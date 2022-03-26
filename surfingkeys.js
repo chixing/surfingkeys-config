@@ -1,47 +1,52 @@
 settings.scrollStepSize = 90;
 settings.hintAlign = "left";
 
-completions = {}
+completions = {};
 completions.az = {
-  alias:  "a",
-  name:   "amazon",
+  alias: "a",
+  name: "amazon",
   search: "https://smile.amazon.com/s/?field-keywords=",
-  compl:  "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
-  callback: (response) => JSON.parse(response.text)[1] 
-}
+  compl:
+    "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
+  callback: (response) => JSON.parse(response.text)[1],
+};
 completions.yp = {
-  alias:  "yp",
-  name:   "yelp",
+  alias: "yp",
+  name: "yelp",
   search: "https://www.yelp.com/search?find_desc=",
-  compl:  "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
+  compl: "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
   callback: (response) => {
-  const res = JSON.parse(response.text).response
-  const words = []
-  res.forEach((r) => {
-    r.suggestions.forEach((s) => {
-      const w = s.query
-      if (words.indexOf(w) === -1) {
-        words.push(w)
-      }
-    })
-  })
-  return words
-}
-
-}
+    const res = JSON.parse(response.text).response;
+    const words = [];
+    res.forEach((r) => {
+      r.suggestions.forEach((s) => {
+        const w = s.query;
+        if (words.indexOf(w) === -1) {
+          words.push(w);
+        }
+      });
+    });
+    return words;
+  },
+};
 
 for (const c in completions) {
-  const s = completions[c]
-  console.log(s)
-  console.log(s.callback)
-  api.addSearchAlias(s.alias, s.name, s.search, 's', s.compl, s.callback);
+  const s = completions[c];
+  console.log(s);
+  console.log(s.callback);
+  api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
 }
 
 // Tomorrow-Night
-api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
-api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
-api.Visual.style('marks', 'background-color: #52c196;');
-api.Visual.style('cursor', 'background-color: red;');
+api.Hints.style(
+  "border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;"
+);
+api.Hints.style(
+  "border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;",
+  "text"
+);
+api.Visual.style("marks", "background-color: #52c196;");
+api.Visual.style("cursor", "background-color: red;");
 
 settings.theme = `
 :root {
