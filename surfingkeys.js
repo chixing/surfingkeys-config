@@ -9,7 +9,6 @@ completions.az = {
   compl:  "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
   callback: (response) => JSON.parse(response.text)[1] 
 }
-// Yelp
 completions.yp = {
   alias:  "yp",
   name:   "yelp",
