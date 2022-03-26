@@ -17,20 +17,7 @@ completions.yp = {
   callback: 
 }
 
-completions.yp.callback = (response) => {
-  const res = JSON.parse(response.text).response
-  const words = []
-  res.forEach((r) => {
-    r.suggestions.forEach((s) => {
-      const w = s.query
-      if (words.indexOf(w) === -1) {
-        words.push(w)
-      }
-    })
-  })
-  return words
-}
-for (const c in completions) {
+completions.yp.callback = for (const c in completions) {
   const s = completions[c]
   console.log(s)
   console.log(s.callback)
