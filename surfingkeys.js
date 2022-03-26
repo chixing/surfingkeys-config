@@ -29,7 +29,7 @@ completions.yp = {
   },
 };
 
-console.log(comp)
+console.log(completions);
 for (const c in completions) {
   const s = completions[c];
   console.log(s);
