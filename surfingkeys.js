@@ -98,14 +98,6 @@ settings.theme = `
   --accent-fg: #A3BE8C;
   --info-fg: #5E81AC;
   --select: #4C566A;
-  --fg: #C5C8C6;
-  --bg: #282A2E;
-  --bg-dark: #1D1F21;
-  --border: #373b41;
-  --main-fg: #81A2BE;
-  --accent-fg: #52c196;
-  --info-fg: #AC7BBA;
-  --select: #585858;
 }
 
 .sk_theme {
