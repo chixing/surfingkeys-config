@@ -79,7 +79,10 @@ util.createSuggestionItem = (html, props = {}) => {
 };
 
 // Tomorrow-Night
-api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
+api.Hints.style('border: solid 2px #4C566A; color:#A3BE8C; background: initial; background-color: #3B4252;');
+api.Hints.style("border: solid 2px #4C566A !important; padding: 1px !important; color: #E5E9F0 !important; background: #3B4252 !important;", "text");
+Visual.style('marks', 'background-color: #A3BE8C99;');
+Visual.style('cursor', 'background-color: #88C0D0;');api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
 api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
 api.Visual.style('marks', 'background-color: #52c196;');
 api.Visual.style('cursor', 'background-color: red;');
@@ -175,12 +178,12 @@ input {
   background: var(--border);
 }
 .sk_theme #sk_omnibarSearchResult ul li {
-  padding: 0.5em;
+  padding: 0.4em;
 }
 .sk_theme #sk_omnibarSearchArea {
   border-top-color: var(--border);
-  // border-bottom-color: var(--border);
-  // padding-bottom: 0.5rem; 
+  border-bottom-color: var(--border);
+  padding-bottom: 0.5rem; 
 }
 .sk_theme #sk_omnibarSearchArea input,
 .sk_theme #sk_omnibarSearchArea span {
