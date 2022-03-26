@@ -174,6 +174,9 @@ input {
 .sk_theme #sk_omnibarSearchResult ul li.focused {
   background: var(--border);
 }
+.sk_theme #sk_omnibarSearchResult ul li.focused {
+  background: var(--border);
+}
 .sk_theme #sk_omnibarSearchArea {
   border-top-color: var(--border);
   // border-bottom-color: var(--border);
