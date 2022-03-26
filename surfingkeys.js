@@ -28,7 +28,7 @@ completions.yp = {
     return words;
   },
 };
-
+console.log(first)
 console.log(completions);
 for (const c in completions) {
   const s = completions[c];
