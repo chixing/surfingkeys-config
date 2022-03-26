@@ -30,7 +30,7 @@ completions.yp = {
 
 }
 
-for (const c in completions) {
+ for (const c in completions) {
   const s = completions[c]
   console.log(s)
   console.log(s.callback)
