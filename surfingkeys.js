@@ -56,10 +56,6 @@ createURLItem = (title, url, sanitize = true) => {
     `, { url: u })
 }
 
-for (const c in completions) {
-  const s = completions[c];
-  api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
-}
 
 // Tomorrow-Night
 api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
