@@ -175,7 +175,7 @@ input {
   background: var(--border);
 }
 .sk_theme #sk_omnibarSearchResult ul li.focused {
-  padding
+  padding: 0.5em;
 }
 .sk_theme #sk_omnibarSearchArea {
   border-top-color: var(--border);
