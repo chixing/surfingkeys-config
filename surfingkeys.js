@@ -61,7 +61,6 @@ util.createURLItem = (title, url, sanitize = true) => {
       <div class="url">${u}</div>
     `, { url: u })
 }
-
 util.escape = (str) =>
   String(str).replace(/[&<>"'`=/]/g, (s) => ({
     "&":  "&amp;",
