@@ -81,7 +81,7 @@ util.createSuggestionItem = (html, props = {}) => {
 // Tomorrow-Night
 api.Hints.style('border: solid 2px #4C566A; color:#A3BE8C; background: initial; background-color: #3B4252;');
 api.Hints.style("border: solid 2px #4C566A !important; padding: 1px !important; color: #E5E9F0 !important; background: #3B4252 !important;", "text");
-api.sVisual.style('marks', 'background-color: #A3BE8C99;');
+api.Visual.style('marks', 'background-color: #A3BE8C99;');
 api.Visual.style('cursor', 'background-color: #88C0D0;');
 
 settings.theme = `
