@@ -174,7 +174,7 @@ input {
 .sk_theme #sk_omnibarSearchResult ul li.focused {
   background: var(--border);
 }
-.sk_theme #sk_omnibarSearchResult ul li.focused {
+.sk_theme #sk_omnibarSearchResult ul li {
   padding: 0.5em;
 }
 .sk_theme #sk_omnibarSearchArea {
