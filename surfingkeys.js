@@ -14,7 +14,20 @@ completions.yp = {
   name:   "yelp",
   search: "https://www.yelp.com/search?find_desc=",
   compl:  "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
-  callback: 
+  callback: (response) => {
+  const res = JSON.parse(response.text).response
+  const words = []
+  res.forEach((r) => {
+    r.suggestions.forEach((s) => {
+      const w = s.query
+      if (words.indexOf(w) === -1) {
+        words.push(w)
+      }
+    })
+  })
+  return words
+}
+
 }
 
 completions.yp.callback = for (const c in completions) {
