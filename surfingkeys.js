@@ -75,10 +75,10 @@ util.escape = (str) =>
   }[s]))
 
 util.createSuggestionItem = (html, props = {}) => {
-  const li = document.createElement("li")
-  li.innerHTML = html
-  return { html: li.outerHTML, props }
-}
+  const li = document.createElement("li");
+  li.innerHTML = html;
+  return { html: li.outerHTML, props };
+};
 
 // Tomorrow-Night
 api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
