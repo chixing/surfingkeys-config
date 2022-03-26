@@ -63,20 +63,16 @@ util.createURLItem = (title, url, sanitize = true) => {
 }
 
 util.escape = (str) =>
-  String(str).replace(
-    /[&<>"'`=/]/g,
-    (s) =>
-      ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#39;",
-        "/": "&#x2F;",
-        "`": "&#x60;",
-        "=": "&#x3D;",
-      }[s])
-  );
+  String(str).replace(/[&<>"'`=/]/g, (s) => ({
+    "&":  "&amp;",
+    "<":  "&lt;",
+    ">":  "&gt;",
+    "\"": "&quot;",
+    "'":  "&#39;",
+    "/":  "&#x2F;",
+    "`":  "&#x60;",
+    "=":  "&#x3D;",
+  }[s]))
 
 util.createSuggestionItem = (html, props = {}) => {
   const li = document.createElement("li");
