@@ -108,7 +108,7 @@ settings.theme = `
   font-family: var(--font);
   font-size: var(--font-size);
   font-weight: var(--font-weight);
-//   line-height: 2em;
+  line-height: 2em;
 }
 input {
   font-family: var(--font);
