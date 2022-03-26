@@ -83,7 +83,6 @@ api.Hints.style('border: solid 2px #4C566A; color:#A3BE8C; background: initial; 
 api.Hints.style("border: solid 2px #4C566A !important; padding: 1px !important; color: #E5E9F0 !important; background: #3B4252 !important;", "text");
 api.sVisual.style('marks', 'background-color: #A3BE8C99;');
 api.Visual.style('cursor', 'background-color: #88C0D0;');
-api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
 
 settings.theme = `
 :root {
