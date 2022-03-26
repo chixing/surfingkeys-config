@@ -86,7 +86,7 @@ api.Visual.style('cursor', 'background-color: #88C0D0;');
 
 settings.theme = `
 :root {
-  --font: 'Source Code Pro', Ubuntu, sans;
+  --font: 'Roboto', 'Source Code Pro', Ubuntu, sans;
   --font-size: 14;
   --font-weight: normal;
 
