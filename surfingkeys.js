@@ -72,7 +72,6 @@ util.escape = (str) =>
     "`":  "&#x60;",
     "=":  "&#x3D;",
   }[s]))
-
 util.createSuggestionItem = (html, props = {}) => {
   const li = document.createElement("li");
   li.innerHTML = html;
