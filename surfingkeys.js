@@ -29,6 +29,7 @@ completions.yp = {
   },
 };
 
+conl
 for (const c in completions) {
   const s = completions[c];
   console.log(s);
