@@ -30,8 +30,6 @@ completions.yp = {
 };
 for (const c in completions) {
   const s = completions[c];
-  console.log(s);
-  console.log(s.callback);
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
 }
 
