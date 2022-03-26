@@ -28,7 +28,21 @@ completions.yp = {
     return words;
   },
 };
+// GitHub
+completions.gh = {
+  alias:  "gh",
+  name:   "github",
+  search: "https://github.com/search?q=",
+  compl:  "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
+}
 
+completions.gh.callback = (response) => JSON.parse(response.text).items.map((s) => {
+  let prefix = ""
+  if (s.stargazers_count) {
+    prefix += `[★${s.stargazers_count}] `
+  }
+  return createURLItem(prefix + s.full_name, s.html_url)
+})
 
 
 for (const c in completions) {
