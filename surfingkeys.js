@@ -78,7 +78,7 @@ util.createSuggestionItem = (html, props = {}) => {
   return { html: li.outerHTML, props };
 };
 
-// Tomorrow-Night
+// Nord colors
 api.Hints.style('border: solid 2px #4C566A; color:#A3BE8C; background: initial; background-color: #3B4252;');
 api.Hints.style("border: solid 2px #4C566A !important; padding: 1px !important; color: #E5E9F0 !important; background: #3B4252 !important;", "text");
 api.Visual.style('marks', 'background-color: #A3BE8C99;');
