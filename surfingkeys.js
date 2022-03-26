@@ -11,7 +11,6 @@ completions.az = {
 }
 completions.yp = {
   alias: "yp",
-  l
   name: "yelp",
   search: "https://www.yelp.com/search?find_desc=",
   compl: "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
