@@ -30,7 +30,7 @@ completions.yp = {
 };
 console.log('first')
 console.log(completions);
-console.log('first')
+console.log('secodn')
 for (const c in completions) {
   const s = completions[c];
   console.log(s);
