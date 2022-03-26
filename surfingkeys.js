@@ -48,6 +48,7 @@ for (const c in completions) {
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
 }
 
+util = {}
 createURLItem = (title, url, sanitize = true) => {
   let t = title
   let u = url
