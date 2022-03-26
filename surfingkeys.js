@@ -10,24 +10,25 @@ completions.az = {
   callback: (response) => JSON.parse(response.text)[1] 
 }
 completions.yp = {
-  alias: "yp",
-  name: "yelp",
+  alias:  "yp",
+  name:   "yelp",
   search: "https://www.yelp.com/search?find_desc=",
-  compl: "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
+  compl:  "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
   callback: (response) => {
-    const res = JSON.parse(response.text).response;
-    const words = [];
-    res.forEach((r) => {
-      r.suggestions.forEach((s) => {
-        const w = s.query;
-        if (words.indexOf(w) === -1) {
-          words.push(w);
-        }
-      });
+  const res = JSON.parse(response.text).response
+  const words = []
+  res.forEach((r) => {
+    r.suggestions.forEach((s) => {
+      const w = s.query;
+      if (words.indexOf(w) === -1) {
+        words.push(w);
+      }
     });
-    return words;
-  },
-};
+  });
+  return words
+}
+
+}
 
 for (const c in completions) {
   const s = completions[c];
