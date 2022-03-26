@@ -42,6 +42,7 @@ completions.gh = {
       return createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
+
 createURLItem = (title, url, sanitize = true) => {
   let t = title
   let u = url
