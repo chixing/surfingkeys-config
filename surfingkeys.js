@@ -42,7 +42,18 @@ completions.gh = {
       return createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
-https://gist.github.com/chixing/82767d49380294ad7b298554e2c0e59b/raw
+util.createURLItem = (title, url, sanitize = true) => {
+  let t = title
+  let u = url
+  if (sanitize) {
+    t = util.escape(t)
+    u = new URL(u).toString()
+  }
+  return util.createSuggestionItem(`
+      <div class="title">${t}</div>
+      <div class="url">${u}</div>
+    `, { url: u })
+}
 for (const c in completions) {
   const s = completions[c];
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
