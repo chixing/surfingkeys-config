@@ -39,7 +39,7 @@ completions.gh = {
       if (s.stargazers_count) {
         prefix += `[★${s.stargazers_count}] `;
       }
-      return createURLItem(prefix + s.full_name, s.html_url);
+      return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
 
