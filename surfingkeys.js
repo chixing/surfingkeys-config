@@ -89,7 +89,15 @@ settings.theme = `
   --font: 'Source Code Pro', Ubuntu, sans;
   --font-size: 14;
   --font-weight: normal;
-  
+
+    --fg: #E5E9F0;
+  --bg: #3B4252;
+  --bg-dark: #2E3440;
+  --border: #4C566A;
+  --main-fg: #88C0D0;
+  --accent-fg: #A3BE8C;
+  --info-fg: #5E81AC;
+  --select: #4C566A;
   --fg: #C5C8C6;
   --bg: #282A2E;
   --bg-dark: #1D1F21;
