@@ -28,7 +28,6 @@ completions.yp = {
     return words;
   },
 };
-// GitHub
 completions.gh = {
   alias:  "gh",
   name:   "github",
