@@ -43,7 +43,6 @@ completions.gh = {
 
 }
 
-completions.gh.callback = 
 
 for (const c in completions) {
   const s = completions[c];
