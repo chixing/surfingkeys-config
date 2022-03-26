@@ -49,7 +49,7 @@ for (const c in completions) {
 }
 
 util = {}
-createURLItem = (title, url, sanitize = true) => {
+util.createURLItem = (title, url, sanitize = true) => {
   let t = title
   let u = url
   if (sanitize) {
