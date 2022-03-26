@@ -90,7 +90,7 @@ settings.theme = `
   --font-size: 16;
   --font-weight: normal;
 
-    --fg: #E5E9F0;
+  --fg: #E5E9F0;
   --bg: #3B4252;
   --bg-dark: #2E3440;
   --border: #4C566A;
