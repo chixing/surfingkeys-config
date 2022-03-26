@@ -73,7 +73,7 @@ util.escape = (str) =>
     "`":  "&#x60;",
     "=":  "&#x3D;",
   }[s]))
-.
+
 // Tomorrow-Night
 api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
 api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
