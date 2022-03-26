@@ -28,6 +28,9 @@ completions.yp = {
     return words;
   },
 };
+
+
+
 for (const c in completions) {
   const s = completions[c];
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
