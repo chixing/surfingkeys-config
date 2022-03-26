@@ -10,7 +10,7 @@ completions.az = {
   callback: (response) => JSON.parse(response.text)[1] 
 }
 completions.yp = {
-  alias: "yp",
+  alias: "",
   name: "yelp",
   search: "https://www.yelp.com/search?find_desc=",
   compl: "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
