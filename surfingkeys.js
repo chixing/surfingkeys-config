@@ -59,7 +59,19 @@ createURLItem = (title, url, sanitize = true) => {
       <div class="title">${t}</div>
       <div class="url">${u}</div>
     `, { url: u })
+
 }
+util.escape = (str) =>
+  String(str).replace(/[&<>"'`=/]/g, (s) => ({
+    "&":  "&amp;",
+    "<":  "&lt;",
+    ">":  "&gt;",
+    "\"": "&quot;",
+    "'":  "&#39;",
+    "/":  "&#x2F;",
+    "`":  "&#x60;",
+    "=":  "&#x3D;",
+  }[s]))
 
 // Tomorrow-Night
 api.Hints.style('border: solid 2px #373B41; color:#52c196; background: initial; background-color: #1D1F21;');
