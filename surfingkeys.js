@@ -19,12 +19,12 @@ completions.yp = {
   const words = []
   res.forEach((r) => {
     r.suggestions.forEach((s) => {
-      const w = s.query
+      const w = s.query;
       if (words.indexOf(w) === -1) {
-        words.push(w)
+        words.push(w);
       }
-    })
-  })
+    });
+  });
   return words
 }
 
