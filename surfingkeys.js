@@ -48,7 +48,7 @@ completions.github = {
 };
 completions.bokcc = {
   alias: "c",
-  name: "github",
+  name: "b-",
   search: "https://github.com/search?q=",
   compl: "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
   callback: (response) =>
