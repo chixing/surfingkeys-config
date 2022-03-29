@@ -54,7 +54,7 @@ completions.bokcc = {
 completions.libgen = {
   alias: "v",
   name: "b-ok.cc",
-  search: "https://u1lib.org/s/",
+  search: "https://libgen.is/search.php?req=",
 }
 
 for (const c in completions) {
