@@ -46,7 +46,7 @@ completions.gh = {
       return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
-completions. = {
+completions.bokcc = {
   alias: "t",
   name: "github",
   search: "https://github.com/search?q=",
