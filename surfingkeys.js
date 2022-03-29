@@ -50,7 +50,16 @@ completions.bokcc = {
   alias: "c",
   name: "b-ok.cc",
   search: "https://u1lib.org/s/",
-};
+  // compl: "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
+  callback: (response) =>
+    JSON.parse(response.text).items.map((s) => {
+      let prefix = "";
+      if (s.stargazers_count) {
+        prefix += `[★${s.stargazers_count}] `;
+      }
+      return util.createURLItem(prefix + s.full_name, s.html_url);
+    }),
+
 
 for (const c in completions) {
   const s = completions[c];
