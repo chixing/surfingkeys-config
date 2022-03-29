@@ -50,6 +50,10 @@ completions.bokcc = {
   alias: "c",
   name: "b-ok.cc",
   search: "https://u1lib.org/s/",
+}completions.bokcc = {
+  alias: "c",
+  name: "b-ok.cc",
+  search: "https://u1lib.org/s/",
 }
 
 for (const c in completions) {
