@@ -32,7 +32,7 @@ completions.yp = {
     return words;
   },
 };
-completions.githu = {
+completions.github = {
   alias: "t",
   name: "github",
   search: "https://github.com/search?q=",
