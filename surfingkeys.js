@@ -53,7 +53,7 @@ completions.bokcc = {
 }
 completions.libgen = {
   alias: "v",
-  name: "b-ok.cc",
+  name: "https://libgen.is/search.php?req=",
   search: "https://u1lib.org/s/",
 }
 
