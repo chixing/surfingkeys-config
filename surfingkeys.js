@@ -50,7 +50,7 @@ completions.bokcc = {
   alias: "c",
   name: "b-ok.cc",
   search: "https://github.com/search?q=",
-https://u1lib.org/s/
+
   compl: "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
   callback: (response) =>
     JSON.parse(response.text).items.map((s) => {
