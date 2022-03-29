@@ -49,7 +49,7 @@ completions.github = {
 completions.bokcc = {
   alias: "c",
   name: "b-ok.cc",
-  search: https://u1lib.org/s/
+  search: "https://github.com/search?q=",
 
   compl: "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
   callback: (response) =>
