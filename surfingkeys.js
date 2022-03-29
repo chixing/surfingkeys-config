@@ -51,7 +51,7 @@ completions.bokcc = {
   name: "b-ok.cc",
   search: "https://u1lib.org/s/",
 }
-completions.bokcc = {
+completions.libgen = {
   alias: "c",
   name: "b-ok.cc",
   search: "https://u1lib.org/s/",
