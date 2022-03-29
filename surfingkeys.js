@@ -47,7 +47,7 @@ completions.github = {
     }),
 };
 completions.bokcc = {
-  alias: "t",
+  alias: "c",
   name: "github",
   search: "https://github.com/search?q=",
   compl: "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
