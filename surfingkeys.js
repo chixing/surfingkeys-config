@@ -53,7 +53,7 @@ completions.bokcc = {
 }
 completions.libgen = {
   alias: "v",
-  name: "b-ok.cc",
+  name: "libgen",
   search: "https://libgen.is/search.php?req=",
 }
 
