@@ -6,7 +6,7 @@ api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
 });
 
 completions = {}
-completions.az = {
+completions.amazon = {
   alias:  "a",
   name:   "amazon",
   search: "https://smile.amazon.com/s/?field-keywords=",
