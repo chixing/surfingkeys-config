@@ -60,7 +60,6 @@ completions.bokcc = {
       return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
-https://u1lib.org/s/
 for (const c in completions) {
   const s = completions[c];
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
