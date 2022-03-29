@@ -46,6 +46,20 @@ completions.gh = {
       return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
+completions.gh = {
+  alias: "t",
+  name: "github",
+  search: "https://github.com/search?q=",
+  compl: "https://api.github.com/search/repositories?sort=stars&order=desc&q=",
+  callback: (response) =>
+    JSON.parse(response.text).items.map((s) => {
+      let prefix = "";
+      if (s.stargazers_count) {
+        prefix += `[★${s.stargazers_count}] `;
+      }
+      return util.createURLItem(prefix + s.full_name, s.html_url);
+    }),
+};
 https://u1lib.org/s/
 for (const c in completions) {
   const s = completions[c];
