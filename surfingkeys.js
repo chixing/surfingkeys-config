@@ -4,6 +4,9 @@ settings.hintAlign = "left";
 api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
     api.tabOpenLink("chrome://extensions/shortcuts");
 });
+api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
+    api.tabOpenLink("chrome://extensions/shortcuts");
+});
 
 completions = {}
 completions.amazon = {
