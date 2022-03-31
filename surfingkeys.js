@@ -1,7 +1,7 @@
 settings.scrollStepSize = 90;
 settings.hintAlign = "left";
 
-api.mapkey('gp', '#12Open Chrome  Shortcuts', function() {
+api.mapkey('gp', '#12Open Chrome Passwords', function() {
     api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
