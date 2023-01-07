@@ -57,6 +57,11 @@ completions.bokcc = {
   name: "b-ok.cc",
   search: "https://u1lib.org/s/",
 }
+completions.libhunt = {
+  alias: "l",
+  name: "libhunt",
+  search: "https://www.libhunt.com/search?query=",
+}
 completions.libgen = {
   alias: "v",
   name: "libgen",
