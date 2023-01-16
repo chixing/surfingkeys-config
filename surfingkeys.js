@@ -103,26 +103,31 @@ util.createSuggestionItem = (html, props = {}) => {
   return { html: li.outerHTML, props };
 };
 
-// Nord colors
-api.Hints.style('border: solid 2px #4C566A; color:#A3BE8C; background: initial; background-color: #3B4252;');
-api.Hints.style("border: solid 2px #4C566A !important; padding: 1px !important; color: #E5E9F0 !important; background: #3B4252 !important;", "text");
-api.Visual.style('marks', 'background-color: #A3BE8C99;');
-api.Visual.style('cursor', 'background-color: #88C0D0;');
+// Tomorrow-Night
+Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21;');
+Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
+Visual.style('marks', 'background-color: #52C19699;');
+Visual.style('cursor', 'background-color: #81A2BE;');
+
 
 settings.theme = `
 :root {
   --font: 'Roboto', 'Meslo', 'Source Code Pro', Ubuntu, sans;
-  --font-size: 16;
+  --font-size: 14;
   --font-weight: normal;
+  
+  /* -------------------- */
+  /* -- Tomorrow Night -- */
+  /* -------------------- */
+  --fg: #C5C8C6;
+  --bg: #282A2E;
+  --bg-dark: #1D1F21;
+  --border: #373b41;
+  --main-fg: #81A2BE;
+  --accent-fg: #52C196;
+  --info-fg: #AC7BBA;
+  --select: #585858;
 
-  --fg: #E5E9F0;
-  --bg: #3B4252;
-  --bg-dark: #2E3440;
-  --border: #4C566A;
-  --main-fg: #88C0D0;
-  --accent-fg: #A3BE8C;
-  --info-fg: #5E81AC;
-  --select: #4C566A;
 }
 
 .sk_theme {
