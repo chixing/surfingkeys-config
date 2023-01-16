@@ -104,10 +104,10 @@ util.createSuggestionItem = (html, props = {}) => {
 };
 
 // Tomorrow-Night
-Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21;');
-Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
-Visual.style('marks', 'background-color: #52C19699;');
-Visual.style('cursor', 'background-color: #81A2BE;');
+api.Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21;');
+api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
+api.Visual.style('marks', 'background-color: #52C19699;');
+api.Visual.style('cursor', 'background-color: #81A2BE;');
 
 
 settings.theme = `
