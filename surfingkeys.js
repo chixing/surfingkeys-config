@@ -1,7 +1,7 @@
 settings.scrollStepSize = 90;
 settings.hintAlign = "left";
 
-settings.blacklistPattern = /.*gitpod.*/;
+settings.blocklistPattern = /.*gitpod.*/;
 
 api.mapkey('gp', '#12Open Chrome Passwords', function() {
     api.tabOpenLink("chrome://settings/passwords");
