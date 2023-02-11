@@ -67,6 +67,11 @@ completions.libgen = {
   name: "libgen",
   search: "https://libgen.is/search.php?req=",
 }
+completions.yandex = {
+  alias: "n",
+  name: "yandex",
+  search: "https://yandex.com/search/?text=",
+}
 
 for (const c in completions) {
   const s = completions[c];
