@@ -54,8 +54,8 @@ completions.github = {
 };
 completions.bokcc = {
   alias: "c",
-  name: "b-ok.cc",
-  search: "https://u1lib.org/s/",
+  name: "anna archive",
+  search: "https://www.annas-archive.org/search?q=",
 }
 completions.libhunt = {
   alias: "l",
