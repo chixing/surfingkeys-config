@@ -52,7 +52,12 @@ completions.github = {
       return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
-completions.bokcc = {
+completions.skid = {
+  alias: "k",
+  name: "skidrow",
+  search: "https://www.skidrowreloaded.com/?s=",
+}
+completions.anna = {
   alias: "c",
   name: "anna archive",
   search: "https://www.annas-archive.org/search?q=",
