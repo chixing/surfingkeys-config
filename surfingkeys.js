@@ -4,7 +4,7 @@ settings.hintAlign = "left";
 settings.blocklistPattern = /.*gitpod.*/;
 
 api.mapkey('gp', '#12Open Chrome Passwords', function() {
-    api.tabOpenLink("chrome://settings/passwords");
+    api.tabOpenLink("chrome://password-manager/passwords");
 });
 
 api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
@@ -76,6 +76,11 @@ completions.yandex = {
   alias: "n",
   name: "yandex",
   search: "https://yandex.com/search/?text=",
+}
+completions.urban = {
+  alias: "u",
+  name: "urbandictionary",
+  search: "https://www.urbandictionary.com/define.php?term=",
 }
 
 for (const c in completions) {
