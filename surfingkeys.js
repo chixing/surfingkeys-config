@@ -82,7 +82,11 @@ completions.urban = {
   name: "urbandictionary",
   search: "https://www.urbandictionary.com/define.php?term=",
 }
-
+completions.archive = {
+  alias: "r",
+  name: "archive",
+  search: "https://archive.is/",
+}
 for (const c in completions) {
   const s = completions[c];
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
