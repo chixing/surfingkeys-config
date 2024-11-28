@@ -52,7 +52,7 @@ completions.github = {
       return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
-completions.skid = {
+completions.gpt = {
   alias: "k",
   name: "skidrow",
   search: "https://www.skidrowreloaded.com/?s=",
