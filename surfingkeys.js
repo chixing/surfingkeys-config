@@ -53,7 +53,7 @@ completions.github = {
     }),
 };
 completions.gpt = {
-  alias: "k",
+  alias: "h",
   name: "skidrow",
   search: "https://www.skidrowreloaded.com/?s=",
 }
