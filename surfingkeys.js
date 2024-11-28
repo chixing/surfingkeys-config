@@ -54,7 +54,7 @@ completions.github = {
 };
 completions.gpt = {
   alias: "h",
-  name: "",
+  name: "chatgpt",
   search: "https://www.skidrowreloaded.com/?s=",
 }
 completions.skid = {
