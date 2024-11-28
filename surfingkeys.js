@@ -57,6 +57,11 @@ completions.skid = {
   name: "skidrow",
   search: "https://www.skidrowreloaded.com/?s=",
 }
+completions.skid = {
+  alias: "k",
+  name: "skidrow",
+  search: "https://www.skidrowreloaded.com/?s=",
+}
 completions.anna = {
   alias: "c",
   name: "anna archive",
