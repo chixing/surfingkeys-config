@@ -53,7 +53,7 @@ completions.github = {
     }),
 };
 completions.gpt = {
-  alias: "i",
+  alias: "z",
   name: "chatgpt",
   search: "https://chatgpt.com/?q=",
 }
