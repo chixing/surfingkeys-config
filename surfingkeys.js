@@ -1,5 +1,6 @@
 settings.scrollStepSize = 90;
 settings.hintAlign = "left";
+settings.omnibarMaxResults	= 20;
 
 settings.blocklistPattern = /.*gitpod.*/;
 
