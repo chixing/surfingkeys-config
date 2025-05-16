@@ -2,8 +2,6 @@ settings.scrollStepSize = 90;
 settings.hintAlign = "left";
 settings.omnibarMaxResults	= 20;
 
-api.iunmap('<Ctrl-a>');
-
 api.mapkey('gp', '#12Open Chrome Passwords', function() {
     api.tabOpenLink("chrome://password-manager/passwords");
 });
