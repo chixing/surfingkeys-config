@@ -4,7 +4,7 @@ settings.omnibarMaxResults	= 20;
 
 settings.blocklistPattern = /.*gitpod.*/;
 
-api.iunmap('<Ctrl-a>')
+api.iunmap('<Ctrl-a>');
 
 api.mapkey('gp', '#12Open Chrome Passwords', function() {
     api.tabOpenLink("chrome://password-manager/passwords");
