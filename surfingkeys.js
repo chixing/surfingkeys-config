@@ -4,6 +4,8 @@ settings.omnibarMaxResults	= 20;
 
 settings.blocklistPattern = /.*gitpod.*/;
 
+api.iunmap('<Ctrl-a>')
+
 api.mapkey('gp', '#12Open Chrome Passwords', function() {
     api.tabOpenLink("chrome://password-manager/passwords");
 });
@@ -24,7 +26,7 @@ completions.yelp = {
   alias: "p",
   name: "yelp",
   search: "https://www.yelp.com/search?find_desc=",
-  compl: "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",
+  compl: "https://www.yelp.com/search_suggest/v2/prefetch?prefix=",i
   callback: (response) => {
     const res = JSON.parse(response.text).response;
     const words = [];
