@@ -2,6 +2,7 @@ settings.scrollStepSize = 90;
 settings.hintAlign = "left";
 settings.omnibarMaxResults	= 20;
 
+api.map('q', 'p');
 api.iunmap("<Ctrl-a>");
 
 api.mapkey('gp', '#12Open Chrome Passwords', function() {
