@@ -2,6 +2,10 @@ settings.scrollStepSize = 90;
 settings.hintAlign = "left";
 settings.omnibarMaxResults	= 20;
 
+api.mapkey("F", "Open link in a new window", function() {
+    Hints.create("a[href]", Hints.dispatchMouseClick, {window: true});
+});
+
 // Next/Prev Page
 api.map('K', '[[');
 api.map('J', ']]');
