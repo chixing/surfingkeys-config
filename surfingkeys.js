@@ -1,4 +1,4 @@
-settings.scrollStepSize = 90;
+settings.scrollStepSize = 120;
 settings.hintAlign = "left";
 settings.omnibarMaxResults	= 20;
 
@@ -12,30 +12,12 @@ api.map('q', 'p');
 // Select all
 api.iunmap("<Ctrl-a>");
 
-// api.mapkey('gp', '#12Open Chrome Passwords', function() {
-//     api.tabOpenLink("chrome://password-manager/passwords");
-// });
-
-// api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
-//     api.tabOpenLink("chrome://extensions/shortcuts");
-// });
-
-// Browser-specific URLs
-const browserUrls = {
-    passwords: navigator.userAgent.toLowerCase().indexOf('firefox') > -1 
-        ? "about:logins" 
-        : "chrome://password-manager/passwords",
-    shortcuts: navigator.userAgent.toLowerCase().indexOf('firefox') > -1 
-        ? "about:addons" 
-        : "chrome://extensions/shortcuts"
-};
-
-api.mapkey('gp', '#12Open Browser Passwords', function() {
-    api.tabOpenLink(browserUrls.passwords);
+api.mapkey('gp', '#12Open Chrome Passwords', function() {
+    api.tabOpenLink("chrome://password-manager/passwords");
 });
 
-api.mapkey('gs', '#12Open Browser Extensions/Shortcuts', function() {
-    api.tabOpenLink(browserUrls.shortcuts);
+api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
+    api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
 completions = {}
