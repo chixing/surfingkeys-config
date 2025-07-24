@@ -13,10 +13,9 @@ api.map('q', 'p');
 api.iunmap("<Ctrl-a>");
 
 api.mapkey('gp', '#12Open Passwords', function() {
-    // const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
-    // const url = isFirefox ? "about:logins" : "chrome://password-manager/passwords";
-    const url = "about:logins"; 
-    api.tabOpenLink(url);
+  // Chrome only: open Chrome password manager
+  const url = "chrome://password-manager/passwords";
+  api.tabOpenLink(url);
 });
 
 api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
