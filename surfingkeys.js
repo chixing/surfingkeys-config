@@ -13,7 +13,6 @@ api.map('q', 'p');
 api.iunmap("<Ctrl-a>");
 
 api.mapkey('gp', '#12Open Passwords', function() {
-  // Chrome only: open Chrome password manager
   const url = "chrome://password-manager/passwords";
   api.tabOpenLink(url);
 });
