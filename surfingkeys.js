@@ -1,17 +1,33 @@
+// ================================================================================
+// SURFINGKEYS CONFIGURATION
+// ================================================================================
+
+// ================================
+// BASIC SETTINGS
+// ================================
 settings.scrollStepSize = 120;
 settings.hintAlign = "left";
-settings.omnibarMaxResults	= 20;
+settings.omnibarMaxResults = 20;
 
-// Next/Prev Page
-api.map('K', '[[');
-api.map('J', ']]');
+// ================================
+// KEY MAPPINGS
+// ================================
 
-// Left hand passthrough
-api.map('q', 'p');
+// Navigation
+api.map('K', '[[');  // Previous page
+api.map('J', ']]');  // Next page
 
-// Select all
-api.iunmap("<Ctrl-a>");
+// Convenience mappings
+api.map('q', 'p');   // Left hand passthrough
 
+// Unmappings
+api.iunmap("<Ctrl-a>");  // Unmap select all
+
+// ================================
+// CUSTOM KEYBINDINGS
+// ================================
+
+// Chrome utilities
 api.mapkey('gp', '#12Open Passwords', function() {
   const url = "chrome://password-manager/passwords";
   api.tabOpenLink(url);
@@ -21,7 +37,47 @@ api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
     api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
+// ================================
+// UTILITY FUNCTIONS
+// ================================
+util = {}
+util.createURLItem = (title, url, sanitize = true) => {
+  let t = title
+  let u = url
+  if (sanitize) {
+    t = util.escape(t)
+    u = new URL(u).toString()
+  }
+  return util.createSuggestionItem(`
+      <div class="title">${t}</div>
+      <div class="url">${u}</div>
+    `, { url: u })
+}
+
+util.escape = (str) =>
+  String(str).replace(/[&<>"'`=/]/g, (s) => ({
+    "&":  "&amp;",
+    "<":  "&lt;",
+    ">":  "&gt;",
+    "\"": "&quot;",
+    "'":  "&#39;",
+    "/":  "&#x2F;",
+    "`":  "&#x60;",
+    "=":  "&#x3D;",
+  }[s]))
+
+util.createSuggestionItem = (html, props = {}) => {
+  const li = document.createElement("li");
+  li.innerHTML = html;
+  return { html: li.outerHTML, props };
+};
+
+// ================================
+// SEARCH ENGINES & COMPLETIONS
+// ================================
 completions = {}
+
+// E-commerce
 completions.amazon = {
   alias:  "a",
   name:   "amazon",
@@ -29,6 +85,8 @@ completions.amazon = {
   compl:  "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
   callback: (response) => JSON.parse(response.text)[1] 
 }
+
+// Local services
 completions.yelp = {
   alias: "p",
   name: "yelp",
@@ -48,6 +106,8 @@ completions.yelp = {
     return words;
   },
 };
+
+// Development & Tech
 completions.github = {
   alias: "t",
   name: "github",
@@ -62,84 +122,75 @@ completions.github = {
       return util.createURLItem(prefix + s.full_name, s.html_url);
     }),
 };
-completions.gpt = {
-  alias: "z",
-  name: "chatgpt",
-  search: "https://chatgpt.com/?q=",
-}
-completions.skid = {
-  alias: "k",
-  name: "skidrow",
-  search: "https://www.skidrowreloaded.com/?s=",
-}
-completions.anna = {
-  alias: "c",
-  name: "anna archive",
-  search: "https://www.annas-archive.org/search?q=",
-}
+
 completions.libhunt = {
   alias: "l",
   name: "libhunt",
   search: "https://www.libhunt.com/search?query=",
 }
-completions.libgen = {
-  alias: "v",
-  name: "libgen",
-  search: "https://libgen.is/search.php?req=",
+
+// AI & Search
+completions.gpt = {
+  alias: "z",
+  name: "chatgpt",
+  search: "https://chatgpt.com/?q=",
 }
+
 completions.yandex = {
   alias: "n",
   name: "yandex",
   search: "https://yandex.com/search/?text=",
 }
+
+// Entertainment & Media
+completions.skid = {
+  alias: "k",
+  name: "skidrow",
+  search: "https://www.skidrowreloaded.com/?s=",
+}
+
+// Books & Research
+completions.anna = {
+  alias: "c",
+  name: "anna archive",
+  search: "https://www.annas-archive.org/search?q=",
+}
+
+completions.libgen = {
+  alias: "v",
+  name: "libgen",
+  search: "https://libgen.is/search.php?req=",
+}
+
+// Reference & Definitions
 completions.urban = {
   alias: "u",
   name: "urbandictionary",
   search: "https://www.urbandictionary.com/define.php?term=",
 }
+
+// Archive & History
 completions.archive = {
   alias: "r",
   name: "archive",
   search: "https://archive.is/",
 }
+
+// Register all search engines
 for (const c in completions) {
   const s = completions[c];
   api.addSearchAlias(s.alias, s.name, s.search, "s", s.compl, s.callback);
 }
 
-util = {}
-util.createURLItem = (title, url, sanitize = true) => {
-  let t = title
-  let u = url
-  if (sanitize) {
-    t = util.escape(t)
-    u = new URL(u).toString()
-  }
-  return util.createSuggestionItem(`
-      <div class="title">${t}</div>
-      <div class="url">${u}</div>
-    `, { url: u })
-}
-util.escape = (str) =>
-  String(str).replace(/[&<>"'`=/]/g, (s) => ({
-    "&":  "&amp;",
-    "<":  "&lt;",
-    ">":  "&gt;",
-    "\"": "&quot;",
-    "'":  "&#39;",
-    "/":  "&#x2F;",
-    "`":  "&#x60;",
-    "=":  "&#x3D;",
-  }[s]))
-util.createSuggestionItem = (html, props = {}) => {
-  const li = document.createElement("li");
-  li.innerHTML = html;
-  return { html: li.outerHTML, props };
-};
+// ================================
+// VISUAL STYLING
+// ================================
 
-// Tomorrow-Night
+// Hints styling
 api.Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21;');
 api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
+
+// Visual mode styling
 api.Visual.style('marks', 'background-color: #52C19699;');
 api.Visual.style('cursor', 'background-color: #81A2BE;');
 
