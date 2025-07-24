@@ -12,8 +12,10 @@ api.map('q', 'p');
 // Select all
 api.iunmap("<Ctrl-a>");
 
-api.mapkey('gp', '#12Open Chrome Passwords', function() {
-    api.tabOpenLink("chrome://password-manager/passwords");
+api.mapkey('gp', '#12Open Passwords', function() {
+    const isFirefox = navigator.userAgent.toLowerCase().includes('firefox');
+    const url = isFirefox ? "about:logins" : "chrome://password-manager/passwords";
+    api.tabOpenLink(url);
 });
 
 api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
