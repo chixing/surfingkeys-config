@@ -38,7 +38,7 @@ api.mapkey('gp', '#12Open Passwords', function() {
     }, 100); // Small delay to ensure Alt+T is processed first
   } else {
     // Chrome/Safari: open password manager
-    tabOpenLink("chrome://password-manager/passwords");
+    api.tabOpenLink("chrome://password-manager/passwords");
   }
 });
 
