@@ -28,14 +28,17 @@ api.iunmap("<Ctrl-a>");  // Unmap select all
 // ================================
 
 // Chrome utilities
+
 api.mapkey('gp', '#12Open Passwords', function() {
-  if (navigator.userAgent.includes('Firefox')) {
-    // Send Alt+T then E in Firefox (no timeout)
-    api.sendKey('Alt-t');
-    api.sendKey('e');
+  if (getBrowserName() === 'Firefox') {
+    // Send Alt+T then E in Firefox
+    Normal.feedkeys('Alt-t');
+    setTimeout(() => {
+      Normal.feedkeys('e');
+    }, 100); // Small delay to ensure Alt+T is processed first
   } else {
-    // Chrome: open password manager
-    api.tabOpenLink("chrome://password-manager/passwords");
+    // Chrome/Safari: open password manager
+    tabOpenLink("chrome://password-manager/passwords");
   }
 });
 
