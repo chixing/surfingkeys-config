@@ -30,16 +30,7 @@ api.iunmap("<Ctrl-a>");  // Unmap select all
 // Chrome utilities
 
 api.mapkey('gp', '#12Open Passwords', function() {
-  if (getBrowserName() === 'Firefox') {
-    // Send Alt+T then E in Firefox
-    Normal.feedkeys('Alt-t');
-    setTimeout(() => {
-      Normal.feedkeys('e');
-    }, 100); // Small delay to ensure Alt+T is processed first
-  } else {
-    // Chrome/Safari: open password manager
     api.tabOpenLink("chrome://password-manager/passwords");
-  }
 });
 
 api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
