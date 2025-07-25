@@ -29,8 +29,16 @@ api.iunmap("<Ctrl-a>");  // Unmap select all
 
 // Chrome utilities
 api.mapkey('gp', '#12Open Passwords', function() {
-  const url = "chrome://password-manager/passwords";
-  api.tabOpenLink(url);
+  if (navigator.userAgent.includes('Firefox')) {
+    // Send Alt+T then E in Firefox
+    api.sendKey('Alt-t');
+    setTimeout(function() {
+      api.sendKey('e');
+    }, 100);
+  } else {
+    // Chrome: open password manager
+    api.tabOpenLink("chrome://password-manager/passwords");
+  }
 });
 
 api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
