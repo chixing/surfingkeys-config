@@ -435,4 +435,3 @@ input {
   background: var(--select) !important;
 }
 `;
-}
