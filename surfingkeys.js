@@ -8,6 +8,7 @@
 settings.scrollStepSize = 120;
 settings.hintAlign = "left";
 settings.omnibarMaxResults = 20;
+settings.historyMUOrder = false; // list history by recency instead of most-used frequency
 
 // ================================
 // KEY MAPPINGS
@@ -434,3 +435,4 @@ input {
   background: var(--select) !important;
 }
 `;
+}
