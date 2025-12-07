@@ -38,6 +38,15 @@ api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
     api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
+api.mapkey('yu', 'Yank link and search in Gemini', function() {
+    api.Hints.create("", function(element) {
+        var link = element.href;
+        var promptText = "Review this link: " + link;
+        var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(promptText);
+        api.tabOpenLink(targetUrl);
+    });
+});
+
 // ================================
 // UTILITY FUNCTIONS
 // ================================
