@@ -47,6 +47,42 @@ api.mapkey('yu', 'Yank link and search in Gemini', function() {
     });
 });
 
+// Gemini Automation Script
+if (window.location.hostname === "gemini.google.com") {
+    if (window.location.hash.startsWith("#sk_prompt=")) {
+        var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
+
+        var checkExist = setInterval(function() {
+            var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
+            
+            if (inputBox) {
+                clearInterval(checkExist);
+                inputBox.focus();
+                
+                // 1. Insert the text
+                document.execCommand('insertText', false, promptToPaste);
+                
+                // 2. Wait a split second for the app to register the text
+                setTimeout(function() {
+                    // 3. Create and dispatch the Enter key event
+                    var enterEvent = new KeyboardEvent('keydown', {
+                        bubbles: true,
+                        cancelable: true,
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        which: 13
+                    });
+                    inputBox.dispatchEvent(enterEvent);
+                    
+                    // Clean URL
+                    history.replaceState(null, null, ' ');
+                }, 300); 
+            }
+        }, 500);
+    }
+}
+
 // ================================
 // UTILITY FUNCTIONS
 // ================================
