@@ -57,9 +57,9 @@ api.mapkey('gw', 'Yank link and search in Gemini', function() {
 api.mapkey('gq', 'Review current tab in Gemini', function() {
     var link = window.location.href;
     var promptText = link + " provide a detailed summary";
-    var userInput = prompt("Edit prompt:", promptText);
+    var userInput = prompt("Edit prompt:", " provide a detailed summary");
     if (userInput !== null) {
-        var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput);
+        var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
         api.tabOpenLink(targetUrl);
     }
 });
