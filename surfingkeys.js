@@ -65,6 +65,8 @@ api.mapkey('gq', 'Review current tab in Gemini', function() {
 });
 
 // Gemini Automation Script
+// This script checks if the current site is Gemini and if there's a prompt in the URL hash.
+// If so, it pastes the prompt into the input box and simulates pressing Enter.
 if (window.location.hostname === "gemini.google.com") {
     if (window.location.hash.startsWith("#sk_prompt=")) {
         var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
