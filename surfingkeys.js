@@ -47,6 +47,13 @@ api.mapkey('gw', 'Yank link and search in Gemini', function() {
     });
 });
 
+api.mapkey('gq', 'Review current tab in Gemini', function() {
+    var link = window.location.href;
+    var promptText = "Review this link: " + link;
+    var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(promptText);
+    api.tabOpenLink(targetUrl);
+});
+
 // Gemini Automation Script
 if (window.location.hostname === "gemini.google.com") {
     if (window.location.hash.startsWith("#sk_prompt=")) {
