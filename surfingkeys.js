@@ -21,6 +21,10 @@ api.map('J', ']]');  // Next page
 // Convenience mappings
 api.map('q', 'p');   // Left hand passthrough
 
+// Swap v and zv
+api.map('v', 'zv');  // Visual mode now on v
+api.map('zv', 'v');  // Enter visual mode (caret mode) now on zv
+
 // Unmappings
 api.iunmap("<Ctrl-a>");  // Unmap select all
 
