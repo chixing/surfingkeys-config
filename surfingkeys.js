@@ -94,7 +94,7 @@ if (window.location.hostname === "gemini.google.com") {
             }
         }, 500);
     }
-}gw
+}
 
 // ================================
 // UTILITY FUNCTIONS
