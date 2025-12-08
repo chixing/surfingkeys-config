@@ -41,7 +41,7 @@ api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
 api.mapkey('gw', 'Yank link and search in Gemini', function() {
     api.Hints.create("", function(element) {
         var link = element.href;
-        var promptText = "Review this link: " + link;
+        var promptText = link + " review this link";
         var userInput = prompt("Edit prompt:", promptText);
         if (userInput !== null) {
             var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput);
@@ -52,7 +52,7 @@ api.mapkey('gw', 'Yank link and search in Gemini', function() {
 
 api.mapkey('gq', 'Review current tab in Gemini', function() {
     var link = window.location.href;
-    var promptText = "Review this link: " + link;
+    var promptText = link + " review this link";
     var userInput = prompt("Edit prompt:", promptText);
     if (userInput !== null) {
         var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput);
