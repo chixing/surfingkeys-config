@@ -38,7 +38,7 @@ api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
     api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
-api.mapkey('gw', 'Yank link and search in Gemini', function() {
+api.mapkey('yu', 'Yank link and search in Gemini', function() {
     api.Hints.create("", function(element) {
         var link = element.href;
         var promptText = link + " provide a detailed summary";
@@ -94,7 +94,7 @@ if (window.location.hostname === "gemini.google.com") {
             }
         }, 500);
     }
-}
+}gw
 
 // ================================
 // UTILITY FUNCTIONS
@@ -258,9 +258,13 @@ api.Visual.style('cursor', 'background-color: #81A2BE;');
 // ================================
 settings.theme = `
 :root {
-  --font: 'Roboto', 'Meslo', 'Source Code Pro', Ubuntu, sans;
+  --font: 'Monaco', 'Consolas', 'Courier New', monospace;
   --font-size: 14;
   --font-weight: normal;
+  
+  /* -------------------- */
+  /* -- Tomorrow Night -- */
+  /* -------------------- */
   --fg: #C5C8C6;
   --bg: #282A2E;
   --bg-dark: #1D1F21;
@@ -271,29 +275,37 @@ settings.theme = `
   --select: #585858;
 }
 
+/* Base Theme */
 .sk_theme {
   background: var(--bg);
   color: var(--fg);
+  background-color: var(--bg);
   border-color: var(--border);
   font-family: var(--font);
   font-size: var(--font-size);
   font-weight: var(--font-weight);
+  // line-height: 2em;
 }
 
-input, .sk_theme input {
+input {
   font-family: var(--font);
   font-weight: var(--font-weight);
-  color: var(--fg);
 }
 
 .sk_theme tbody {
   color: var(--fg);
 }
 
+.sk_theme input {
+  color: var(--fg);
+}
+
+/* Hints */
 #sk_hints .begin {
   color: var(--accent-fg) !important;
 }
 
+/* Tabs */
 #sk_tabs .sk_tab {
   background: var(--bg-dark);
   border: 1px solid var(--border);
@@ -318,6 +330,13 @@ input, .sk_theme input {
   opacity: 0.2;
   color: var(--accent-fg);
 }
+
+/* Omnibar */
+/* Uncomment this and use settings.omnibarPosition = 'bottom' for Pentadactyl/Tridactyl style bottom bar */
+/* .sk_theme#sk_omnibar {
+  width: 100%;
+  left: 0;
+} */
 
 .sk_theme .title {
   color: var(--accent-fg);
@@ -358,7 +377,7 @@ input, .sk_theme input {
 .sk_theme #sk_omnibarSearchArea {
   border-top-color: var(--border);
   border-bottom-color: var(--border);
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.5rem; 
 }
 
 .sk_theme #sk_omnibarSearchArea input,
@@ -370,6 +389,7 @@ input, .sk_theme input {
   color: var(--accent-fg);
 }
 
+/* Popup Notification Banner */
 #sk_banner {
   font-family: var(--font);
   font-size: var(--font-size);
@@ -380,6 +400,7 @@ input, .sk_theme input {
   opacity: 0.9;
 }
 
+/* Popup Keys */
 #sk_keystroke {
   background-color: var(--bg);
 }
@@ -392,6 +413,7 @@ input, .sk_theme input {
   color: var(--accent-fg);
 }
 
+/* Popup Translation Bubble */
 #sk_bubble {
   background-color: var(--bg) !important;
   color: var(--fg) !important;
@@ -412,7 +434,9 @@ input, .sk_theme input {
   border-bottom-color: var(--bg) !important;
 }
 
-#sk_status, #sk_find {
+/* Search */
+#sk_status,
+#sk_find {
   font-size: var(--font-size);
   border-color: var(--border);
 }
@@ -428,9 +452,11 @@ input, .sk_theme input {
   color: var(--main-fg);
 }
 
+/* ACE Editor */
 #sk_editor {
   background: var(--bg-dark) !important;
   height: 50% !important;
+  /* Remove this to restore the default editor size */
 }
 
 .ace_dialog-bottom {
@@ -448,7 +474,8 @@ input, .sk_theme input {
   color: var(--fg) !important;
 }
 
-.ace_gutter, .ace_dialog {
+.ace_gutter,
+.ace_dialog {
   color: var(--fg) !important;
 }
 
