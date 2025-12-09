@@ -132,8 +132,15 @@ if (window.location.hostname === "claude.ai") {
         inputBox.focus();
         document.execCommand('insertText', false, promptToPaste);
         setTimeout(function() {
-          var submitButton = document.querySelector('button[type="submit"]');
-          submitButton.click();
+          var submitButton = document.querySelector('button[type="submit"]') || 
+                    document.querySelector('button.send-button') ||
+                    document.querySelector('button[aria-label*="send" i]') ||
+                    document.querySelector('button svg[class*="send"]')?.closest('button');
+          if (submitButton) {
+            submitButton.click();
+          } else {
+            pressEnter(inputBox);
+          }
           history.replaceState(null, null, ' ');
         }, 1000);
       }
