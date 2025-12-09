@@ -70,9 +70,9 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
             var urls = [
                 // "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
                 // "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-                "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
+                // "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
                 // "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-                // "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
+                "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
                 // "https://perplexity.ai?q=" + encodeURIComponent(userInput),
                 // "https://grok.com?q=" + encodeURIComponent(userInput),
             ];
