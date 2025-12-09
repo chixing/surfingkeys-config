@@ -109,7 +109,6 @@ if (window.location.hostname === "chatgpt.com") {
           which: 13
         });
         inputBox.dispatchEvent(enterEvent);
-        history.replaceState(null, null, ' ');
       }, 500);
     }
   }, 500);
@@ -241,7 +240,7 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
                         which: 13
                     });
                     inputBox.dispatchEvent(enterEvent);
-                    history.replaceState(null, null, ' ');
+                    // history.replaceState(null, null, ' ');
                 }, 300);
             }
         }, 500);
