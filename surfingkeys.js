@@ -160,7 +160,7 @@ if (window.location.hostname === "claude.ai") {
             inputBox.dispatchEvent(enterEvent);
           }
           history.replaceState(null, null, ' ');
-        }, 300);
+        }, 500);
       }
     }, 500);
   }
@@ -202,7 +202,7 @@ if (window.location.hostname === "www.doubao.com") {
             inputBox.dispatchEvent(enterEvent);
           }
           history.replaceState(null, null, ' ');
-        }, 300);
+        }, 500);
       }
     }, 500);
   }
@@ -235,7 +235,7 @@ if (window.location.hostname.includes("yandex.ru")) {
           });
           inputBox.dispatchEvent(enterEvent);
           // history.replaceState(null, null, ' ');
-        }, 300);
+        }, 500);
       }
     }, 500);
   }
