@@ -34,63 +34,63 @@ api.iunmap("<Ctrl-a>");  // Unmap select all
 
 // Chrome utilities
 
-api.mapkey('gp', '#12Open Passwords', function() {
-    api.tabOpenLink("chrome://password-manager/passwords");
+api.mapkey('gp', '#12Open Passwords', function () {
+  api.tabOpenLink("chrome://password-manager/passwords");
 });
 
-api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
-    api.tabOpenLink("chrome://extensions/shortcuts");
+api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function () {
+  api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
-api.mapkey('gw', 'Yank link and search in Gemini', function() {
-    api.Hints.create("", function(element) {
-        var link = element.href;
-        var promptText = link + " provide a detailed summary";
-        var userInput = prompt("Edit prompt:", " provide a detailed summary");
-        if (userInput !== null) {
-            var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
-            api.tabOpenLink(targetUrl);
-        }
-    });
-});
-
-api.mapkey('gq', 'Review current tab in Gemini', function() {
-    var link = window.location.href;
+api.mapkey('gw', 'Yank link and search in Gemini', function () {
+  api.Hints.create("", function (element) {
+    var link = element.href;
     var promptText = link + " provide a detailed summary";
     var userInput = prompt("Edit prompt:", " provide a detailed summary");
     if (userInput !== null) {
-        var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
-        api.tabOpenLink(targetUrl);
+      var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
+      api.tabOpenLink(targetUrl);
     }
+  });
 });
 
-api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function() {
-    var openTabs = function(userInput) {
-        if (userInput !== null) {
-            var urls = [
-                // "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-                // "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-                // "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-                "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-                // "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-                // "https://perplexity.ai?q=" + encodeURIComponent(userInput),
-                // "https://grok.com?q=" + encodeURIComponent(userInput),
-            ];
-            urls.forEach(function(url) {
-                api.tabOpenLink(url);
-            });
-        }
-    };
-    
-    // Get clipboard content
-    navigator.clipboard.readText().then(function(clipboardText) {
-        var userInput = prompt("Edit query:", clipboardText);
-        openTabs(userInput);
-    }).catch(function(err) {
-        api.echoerr('Failed to read clipboard');
-        var userInput = prompt("Enter query:");
-        openTabs(userInput);
-    });
+api.mapkey('gq', 'Review current tab in Gemini', function () {
+  var link = window.location.href;
+  var promptText = link + " provide a detailed summary";
+  var userInput = prompt("Edit prompt:", " provide a detailed summary");
+  if (userInput !== null) {
+    var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
+    api.tabOpenLink(targetUrl);
+  }
+});
+
+api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function () {
+  var openTabs = function (userInput) {
+    if (userInput !== null) {
+      var urls = [
+        // "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
+        // "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
+        // "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
+        "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
+        // "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
+        // "https://perplexity.ai?q=" + encodeURIComponent(userInput),
+        // "https://grok.com?q=" + encodeURIComponent(userInput),
+      ];
+      urls.forEach(function (url) {
+        api.tabOpenLink(url);
+      });
+    }
+  };
+
+  // Get clipboard content
+  navigator.clipboard.readText().then(function (clipboardText) {
+    var userInput = prompt("Edit query:", clipboardText);
+    openTabs(userInput);
+  }).catch(function (err) {
+    api.echoerr('Failed to read clipboard');
+    var userInput = prompt("Enter query:");
+    openTabs(userInput);
+  });
 });
 
 // ChatGPT
@@ -109,11 +109,11 @@ if (window.location.hostname === "chatgpt.com") {
 if (window.location.hostname === "gemini.google.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    setTimeout(function() {
+    setTimeout(function () {
       var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
       inputBox.focus();
       document.execCommand('insertText', false, promptToPaste);
-      setTimeout(function() {
+      setTimeout(function () {
         pressEnter(inputBox);
         history.replaceState(null, null, ' ');
       }, 500);
@@ -125,25 +125,22 @@ if (window.location.hostname === "gemini.google.com") {
 if (window.location.hostname === "claude.ai") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    var checkExist = setInterval(function() {
+    setTimeout(function () {
       var inputBox = document.querySelector('div[contenteditable="true"]');
-      if (inputBox) {
-        clearInterval(checkExist);
-        inputBox.focus();
-        document.execCommand('insertText', false, promptToPaste);
-        setTimeout(function() {
-          var submitButton = document.querySelector('button[type="submit"]') || 
-                    document.querySelector('button.send-button') ||
-                    document.querySelector('button[aria-label*="send" i]') ||
-                    document.querySelector('button svg[class*="send"]')?.closest('button');
-          if (submitButton) {
-            submitButton.click();
-          } else {
-            pressEnter(inputBox);
-          }
-          history.replaceState(null, null, ' ');
-        }, 1000);
-      }
+      inputBox.focus();
+      document.execCommand('insertText', false, promptToPaste);
+      setTimeout(function () {
+        var submitButton = document.querySelector('button[type="submit"]') ||
+          document.querySelector('button.send-button') ||
+          document.querySelector('button[aria-label*="send" i]') ||
+          document.querySelector('button svg[class*="send"]')?.closest('button');
+        if (submitButton) {
+          submitButton.click();
+        } else {
+          pressEnter(inputBox);
+        }
+        history.replaceState(null, null, ' ');
+      }, 1000);
     }, 500);
   }
 }
@@ -152,7 +149,7 @@ if (window.location.hostname === "claude.ai") {
 if (window.location.hostname === "www.doubao.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    var checkExist = setInterval(function() {
+    var checkExist = setInterval(function () {
       var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
       if (inputBox) {
         clearInterval(checkExist);
@@ -163,11 +160,11 @@ if (window.location.hostname === "www.doubao.com") {
           inputBox.focus();
           document.execCommand('insertText', false, promptToPaste);
         }
-        setTimeout(function() {
-          var submitButton = document.querySelector('button[type="submit"]') || 
-                    document.querySelector('button.send-button') ||
-                    document.querySelector('button[aria-label*="send" i]') ||
-                    document.querySelector('button svg[class*="send"]')?.closest('button');
+        setTimeout(function () {
+          var submitButton = document.querySelector('button[type="submit"]') ||
+            document.querySelector('button.send-button') ||
+            document.querySelector('button[aria-label*="send" i]') ||
+            document.querySelector('button svg[class*="send"]')?.closest('button');
           if (submitButton) {
             submitButton.click();
           } else {
@@ -184,7 +181,7 @@ if (window.location.hostname === "www.doubao.com") {
 if (window.location.hostname.includes("yandex.ru")) {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    var checkExist = setInterval(function() {
+    var checkExist = setInterval(function () {
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
       if (inputBox) {
         clearInterval(checkExist);
@@ -196,7 +193,7 @@ if (window.location.hostname.includes("yandex.ru")) {
         } else {
           document.execCommand('insertText', false, promptToPaste);
         }
-        setTimeout(function() {
+        setTimeout(function () {
           pressEnter(inputBox);
         }, 500);
       }
@@ -209,7 +206,7 @@ if (window.location.hostname.includes("yandex.ru")) {
 // ================================
 
 // Helper function to press Enter key
-var pressEnter = function(element) {
+var pressEnter = function (element) {
   var enterEvent = new KeyboardEvent('keydown', {
     bubbles: true,
     cancelable: true,
@@ -237,14 +234,14 @@ util.createURLItem = (title, url, sanitize = true) => {
 
 util.escape = (str) =>
   String(str).replace(/[&<>"'`=/]/g, (s) => ({
-    "&":  "&amp;",
-    "<":  "&lt;",
-    ">":  "&gt;",
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
     "\"": "&quot;",
-    "'":  "&#39;",
-    "/":  "&#x2F;",
-    "`":  "&#x60;",
-    "=":  "&#x3D;",
+    "'": "&#39;",
+    "/": "&#x2F;",
+    "`": "&#x60;",
+    "=": "&#x3D;",
   }[s]))
 
 util.createSuggestionItem = (html, props = {}) => {
@@ -260,11 +257,11 @@ completions = {}
 
 // E-commerce
 completions.amazon = {
-  alias:  "a",
-  name:   "amazon",
+  alias: "a",
+  name: "amazon",
   search: "https://smile.amazon.com/s/?field-keywords=",
-  compl:  "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
-  callback: (response) => JSON.parse(response.text)[1] 
+  compl: "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
+  callback: (response) => JSON.parse(response.text)[1]
 }
 
 // Local services
