@@ -124,9 +124,10 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
     // ChatGPT
     if (window.location.hostname === "chatgpt.com") {
         var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('#prompt-textarea');
+            var inputBox = document.querySelector('[name="prompt-textarea"]');
             if (inputBox) {
                 clearInterval(checkExist);
+                inputBox.focus();
                 inputBox.value = promptToPaste;
                 inputBox.dispatchEvent(new Event('input', { bubbles: true }));
                 setTimeout(function() {
@@ -216,15 +217,15 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
     // Yandex Alice
     if (window.location.hostname.includes("yandex.ru")) {
         var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('input[class*="input"], textarea, input[type="text"], div[contenteditable="true"]');
+            var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
             if (inputBox) {
                 clearInterval(checkExist);
+                inputBox.focus();
                 if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
                     inputBox.value = promptToPaste;
                     inputBox.dispatchEvent(new Event('input', { bubbles: true }));
                     inputBox.dispatchEvent(new Event('change', { bubbles: true }));
                 } else {
-                    inputBox.focus();
                     document.execCommand('insertText', false, promptToPaste);
                 }
                 setTimeout(function() {
