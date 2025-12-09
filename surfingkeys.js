@@ -98,13 +98,14 @@ var delay_in_ms = 1000;
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
-  setTimeout(function () {
+  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+  (async () => {
+    await delay(delay_in_ms);
     var inputBox = document.querySelector('[name="prompt-textarea"]');
-    setTimeout(function () {
-      var submitButton = document.getElementById('composer-submit-button');
-      submitButton.click();
-    }, delay_in_ms);
-  }, delay_in_ms);
+    await delay(delay_in_ms);
+    var submitButton = document.getElementById('composer-submit-button');
+    submitButton.click();
+  })();
 }
 
 // Gemini
