@@ -174,19 +174,17 @@ if (window.location.hostname.includes("yandex.ru")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
     setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
-      if (inputBox) {
-        inputBox.focus();
-        if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
-          inputBox.value = promptToPaste;
-          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-          inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-        } else {
-          document.execCommand('insertText', false, promptToPaste);
-        }
-        setTimeout(function () {
-          pressEnter(inputBox);
-        }, 500);
+      inputBox.focus();
+      if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
+        inputBox.value = promptToPaste;
+        inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+        inputBox.dispatchEvent(new Event('change', { bubbles: true }));
+      } else {
+        document.execCommand('insertText', false, promptToPaste);
       }
+      setTimeout(function () {
+        pressEnter(inputBox);
+      }, 500);
     }, 500);
   }
 }
