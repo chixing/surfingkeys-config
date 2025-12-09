@@ -184,8 +184,8 @@ if (window.location.hostname.includes("yandex.ru")) {
       inputBox.dispatchEvent(new Event('change', { bubbles: true }));
       setTimeout(function () {
         pressEnter(inputBox);
-      }, AI_DELAY);
-    }, AI_DELAY);
+      }, delay_in_ms);
+    }, delay_in_ms);
   }
 }
 
