@@ -64,6 +64,52 @@ api.mapkey('gq', 'Review current tab in Gemini', function() {
     }
 });
 
+api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function() {
+    // Get clipboard content
+    navigator.clipboard.readText().then(function(clipboardText) {
+        // Show prompt with clipboard content
+        var userInput = prompt("Edit query:", clipboardText);
+        
+        if (userInput !== null) {
+            // List of URLs to open with the user input
+            var urls = [
+                "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
+                "https://claude.ai",
+                "https://gemini.google.com/app?q=" + encodeURIComponent(userInput),
+                "https://perplexity.ai",
+                "https://grok.com",
+                "https://doubao.com/chat",
+                "https://alice.yandex.ru"
+            ];
+            
+            // Open each URL in a new tab
+            urls.forEach(function(url) {
+                api.tabOpenLink(url);
+            });
+        }
+    }).catch(function(err) {
+        // Fallback if clipboard read fails
+        api.echoerr('Failed to read clipboard');
+        var userInput = prompt("Enter query:");
+        
+        if (userInput !== null) {
+            var urls = [
+                "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
+                "https://claude.ai",
+                "https://gemini.google.com/app?q=" + encodeURIComponent(userInput),
+                "https://perplexity.ai",
+                "https://grok.com",
+                "https://doubao.com/chat",
+                "https://alice.yandex.ru"
+            ];
+            
+            urls.forEach(function(url) {
+                api.tabOpenLink(url);
+            });
+        }
+    });
+});
+
 // checks if the current site is Gemini and if there's a prompt in the URL hash.
 // If so, it pastes the prompt into the input box and simulates pressing Enter.
 if (window.location.hostname === "gemini.google.com") {
