@@ -142,8 +142,8 @@ if (window.location.hostname === "claude.ai") {
           pressEnter(inputBox);
         }
         history.replaceState(null, null, ' ');
-      }, AI_DELAY);
-    }, AI_DELAY);
+      }, delay_in_ms);
+    }, delay_in_ms);
   }
 }
 
