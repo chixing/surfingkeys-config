@@ -158,10 +158,7 @@ if (window.location.hostname === "www.doubao.com") {
       inputBox.value = promptToPaste;
       inputBox.dispatchEvent(new Event('input', { bubbles: true }));
       await delay(delay_in_ms);
-      var submitButton = document.querySelector('button[type="submit"]') ||
-        document.querySelector('button.send-button') ||
-        document.querySelector('button[aria-label*="send" i]') ||
-        document.querySelector('button svg[class*="send"]')?.closest('button');
+      var submitButton = getSubmitButton();
       if (submitButton) {
         submitButton.click();
       } else {
