@@ -64,7 +64,7 @@ api.mapkey('gq', 'Review current tab in Gemini', function() {
     }
 });
 
-api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function() {
+api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites in background', function() {
     var openTabs = function(userInput) {
         if (userInput !== null) {
             var urls = [
@@ -77,7 +77,13 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
                 "https://alice.yandex.ru"
             ];
             urls.forEach(function(url) {
-                api.tabOpenLink(url);
+                RUNTIME("openLink", {
+                    tab: {
+                        tabbed: true,
+                        active: false
+                    },
+                    url: url
+                });
             });
         }
     };
