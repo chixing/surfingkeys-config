@@ -178,7 +178,6 @@ if (window.location.hostname.includes("yandex.ru")) {
   var urlParams = new URLSearchParams(window.location.search);
   var promptToPaste = urlParams.get('q');
   if (promptToPaste) {
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     (async () => {
       await delay(delay_in_ms);
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
