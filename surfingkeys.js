@@ -103,8 +103,10 @@ if (window.location.hostname === "chatgpt.com") {
     await delay(delay_in_ms);
     var inputBox = document.querySelector('[name="prompt-textarea"]');
     await delay(delay_in_ms);
-    var submitButton = document.getElementById('composer-submit-button');
-    submitButton.click();
+    var submitButton = getSubmitButton();
+    if (submitButton) {
+      submitButton.click();
+    }
   })();
 }
 
