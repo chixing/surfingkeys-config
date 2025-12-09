@@ -95,6 +95,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
 
 // Delay constant for AI sites
 var delay_in_ms = 1000;
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
