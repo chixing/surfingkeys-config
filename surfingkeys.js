@@ -181,16 +181,17 @@ if (window.location.hostname.includes("yandex.ru")) {
   var urlParams = new URLSearchParams(window.location.search);
   var promptToPaste = urlParams.get('q');
   if (promptToPaste) {
-    setTimeout(function () {
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    (async () => {
+      await delay(delay_in_ms);
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
       inputBox.focus();
       inputBox.value = promptToPaste;
       inputBox.dispatchEvent(new Event('input', { bubbles: true }));
       inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-      setTimeout(function () {
-        pressEnter(inputBox);
-      }, delay_in_ms);
-    }, delay_in_ms);
+      await delay(delay_in_ms);
+      pressEnter(inputBox);
+    })();
   }
 }
 
