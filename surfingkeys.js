@@ -93,6 +93,9 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
   });
 });
 
+// Delay constant for AI sites
+var AI_DELAY = 2000;
+
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
   setTimeout(function () {
@@ -100,8 +103,8 @@ if (window.location.hostname === "chatgpt.com") {
     setTimeout(function () {
       var submitButton = document.getElementById('composer-submit-button');
       submitButton.click();
-    }, 2000);
-  }, 2000);
+    }, AI_DELAY);
+  }, AI_DELAY);
 }
 
 // Gemini
@@ -115,8 +118,8 @@ if (window.location.hostname === "gemini.google.com") {
       setTimeout(function () {
         pressEnter(inputBox);
         history.replaceState(null, null, ' ');
-      }, 2000);
-    }, 2000);
+      }, AI_DELAY);
+    }, AI_DELAY);
   }
 }
 
@@ -139,8 +142,8 @@ if (window.location.hostname === "claude.ai") {
           pressEnter(inputBox);
         }
         history.replaceState(null, null, ' ');
-      }, 2000);
-    }, 2000);
+      }, AI_DELAY);
+    }, AI_DELAY);
   }
 }
 
@@ -163,8 +166,8 @@ if (window.location.hostname === "www.doubao.com") {
           pressEnter(inputBox);
         }
         hstory.replaceState(null, null, ' ');
-      }, 2000);
-    }, 2000);
+      }, AI_DELAY);
+    }, AI_DELAY);
   }
 }
 
@@ -173,8 +176,6 @@ if (window.location.hostname.includes("yandex.ru")) {
   var urlParams = new URLSearchParams(window.location.search);
   var promptToPaste = urlParams.get('q');
   if (promptToPaste) {
-    var initialDelay = 2000;
-    var submitDelay = 2000;
     setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
       inputBox.focus();
@@ -183,8 +184,8 @@ if (window.location.hostname.includes("yandex.ru")) {
       inputBox.dispatchEvent(new Event('change', { bubbles: true }));
       setTimeout(function () {
         pressEnter(inputBox);
-      }, submitDelay);
-    }, initialDelay);
+      }, AI_DELAY);
+    }, AI_DELAY);
   }
 }
 
