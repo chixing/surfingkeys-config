@@ -368,7 +368,7 @@ api.Visual.style('cursor', 'background-color: #81A2BE;');
 settings.theme = `
 :root {
   --font: 'Monaco', 'Consolas', 'Courier New', monospace;
-  --font-size: 20;
+  --font-size: 20px;
   --font-weight: normal;
   
   /* -------------------- */
