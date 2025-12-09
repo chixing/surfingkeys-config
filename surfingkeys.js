@@ -155,23 +155,24 @@ if (window.location.hostname === "claude.ai") {
 if (window.location.hostname === "www.doubao.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    setTimeout(function () {
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+    (async () => {
+      await delay(delay_in_ms);
       var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
       inputBox.value = promptToPaste;
       inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-      setTimeout(function () {
-        var submitButton = document.querySelector('button[type="submit"]') ||
-          document.querySelector('button.send-button') ||
-          document.querySelector('button[aria-label*="send" i]') ||
-          document.querySelector('button svg[class*="send"]')?.closest('button');
-        if (submitButton) {
-          submitButton.click();
-        } else {
-          pressEnter(inputBox);
-        }
-        hstory.replaceState(null, null, ' ');
-      }, delay_in_ms);
-    }, delay_in_ms);
+      await delay(delay_in_ms);
+      var submitButton = document.querySelector('button[type="submit"]') ||
+        document.querySelector('button.send-button') ||
+        document.querySelector('button[aria-label*="send" i]') ||
+        document.querySelector('button svg[class*="send"]')?.closest('button');
+      if (submitButton) {
+        submitButton.click();
+      } else {
+        pressEnter(inputBox);
+      }
+      history.replaceState(null, null, ' ');
+    })();
   }
 }
 
