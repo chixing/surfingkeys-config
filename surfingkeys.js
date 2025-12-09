@@ -68,7 +68,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
     var openTabs = function(userInput) {
         if (userInput !== null) {
             var urls = [
-                "https://chatgpt.com/#sk_prompt=" + encodeURIComponent(userInput),
+                "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
                 // "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
                 "https://alice.yandex.ru/#sk_prompt=" + encodeURIComponent(userInput),
                 // "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
