@@ -132,7 +132,8 @@ if (window.location.hostname === "claude.ai") {
         inputBox.focus();
         document.execCommand('insertText', false, promptToPaste);
         setTimeout(function() {
-          document.querySelector('button[type="submit"]').click();
+          var submitButton = document.querySelector('button[type="submit"]')// ||
+          submitButton.click();
           history.replaceState(null, null, ' ');
         }, 500);
       }
