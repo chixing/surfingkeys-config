@@ -118,8 +118,8 @@ if (window.location.hostname === "gemini.google.com") {
       setTimeout(function () {
         pressEnter(inputBox);
         history.replaceState(null, null, ' ');
-      }, AI_DELAY);
-    }, AI_DELAY);
+      }, delay_in_ms);
+    }, delay_in_ms);
   }
 }
 
