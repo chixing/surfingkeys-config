@@ -99,7 +99,6 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
-  const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
   (async () => {
     await delay(delay_in_ms);
     var inputBox = document.querySelector('[name="prompt-textarea"]');
