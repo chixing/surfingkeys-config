@@ -100,7 +100,7 @@ if (window.location.hostname === "chatgpt.com") {
     setTimeout(function () {
       var submitButton = document.getElementById('composer-submit-button');
       submitButton.click();
-    }, 500);
+    }, 2000);
   }, 500);
 }
 
