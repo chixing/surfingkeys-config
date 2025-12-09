@@ -99,13 +99,17 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
-  (async () => {
-    await delay(delay_in_ms);
-    var inputBox = document.querySelector('[name="prompt-textarea"]');
-    await delay(delay_in_ms);
-    var submitButton = document.getElementById('composer-submit-button');
-    submitButton.click();
-  })();
+  var urlParams = new URLSearchParams(window.location.search);
+  var promptParam = urlParams.get('q');
+  if (promptParam) {
+    (async () => {
+      await delay(delay_in_ms);
+      var inputBox = document.querySelector('[name="prompt-textarea"]');
+      await delay(delay_in_ms);
+      var submitButton = document.getElementById('composer-submit-button');
+      submitButton.click();
+    })();
+  }
 }
 
 // Gemini
