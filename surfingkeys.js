@@ -77,7 +77,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
   });
 });
 
-var openTabs = function (userInput) {
+const openTabs = function (userInput) {
   if (userInput !== null) {
     var urls = [
       "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
