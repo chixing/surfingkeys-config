@@ -64,7 +64,7 @@ api.mapkey('gq', 'Review current tab in Gemini', function() {
     }
 });
 
-api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function() {
+api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites in background', function() {
     var openTabs = function(userInput) {
         if (userInput !== null) {
             var urls = [
@@ -76,9 +76,8 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
                 "https://doubao.com/chat",
                 "https://alice.yandex.ru"
             ];
-            urls.forEach(function(url) {
-                api.tabOpenLink(url);
-            });
+            // Open tabs in background by opening them all except don't switch focus
+            api.tabOpenLink(urls.join('\n'));
         }
     };
     
@@ -87,7 +86,6 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
         var userInput = prompt("Edit query:", clipboardText);
         openTabs(userInput);
     }).catch(function(err) {
-        api.echoerr('Failed to read clipboard');
         var userInput = prompt("Enter query:");
         openTabs(userInput);
     });
