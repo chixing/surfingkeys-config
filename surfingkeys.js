@@ -107,21 +107,6 @@ if (window.location.hostname === "chatgpt.com") {
   }, delay_in_ms);
 }
 
-// // Gemini
-// if (window.location.hostname === "gemini.google.com") {
-//   if (window.location.hash.startsWith("#sk_prompt=")) {
-//     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-//     setTimeout(function () {
-//       var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
-//       inputBox.focus();
-//       document.execCommand('insertText', false, promptToPaste);
-//       setTimeout(function () {
-//         pressEnter(inputBox);
-//         history.replaceState(null, null, ' ');
-//       }, delay_in_ms);
-//     }, delay_in_ms);
-//   }
-// }
 // Gemini
 if (window.location.hostname === "gemini.google.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
