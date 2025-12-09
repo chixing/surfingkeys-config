@@ -105,136 +105,143 @@ if (window.location.hostname === "chatgpt.com") {
 }
 
 // Auto-submit prompts for AI sites
-if (window.location.hash.startsWith("#sk_prompt=")) {
+// Gemini
+if (window.location.hostname === "gemini.google.com") {
+  if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    
-    // Gemini
-    if (window.location.hostname === "gemini.google.com") {
-        var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
-            if (inputBox) {
-                clearInterval(checkExist);
-                inputBox.focus();
-                document.execCommand('insertText', false, promptToPaste);
-                setTimeout(function() {
-                    var enterEvent = new KeyboardEvent('keydown', {
-                        bubbles: true,
-                        cancelable: true,
-                        key: 'Enter',
-                        code: 'Enter',
-                        keyCode: 13,
-                        which: 13
-                    });
-                    inputBox.dispatchEvent(enterEvent);
-                    history.replaceState(null, null, ' ');
-                }, 300);
-            }
-        }, 500);
-    }
-    
+    var checkExist = setInterval(function() {
+      var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
+      if (inputBox) {
+        clearInterval(checkExist);
+        inputBox.focus();
+        document.execCommand('insertText', false, promptToPaste);
+        setTimeout(function() {
+          var enterEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13
+          });
+          inputBox.dispatchEvent(enterEvent);
+          history.replaceState(null, null, ' ');
+        }, 300);
+      }
+    }, 500);
+  }
+}
 
-    // Claude
-    if (window.location.hostname === "claude.ai") {
-        var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('div[contenteditable="true"]');
-            if (inputBox) {
-                clearInterval(checkExist);
-                inputBox.focus();
-                document.execCommand('insertText', false, promptToPaste);
-                setTimeout(function() {
-                    // Try multiple button selectors
-                    var submitButton = document.querySelector('button[aria-label="Send Message"]') ||
-                                      document.querySelector('button[aria-label*="send" i]') ||
-                                      document.querySelector('button[type="submit"]') ||
-                                      document.querySelector('button svg[class*="send"]')?.closest('button');
-                    if (submitButton) {
-                        submitButton.click();
-                    } else {
-                        // Fallback to Enter key
-                        var enterEvent = new KeyboardEvent('keydown', {
-                            bubbles: true,
-                            cancelable: true,
-                            key: 'Enter',
-                            code: 'Enter',
-                            keyCode: 13,
-                            which: 13
-                        });
-                        inputBox.dispatchEvent(enterEvent);
-                    }
-                    history.replaceState(null, null, ' ');
-                }, 300);
-            }
-        }, 500);
-    }
-    
-    // Doubao
-    if (window.location.hostname === "www.doubao.com") {
-        var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
-            if (inputBox) {
-                clearInterval(checkExist);
-                if (inputBox.tagName === 'TEXTAREA') {
-                    inputBox.value = promptToPaste;
-                    inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-                } else {
-                    inputBox.focus();
-                    document.execCommand('insertText', false, promptToPaste);
-                }
-                setTimeout(function() {
-                    // Try multiple button selectors
-                    var submitButton = document.querySelector('button[type="submit"]') || 
-                                      document.querySelector('button.send-button') ||
-                                      document.querySelector('button[aria-label*="send" i]') ||
-                                      document.querySelector('button svg[class*="send"]')?.closest('button');
-                    if (submitButton) {
-                        submitButton.click();
-                    } else {
-                        // Fallback to Enter key
-                        var enterEvent = new KeyboardEvent('keydown', {
-                            bubbles: true,
-                            cancelable: true,
-                            key: 'Enter',
-                            code: 'Enter',
-                            keyCode: 13,
-                            which: 13
-                        });
-                        inputBox.dispatchEvent(enterEvent);
-                    }
-                    history.replaceState(null, null, ' ');
-                }, 300);
-            }
-        }, 500);
-    }
-    
-    // Yandex Alice
-    if (window.location.hostname.includes("yandex.ru")) {
-        var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
-            if (inputBox) {
-                clearInterval(checkExist);
-                inputBox.focus();
-                if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
-                    inputBox.value = promptToPaste;
-                    inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-                    inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-                } else {
-                    document.execCommand('insertText', false, promptToPaste);
-                }
-                setTimeout(function() {
-                    var enterEvent = new KeyboardEvent('keydown', {
-                        bubbles: true,
-                        cancelable: true,
-                        key: 'Enter',
-                        code: 'Enter',
-                        keyCode: 13,
-                        which: 13
-                    });
-                    inputBox.dispatchEvent(enterEvent);
-                    // history.replaceState(null, null, ' ');
-                }, 300);
-            }
-        }, 500);
-    }
+// Claude
+if (window.location.hostname === "claude.ai") {
+  if (window.location.hash.startsWith("#sk_prompt=")) {
+    var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
+    var checkExist = setInterval(function() {
+      var inputBox = document.querySelector('div[contenteditable="true"]');
+      if (inputBox) {
+        clearInterval(checkExist);
+        inputBox.focus();
+        document.execCommand('insertText', false, promptToPaste);
+        setTimeout(function() {
+          // Try multiple button selectors
+          var submitButton = document.querySelector('button[aria-label="Send Message"]') ||
+                    document.querySelector('button[aria-label*="send" i]') ||
+                    document.querySelector('button[type="submit"]') ||
+                    document.querySelector('button svg[class*="send"]')?.closest('button');
+          if (submitButton) {
+            submitButton.click();
+          } else {
+            // Fallback to Enter key
+            var enterEvent = new KeyboardEvent('keydown', {
+              bubbles: true,
+              cancelable: true,
+              key: 'Enter',
+              code: 'Enter',
+              keyCode: 13,
+              which: 13
+            });
+            inputBox.dispatchEvent(enterEvent);
+          }
+          history.replaceState(null, null, ' ');
+        }, 300);
+      }
+    }, 500);
+  }
+}
+
+// Doubao
+if (window.location.hostname === "www.doubao.com") {
+  if (window.location.hash.startsWith("#sk_prompt=")) {
+    var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
+    var checkExist = setInterval(function() {
+      var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
+      if (inputBox) {
+        clearInterval(checkExist);
+        if (inputBox.tagName === 'TEXTAREA') {
+          inputBox.value = promptToPaste;
+          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+        } else {
+          inputBox.focus();
+          document.execCommand('insertText', false, promptToPaste);
+        }
+        setTimeout(function() {
+          // Try multiple button selectors
+          var submitButton = document.querySelector('button[type="submit"]') || 
+                    document.querySelector('button.send-button') ||
+                    document.querySelector('button[aria-label*="send" i]') ||
+                    document.querySelector('button svg[class*="send"]')?.closest('button');
+          if (submitButton) {
+            submitButton.click();
+          } else {
+            // Fallback to Enter key
+            var enterEvent = new KeyboardEvent('keydown', {
+              bubbles: true,
+              cancelable: true,
+              key: 'Enter',
+              code: 'Enter',
+              keyCode: 13,
+              which: 13
+            });
+            inputBox.dispatchEvent(enterEvent);
+          }
+          history.replaceState(null, null, ' ');
+        }, 300);
+      }
+    }, 500);
+  }
+}
+
+// Yandex Alice
+if (window.location.hostname.includes("yandex.ru")) {
+  if (window.location.hash.startsWith("#sk_prompt=")) {
+    var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
+    var checkExist = setInterval(function() {
+      var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
+      if (inputBox) {
+        clearInterval(checkExist);
+        inputBox.focus();
+        if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
+          inputBox.value = promptToPaste;
+          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+          inputBox.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+          document.execCommand('insertText', false, promptToPaste);
+        }
+        setTimeout(function() {
+          var enterEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13
+          });
+          inputBox.dispatchEvent(enterEvent);
+          // history.replaceState(null, null, ' ');
+        }, 300);
+      }
+    }, 500);
+  }
 }
 
 // ================================
