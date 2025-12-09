@@ -109,7 +109,7 @@ if (window.location.hostname === "chatgpt.com") {
 if (window.location.hostname === "gemini.google.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    var checkExist = setInterval(function() {
+    setTimeout(function() {
       var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
       if (inputBox) {
         clearInterval(checkExist);
