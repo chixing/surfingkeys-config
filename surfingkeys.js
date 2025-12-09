@@ -152,11 +152,11 @@ if (window.location.hostname === "www.doubao.com") {
       var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
       if (inputBox) {
         if (inputBox.tagName === 'TEXTAREA') {
-          // inputBox.value = promptToPaste;
-          // inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+          inputBox.value = promptToPaste;
+          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
         } else {
-          inputBox.focus();
-          document.execCommand('insertText', false, promptToPaste);
+          // inputBox.focus();
+          // document.execCommand('insertText', false, promptToPaste);
         }
         setTimeout(function () {
           var submitButton = document.querySelector('button[type="submit"]') ||
