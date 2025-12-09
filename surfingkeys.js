@@ -111,23 +111,20 @@ if (window.location.hostname === "gemini.google.com") {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
     setTimeout(function() {
       var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
-      if (inputBox) {
-        clearInterval(checkExist);
-        inputBox.focus();
-        document.execCommand('insertText', false, promptToPaste);
-        setTimeout(function() {
-          var enterEvent = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13
-          });
-          inputBox.dispatchEvent(enterEvent);
-          history.replaceState(null, null, ' ');
-        }, 300);
-      }
+      inputBox.focus();
+      document.execCommand('insertText', false, promptToPaste);
+      setTimeout(function() {
+        var enterEvent = new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13
+        });
+        inputBox.dispatchEvent(enterEvent);
+        history.replaceState(null, null, ' ');
+      }, 300);
     }, 500);
   }
 }
