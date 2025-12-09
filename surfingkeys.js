@@ -162,7 +162,7 @@ if (window.location.hostname === "www.doubao.com") {
         } else {
           pressEnter(inputBox);
         }
-        history.replaceState(null, null, ' ');
+        hstory.replaceState(null, null, ' ');
       }, 2000);
     }, 2000);
   }
@@ -173,6 +173,8 @@ if (window.location.hostname.includes("yandex.ru")) {
   var urlParams = new URLSearchParams(window.location.search);
   var promptToPaste = urlParams.get('q');
   if (promptToPaste) {
+    var initialDelay = 2000;
+    var submitDelay = 2000;
     setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
       inputBox.focus();
@@ -181,8 +183,8 @@ if (window.location.hostname.includes("yandex.ru")) {
       inputBox.dispatchEvent(new Event('change', { bubbles: true }));
       setTimeout(function () {
         pressEnter(inputBox);
-      }, 2000);
-    }, 2000);
+      }, submitDelay);
+    }, initialDelay);
   }
 }
 
