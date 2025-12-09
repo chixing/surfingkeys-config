@@ -73,8 +73,8 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
                 "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
                 "https://perplexity.ai?q=" + encodeURIComponent(userInput),
                 "https://grok.com?q=" + encodeURIComponent(userInput),
-                "https://doubao.com/chat?q=" + encodeURIComponent(userInput),
-                "https://alice.yandex.ru?q=" + encodeURIComponent(userInput)
+                "https://www.doubao.com/chat?query=" + encodeURIComponent(userInput),
+                "https://alice.yandex.ru/search?q=" + encodeURIComponent(userInput)
             ];
             urls.forEach(function(url) {
                 api.tabOpenLink(url);
