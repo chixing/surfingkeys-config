@@ -166,8 +166,8 @@ if (window.location.hostname === "www.doubao.com") {
           pressEnter(inputBox);
         }
         hstory.replaceState(null, null, ' ');
-      }, AI_DELAY);
-    }, AI_DELAY);
+      }, delay_in_ms);
+    }, delay_in_ms);
   }
 }
 
