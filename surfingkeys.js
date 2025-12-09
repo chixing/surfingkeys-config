@@ -63,12 +63,11 @@ api.mapkey('gq', 'Review current tab in Gemini', function() {
         api.tabOpenLink(targetUrl);
     }
 });
-  // Use 'q' instead of 'sk prompt'
-  let textarea = document.querySelector('textarea');
-  if (textarea && textarea.value.trim() !== '') {
-    // Send the value of textarea
-    sendToChatGPT(textarea.value);
-  }
+
+api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function() {
+    var openTabs = function(userInput) {
+        if (userInput !== null) {
+            var urls = [
                 "https://chatgpt.com/#sk_prompt=" + encodeURIComponent(userInput),
                 // "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
                 "https://alice.yandex.ru/#sk_prompt=" + encodeURIComponent(userInput),
