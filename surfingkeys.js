@@ -129,7 +129,6 @@ if (window.location.hostname === "gemini.google.com") {
 if (window.location.hostname === "claude.ai") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     (async () => {
       await delay(delay_in_ms);
       var inputBox = document.querySelector('div[contenteditable="true"]');
