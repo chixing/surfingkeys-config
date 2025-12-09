@@ -124,7 +124,7 @@ if (window.location.hostname === "gemini.google.com") {
         });
         inputBox.dispatchEvent(enterEvent);
         history.replaceState(null, null, ' ');
-      }, 300);
+      }, 500);
     }, 500);
   }
 }
