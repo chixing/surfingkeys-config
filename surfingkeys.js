@@ -150,27 +150,20 @@ if (window.location.hostname === "www.doubao.com") {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
     setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
-      if (inputBox) {
-        if (inputBox.tagName === 'TEXTAREA') {
-          inputBox.value = promptToPaste;
-          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+      inputBox.value = promptToPaste;
+      inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+      setTimeout(function () {
+        var submitButton = document.querySelector('button[type="submit"]') ||
+          document.querySelector('button.send-button') ||
+          document.querySelector('button[aria-label*="send" i]') ||
+          document.querySelector('button svg[class*="send"]')?.closest('button');
+        if (submitButton) {
+          submitButton.click();
         } else {
-          // inputBox.focus();
-          // document.execCommand('insertText', false, promptToPaste);
+          pressEnter(inputBox);
         }
-        setTimeout(function () {
-          var submitButton = document.querySelector('button[type="submit"]') ||
-            document.querySelector('button.send-button') ||
-            document.querySelector('button[aria-label*="send" i]') ||
-            document.querySelector('button svg[class*="send"]')?.closest('button');
-          if (submitButton) {
-            submitButton.click();
-          } else {
-            pressEnter(inputBox);
-          }
-          history.replaceState(null, null, ' ');
-        }, 500);
-      }
+        history.replaceState(null, null, ' ');
+      }, 500);
     }, 500);
   }
 }
