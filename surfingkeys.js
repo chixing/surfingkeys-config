@@ -69,9 +69,9 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
     if (userInput !== null) {
       var urls = [
         // "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-        // "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
+        "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
         // "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-        "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
+        // "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
         // "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
         // "https://perplexity.ai?q=" + encodeURIComponent(userInput),
         // "https://grok.com?q=" + encodeURIComponent(userInput),
@@ -139,7 +139,7 @@ if (window.location.hostname === "claude.ai") {
           pressEnter(inputBox);
         }
         history.replaceState(null, null, ' ');
-      }, 500);
+      }, 1000);
     }, 500);
   }
 }
@@ -148,10 +148,9 @@ if (window.location.hostname === "claude.ai") {
 if (window.location.hostname === "www.doubao.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    var checkExist = setInterval(function () {
+    setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
       if (inputBox) {
-        clearInterval(checkExist);
         if (inputBox.tagName === 'TEXTAREA') {
           inputBox.value = promptToPaste;
           inputBox.dispatchEvent(new Event('input', { bubbles: true }));
