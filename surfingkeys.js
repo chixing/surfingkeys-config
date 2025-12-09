@@ -99,6 +99,7 @@ if (window.location.hostname === "chatgpt.com") {
     var inputBox = document.querySelector('[name="prompt-textarea"]');
     if (inputBox && inputBox.value.trim() !== '') {
       clearInterval(checkExist);
+      api.status("Debug: ChatGPT prompt box found and filled");
       setTimeout(function () {
         var submitButton = document.getElementById('composer-submit-button');
         submitButton.click();
