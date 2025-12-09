@@ -114,15 +114,7 @@ if (window.location.hostname === "gemini.google.com") {
       inputBox.focus();
       document.execCommand('insertText', false, promptToPaste);
       setTimeout(function() {
-        var enterEvent = new KeyboardEvent('keydown', {
-          bubbles: true,
-          cancelable: true,
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          which: 13
-        });
-        inputBox.dispatchEvent(enterEvent);
+        pressEnter(inputBox);
         history.replaceState(null, null, ' ');
       }, 500);
     }, 500);
@@ -140,7 +132,6 @@ if (window.location.hostname === "claude.ai") {
         inputBox.focus();
         document.execCommand('insertText', false, promptToPaste);
         setTimeout(function() {
-          // Try multiple button selectors
           var submitButton = document.querySelector('button[aria-label="Send Message"]') ||
                     document.querySelector('button[aria-label*="send" i]') ||
                     document.querySelector('button[type="submit"]') ||
@@ -148,16 +139,7 @@ if (window.location.hostname === "claude.ai") {
           if (submitButton) {
             submitButton.click();
           } else {
-            // Fallback to Enter key
-            var enterEvent = new KeyboardEvent('keydown', {
-              bubbles: true,
-              cancelable: true,
-              key: 'Enter',
-              code: 'Enter',
-              keyCode: 13,
-              which: 13
-            });
-            inputBox.dispatchEvent(enterEvent);
+            pressEnter(inputBox);
           }
           history.replaceState(null, null, ' ');
         }, 500);
@@ -182,7 +164,6 @@ if (window.location.hostname === "www.doubao.com") {
           document.execCommand('insertText', false, promptToPaste);
         }
         setTimeout(function() {
-          // Try multiple button selectors
           var submitButton = document.querySelector('button[type="submit"]') || 
                     document.querySelector('button.send-button') ||
                     document.querySelector('button[aria-label*="send" i]') ||
@@ -190,16 +171,7 @@ if (window.location.hostname === "www.doubao.com") {
           if (submitButton) {
             submitButton.click();
           } else {
-            // Fallback to Enter key
-            var enterEvent = new KeyboardEvent('keydown', {
-              bubbles: true,
-              cancelable: true,
-              key: 'Enter',
-              code: 'Enter',
-              keyCode: 13,
-              which: 13
-            });
-            inputBox.dispatchEvent(enterEvent);
+            pressEnter(inputBox);
           }
           history.replaceState(null, null, ' ');
         }, 500);
@@ -225,16 +197,7 @@ if (window.location.hostname.includes("yandex.ru")) {
           document.execCommand('insertText', false, promptToPaste);
         }
         setTimeout(function() {
-          var enterEvent = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13
-          });
-          inputBox.dispatchEvent(enterEvent);
-          // history.replaceState(null, null, ' ');
+          pressEnter(inputBox);
         }, 500);
       }
     }, 500);
