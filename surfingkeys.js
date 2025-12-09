@@ -100,15 +100,8 @@ if (window.location.hostname === "chatgpt.com") {
     if (inputBox && inputBox.value.trim() !== '') {
       clearInterval(checkExist);
       setTimeout(function () {
-        var enterEvent = new KeyboardEvent('keydown', {
-          bubbles: true,
-          cancelable: true,
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          which: 13
-        });
-        inputBox.dispatchEvent(enterEvent);
+        var submitButton = document.getElementById('composer-submit-button');
+        submitButton.click();
       }, 500);
     }
   }, 500);
