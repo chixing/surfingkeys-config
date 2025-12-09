@@ -181,7 +181,7 @@ if (window.location.hostname.includes("yandex.ru")) {
         inputBox.dispatchEvent(new Event('input', { bubbles: true }));
         inputBox.dispatchEvent(new Event('change', { bubbles: true }));
       } else {
-        document.execCommand('insertText', false, promptToPaste);
+        // document.execCommand('insertText', false, promptToPaste);
       }
       setTimeout(function () {
         pressEnter(inputBox);
