@@ -104,7 +104,6 @@ if (window.location.hostname === "chatgpt.com") {
   }, 500);
 }
 
-// Auto-submit prompts for AI sites
 // Gemini
 if (window.location.hostname === "gemini.google.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
