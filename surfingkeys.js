@@ -153,7 +153,6 @@ if (window.location.hostname === "claude.ai") {
 if (window.location.hostname === "www.doubao.com") {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
     (async () => {
       await delay(delay_in_ms);
       var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
