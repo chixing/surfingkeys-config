@@ -97,23 +97,18 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
 if (window.location.hostname === "chatgpt.com") {
   var checkExist = setInterval(function () {
     var inputBox = document.querySelector('[name="prompt-textarea"]');
-    if (inputBox) {
+    if (inputBox && inputBox.value.trim() !== '') {
       clearInterval(checkExist);
-      inputBox.focus();
-      inputBox.value = promptToPaste;
-      inputBox.dispatchEvent(new Event('input', { bubbles: true }));
       setTimeout(function () {
-        if (inputBox.value.trim() !== '') {
-          var enterEvent = new KeyboardEvent('keydown', {
-            bubbles: true,
-            cancelable: true,
-            key: 'Enter',
-            code: 'Enter',
-            keyCode: 13,
-            which: 13
-          });
-          inputBox.dispatchEvent(enterEvent);
-        }
+        var enterEvent = new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13
+        });
+        inputBox.dispatchEvent(enterEvent);
         history.replaceState(null, null, ' ');
       }, 300);
     }
