@@ -99,6 +99,7 @@ if (window.location.hostname === "chatgpt.com") {
     var inputBox = document.querySelector('[name="prompt-textarea"]');
     if (inputBox && inputBox.value.trim() !== '') {
       clearInterval(checkExist);
+      alert('Interval cleared');
       setTimeout(function () {
         var submitButton = document.getElementById('composer-submit-button');
         submitButton.click();
@@ -117,6 +118,7 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
             var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
             if (inputBox) {
                 clearInterval(checkExist);
+                alert('Interval cleared');
                 inputBox.focus();
                 document.execCommand('insertText', false, promptToPaste);
                 setTimeout(function() {
@@ -142,6 +144,7 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
             var inputBox = document.querySelector('div[contenteditable="true"]');
             if (inputBox) {
                 clearInterval(checkExist);
+                alert('Interval cleared');
                 inputBox.focus();
                 document.execCommand('insertText', false, promptToPaste);
                 setTimeout(function() {
@@ -176,6 +179,7 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
             var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
             if (inputBox) {
                 clearInterval(checkExist);
+                alert('Interval cleared');
                 if (inputBox.tagName === 'TEXTAREA') {
                     inputBox.value = promptToPaste;
                     inputBox.dispatchEvent(new Event('input', { bubbles: true }));
@@ -215,15 +219,11 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
             var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
             if (inputBox) {
                 clearInterval(checkExist);
+                alert('Interval cleared');
                 inputBox.focus();
                 if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
                     inputBox.value = promptToPaste;
                     inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-                    inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-                } else {
-                    document.execCommand('insertText', false, promptToPaste);
-                }
-                setTimeout(function() {
                     var enterEvent = new KeyboardEvent('keydown', {
                         bubbles: true,
                         cancelable: true,
