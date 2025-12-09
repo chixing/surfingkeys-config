@@ -65,7 +65,6 @@ api.mapkey('gq', 'Review current tab in Gemini', function () {
 });
 
 api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function () {
-
   // Get clipboard content
   navigator.clipboard.readText().then(function (clipboardText) {
     var userInput = prompt("Edit query:", clipboardText);
