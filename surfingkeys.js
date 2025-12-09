@@ -103,10 +103,8 @@ if (window.location.hostname === "chatgpt.com") {
     await delay(delay_in_ms);
     var inputBox = document.querySelector('[name="prompt-textarea"]');
     await delay(delay_in_ms);
-    var submitButton = getSubmitButton();
-    if (submitButton) {
-      submitButton.click();
-    }
+    var submitButton = document.getElementById('composer-submit-button');
+    submitButton.click();
   })();
 }
 
@@ -137,7 +135,10 @@ if (window.location.hostname === "claude.ai") {
       inputBox.focus();
       document.execCommand('insertText', false, promptToPaste);
       await delay(delay_in_ms);
-      var submitButton = getSubmitButton();
+      var submitButton = document.querySelector('button[type="submit"]') ||
+        document.querySelector('button.send-button') ||
+        document.querySelector('button[aria-label*="send" i]') ||
+        document.querySelector('button svg[class*="send"]')?.closest('button');
       if (submitButton) {
         submitButton.click();
       } else {
@@ -158,7 +159,10 @@ if (window.location.hostname === "www.doubao.com") {
       inputBox.value = promptToPaste;
       inputBox.dispatchEvent(new Event('input', { bubbles: true }));
       await delay(delay_in_ms);
-      var submitButton = getSubmitButton();
+      var submitButton = document.querySelector('button[type="submit"]') ||
+        document.querySelector('button.send-button') ||
+        document.querySelector('button[aria-label*="send" i]') ||
+        document.querySelector('button svg[class*="send"]')?.closest('button');
       if (submitButton) {
         submitButton.click();
       } else {
@@ -203,17 +207,6 @@ var pressEnter = function (element) {
   });
   element.dispatchEvent(enterEvent);
 };
-
-function getSubmitButton(context) {
-  context = context || document;
-  var svg = context.querySelector('button svg[class*="send"]');
-  return context.querySelector('button[type="submit"]') ||
-    context.querySelector('#composer-submit-button') ||
-    context.querySelector('button.send-button') ||
-    context.querySelector('button[aria-label*="send" i]') ||
-    (svg ? svg.closest('button') : null) ||
-    null;
-}
 
 util = {}
 util.createURLItem = (title, url, sanitize = true) => {
