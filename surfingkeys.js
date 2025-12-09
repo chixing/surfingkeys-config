@@ -173,9 +173,24 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
                     document.execCommand('insertText', false, promptToPaste);
                 }
                 setTimeout(function() {
-                    var submitButton = document.querySelector('button[type="submit"], button.send-button');
+                    // Try multiple button selectors
+                    var submitButton = document.querySelector('button[type="submit"]') || 
+                                      document.querySelector('button.send-button') ||
+                                      document.querySelector('button[aria-label*="send" i]') ||
+                                      document.querySelector('button svg[class*="send"]')?.closest('button');
                     if (submitButton) {
                         submitButton.click();
+                    } else {
+                        // Fallback to Enter key
+                        var enterEvent = new KeyboardEvent('keydown', {
+                            bubbles: true,
+                            cancelable: true,
+                            key: 'Enter',
+                            code: 'Enter',
+                            keyCode: 13,
+                            which: 13
+                        });
+                        inputBox.dispatchEvent(enterEvent);
                     }
                     history.replaceState(null, null, ' ');
                 }, 300);
