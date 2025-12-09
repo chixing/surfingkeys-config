@@ -93,7 +93,6 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites in ba
         var userInput = prompt("Edit query:", clipboardText);
         openTabs(userInput);
     }).catch(function(err) {
-        api.echoerr('Failed to read clipboard');
         var userInput = prompt("Enter query:");
         openTabs(userInput);
     });
