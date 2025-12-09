@@ -172,10 +172,9 @@ if (window.location.hostname === "www.doubao.com") {
 if (window.location.hostname.includes("yandex.ru")) {
   if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    var checkExist = setInterval(function () {
+    setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
       if (inputBox) {
-        clearInterval(checkExist);
         inputBox.focus();
         if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
           inputBox.value = promptToPaste;
