@@ -99,7 +99,6 @@ if (window.location.hostname === "chatgpt.com") {
     var inputBox = document.querySelector('[name="prompt-textarea"]');
     if (inputBox && inputBox.value.trim() !== '') {
       clearInterval(checkExist);
-      console.log('ChatGPT input box found and cleared interval');
       setTimeout(function () {
         var enterEvent = new KeyboardEvent('keydown', {
           bubbles: true,
