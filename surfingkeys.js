@@ -76,15 +76,8 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites in ba
                 "https://doubao.com/chat",
                 "https://alice.yandex.ru"
             ];
-            urls.forEach(function(url) {
-                RUNTIME("openLink", {
-                    tab: {
-                        tabbed: true,
-                        active: false
-                    },
-                    url: url
-                });
-            });
+            // Open tabs in background by opening them all except don't switch focus
+            api.tabOpenLink(urls.join('\n'));
         }
     };
     
