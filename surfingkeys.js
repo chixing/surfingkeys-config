@@ -95,7 +95,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
-  var checkExist = setTimeout(function () {
+   setTimeout(function () {
     var inputBox = document.querySelector('[name="prompt-textarea"]');
     setTimeout(function () {
       var submitButton = document.getElementById('composer-submit-button');
