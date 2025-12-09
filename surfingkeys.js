@@ -139,7 +139,7 @@ if (window.location.hostname === "claude.ai") {
           pressEnter(inputBox);
         }
         history.replaceState(null, null, ' ');
-      }, 1000);
+      }, 2000);
     }, 2000);
   }
 }
