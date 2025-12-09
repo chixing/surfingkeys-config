@@ -94,7 +94,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
 });
 
 // Delay constant for AI sites
-var delay_in_ms = 10000;
+var delay_in_ms = 1000;
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
