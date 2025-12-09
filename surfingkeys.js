@@ -70,7 +70,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
             var urls = [
                 "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
                 "https://claude.ai",
-                "https://gemini.google.com/app?q=" + encodeURIComponent(userInput),
+                "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
                 "https://perplexity.ai",
                 "https://grok.com",
                 "https://doubao.com/chat",
