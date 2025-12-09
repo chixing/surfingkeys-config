@@ -135,7 +135,7 @@ if (window.location.hostname === "claude.ai") {
           var submitButton = document.querySelector('button[type="submit"]')// ||
           submitButton.click();
           history.replaceState(null, null, ' ');
-        }, 500);
+        }, 1000);
       }
     }, 500);
   }
