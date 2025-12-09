@@ -101,7 +101,7 @@ if (window.location.hostname === "chatgpt.com") {
       var submitButton = document.getElementById('composer-submit-button');
       submitButton.click();
     }, 2000);
-  }, 500);
+  }, 2000);
 }
 
 // Gemini
@@ -115,8 +115,8 @@ if (window.location.hostname === "gemini.google.com") {
       setTimeout(function () {
         pressEnter(inputBox);
         history.replaceState(null, null, ' ');
-      }, 500);
-    }, 500);
+      }, 2000);
+    }, 2000);
   }
 }
 
@@ -140,7 +140,7 @@ if (window.location.hostname === "claude.ai") {
         }
         history.replaceState(null, null, ' ');
       }, 1000);
-    }, 500);
+    }, 2000);
   }
 }
 
@@ -163,8 +163,8 @@ if (window.location.hostname === "www.doubao.com") {
           pressEnter(inputBox);
         }
         history.replaceState(null, null, ' ');
-      }, 500);
-    }, 500);
+      }, 2000);
+    }, 2000);
   }
 }
 
@@ -181,8 +181,8 @@ if (window.location.hostname.includes("yandex.ru")) {
       inputBox.dispatchEvent(new Event('change', { bubbles: true }));
       setTimeout(function () {
         pressEnter(inputBox);
-      }, 500);
-    }, 500);
+      }, 2000);
+    }, 2000);
   }
 }
 
