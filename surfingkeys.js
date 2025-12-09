@@ -69,12 +69,12 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
         if (userInput !== null) {
             var urls = [
                 "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-                "https://claude.ai",
+                "https://claude.ai?q=" + encodeURIComponent(userInput),
                 "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-                "https://perplexity.ai",
-                "https://grok.com",
-                "https://doubao.com/chat",
-                "https://alice.yandex.ru"
+                "https://perplexity.ai?q=" + encodeURIComponent(userInput),
+                "https://grok.com?q=" + encodeURIComponent(userInput),
+                "https://doubao.com/chat?q=" + encodeURIComponent(userInput),
+                "https://alice.yandex.ru?q=" + encodeURIComponent(userInput)
             ];
             urls.forEach(function(url) {
                 api.tabOpenLink(url);
