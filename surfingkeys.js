@@ -94,7 +94,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
 });
 
 // Delay constant for AI sites
-var AI_DELAY = 2000;
+var delay_in_ms = 2000;
 
 // ChatGPT
 if (window.location.hostname === "chatgpt.com") {
@@ -103,8 +103,8 @@ if (window.location.hostname === "chatgpt.com") {
     setTimeout(function () {
       var submitButton = document.getElementById('composer-submit-button');
       submitButton.click();
-    }, AI_DELAY);
-  }, AI_DELAY);
+    }, delay_in_ms);
+  }, delay_in_ms);
 }
 
 // Gemini
