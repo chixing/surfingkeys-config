@@ -65,22 +65,6 @@ api.mapkey('gq', 'Review current tab in Gemini', function () {
 });
 
 api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function () {
-  var openTabs = function (userInput) {
-    if (userInput !== null) {
-      var urls = [
-        "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-        "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-        "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-        "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-        "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-        "https://perplexity.ai?q=" + encodeURIComponent(userInput),
-        "https://grok.com?q=" + encodeURIComponent(userInput),
-      ];
-      urls.forEach(function (url) {
-        api.tabOpenLink(url);
-      });
-    }
-  };
 
   // Get clipboard content
   navigator.clipboard.readText().then(function (clipboardText) {
@@ -93,8 +77,24 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
   });
 });
 
-// Delay constant for AI sites
-var delay_in_ms = 1000;
+var openTabs = function (userInput) {
+  if (userInput !== null) {
+    var urls = [
+      "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
+      "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
+      "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
+      "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
+      "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
+      "https://perplexity.ai?q=" + encodeURIComponent(userInput),
+      "https://grok.com?q=" + encodeURIComponent(userInput),
+    ];
+    urls.forEach(function (url) {
+      api.tabOpenLink(url);
+    });
+  }
+};
+
+const delay_in_ms = 1000;
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // ChatGPT
