@@ -97,8 +97,10 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
 if (window.location.hostname === "chatgpt.com") {
   var checkExist = setInterval(function () {
     var inputBox = document.querySelector('[name="prompt-textarea"]');
+    alert(inputBox.value);
     if (inputBox && inputBox.value.trim() !== '') {
       clearInterval(checkExist);
+      alert("Submitting prompt to ChatGPT");
       setTimeout(function () {
         var submitButton = document.getElementById('composer-submit-button');
         submitButton.click();
