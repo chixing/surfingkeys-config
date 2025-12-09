@@ -170,8 +170,9 @@ if (window.location.hostname === "www.doubao.com") {
 
 // Yandex Alice
 if (window.location.hostname.includes("yandex.ru")) {
-  if (window.location.hash.startsWith("#sk_prompt=")) {
-    var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
+  var urlParams = new URLSearchParams(window.location.search);
+  var promptToPaste = urlParams.get('q');
+  if (promptToPaste) {
     setTimeout(function () {
       var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
       inputBox.focus();
