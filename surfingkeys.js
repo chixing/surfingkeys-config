@@ -93,6 +93,33 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
     });
 });
 
+// ChatGPT
+if (window.location.hostname === "chatgpt.com") {
+  var checkExist = setInterval(function () {
+    var inputBox = document.querySelector('[name="prompt-textarea"]');
+    if (inputBox) {
+      clearInterval(checkExist);
+      inputBox.focus();
+      inputBox.value = promptToPaste;
+      inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+      setTimeout(function () {
+        if (inputBox.value.trim() !== '') {
+          var enterEvent = new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13
+          });
+          inputBox.dispatchEvent(enterEvent);
+        }
+        history.replaceState(null, null, ' ');
+      }, 300);
+    }
+  }, 500);
+}
+
 // Auto-submit prompts for AI sites
 if (window.location.hash.startsWith("#sk_prompt=")) {
     var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
@@ -121,26 +148,7 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
         }, 500);
     }
     
-    // ChatGPT
-    if (window.location.hostname === "chatgpt.com") {
-        var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('[name="prompt-textarea"]');
-            if (inputBox) {
-                clearInterval(checkExist);
-                inputBox.focus();
-                inputBox.value = promptToPaste;
-                inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-                setTimeout(function() {
-                    var submitButton = document.querySelector('[data-testid="send-button"]');
-                    if (submitButton && !submitButton.disabled) {
-                        submitButton.click();
-                    }
-                    history.replaceState(null, null, ' ');
-                }, 300);
-            }
-        }, 500);
-    }
-    
+
     // Claude
     if (window.location.hostname === "claude.ai") {
         var checkExist = setInterval(function() {
