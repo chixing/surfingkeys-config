@@ -208,6 +208,17 @@ var pressEnter = function (element) {
   element.dispatchEvent(enterEvent);
 };
 
+function getSubmitButton(context) {
+  context = context || document;
+  var svg = context.querySelector('button svg[class*="send"]');
+  return context.querySelector('button[type="submit"]') ||
+    context.querySelector('#composer-submit-button') ||
+    context.querySelector('button.send-button') ||
+    context.querySelector('button[aria-label*="send" i]') ||
+    (svg ? svg.closest('button') : null) ||
+    null;
+}
+
 util = {}
 util.createURLItem = (title, url, sanitize = true) => {
   let t = title
