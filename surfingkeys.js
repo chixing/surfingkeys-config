@@ -70,7 +70,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
             var urls = [
                 "https://chatgpt.com/#sk_prompt=" + encodeURIComponent(userInput),
                 "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-                "https://alice.yandex.ru#sk_prompt=" + encodeURIComponent(userInput),
+                "https://alice.yandex.ru/#sk_prompt=" + encodeURIComponent(userInput),
                 "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
                 // "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
                 // "https://perplexity.ai?q=" + encodeURIComponent(userInput),
@@ -214,14 +214,15 @@ if (window.location.hash.startsWith("#sk_prompt=")) {
     }
     
     // Yandex Alice
-    if (window.location.hostname === "alice.yandex.ru") {
+    if (window.location.hostname.includes("yandex.ru")) {
         var checkExist = setInterval(function() {
-            var inputBox = document.querySelector('textarea, input[type="text"], div[contenteditable="true"]');
+            var inputBox = document.querySelector('input[class*="input"], textarea, input[type="text"], div[contenteditable="true"]');
             if (inputBox) {
                 clearInterval(checkExist);
                 if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
                     inputBox.value = promptToPaste;
                     inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+                    inputBox.dispatchEvent(new Event('change', { bubbles: true }));
                 } else {
                     inputBox.focus();
                     document.execCommand('insertText', false, promptToPaste);
