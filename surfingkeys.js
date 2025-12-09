@@ -207,6 +207,20 @@ if (window.location.hostname.includes("yandex.ru")) {
 // ================================
 // UTILITY FUNCTIONS
 // ================================
+
+// Helper function to press Enter key
+var pressEnter = function(element) {
+  var enterEvent = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    key: 'Enter',
+    code: 'Enter',
+    keyCode: 13,
+    which: 13
+  });
+  element.dispatchEvent(enterEvent);
+};
+
 util = {}
 util.createURLItem = (title, url, sanitize = true) => {
   let t = title
