@@ -355,8 +355,8 @@ for (const c in completions) {
 // ================================
 
 // Hints styling
-api.Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21;');
-api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
+api.Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21; font-size: 14pt; font-weight: normal;');
+api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important; font-size: 14pt !important; font-weight: normal !important;", "text");
 
 // Visual mode styling
 api.Visual.style('marks', 'background-color: #52C19699;');
