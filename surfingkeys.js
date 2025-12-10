@@ -177,33 +177,48 @@ if (window.location.hostname.includes("yandex.ru")) {
 // UTILITY FUNCTIONS
 // ================================
 
+/**
+ * Utility object containing helper functions for tab management and UI creation
+ */
 var util = {
-  openTabs: function (userInput) {
-    if (userInput !== null) {
-      var urls = [
-        "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-        "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-        "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-        "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-        "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-        "https://perplexity.ai?q=" + encodeURIComponent(userInput),
-        "https://grok.com?q=" + encodeURIComponent(userInput),
-      ];
-      urls.forEach(function (url) {
-        api.tabOpenLink(url);
-      });
-    }
-  },
+  /**
+   * Opens multiple AI chat service URLs in new tabs with encoded user input
+   * @param {string|null} userInput - The user input to be encoded and passed to URLs
+   * @returns {void}
+   */
+  openTabs: function (userInput) {},
 
-  // Helper function to press Enter key
-  pressEnter: function (element) {
-    var enterEvent = new KeyboardEvent('keydown', {
-      bubbles: true,
-      cancelable: true,
-      key: 'Enter',
-      code: 'Enter',
-      keyCode: 13,
-      which: 13
+  /**
+   * Dispatches a keyboard Enter key event to the specified element
+   * @param {HTMLElement} element - The DOM element to dispatch the event to
+   * @returns {void}
+   */
+  pressEnter: function (element) {},
+
+  /**
+   * Creates a URL suggestion item with title and URL
+   * @param {string} title - The title text for the suggestion
+   * @param {string} url - The URL to be displayed
+   * @param {boolean} [sanitize=true] - Whether to sanitize the title and URL
+   * @returns {{html: string, props: Object}} An object containing HTML string and properties
+   */
+  createURLItem: function (title, url, sanitize) {},
+
+  /**
+   * Escapes HTML special characters in a string
+   * @param {string} str - The string to escape
+   * @returns {string} The escaped string with HTML entities
+   */
+  escape: function (str) {},
+
+  /**
+   * Creates a suggestion list item element from HTML markup
+   * @param {string} html - The HTML markup to set as the list item content
+   * @param {Object} [props={}] - Additional properties to attach to the suggestion
+   * @returns {{html: string, props: Object}} An object containing the outer HTML and properties
+   */
+  createSuggestionItem: function (html, props) {},
+};
     });
     element.dispatchEvent(enterEvent);
   },
