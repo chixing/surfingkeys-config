@@ -64,43 +64,13 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
   // Get clipboard content
   navigator.clipboard.readText().then(function (clipboardText) {
     var userInput = prompt("Edit query:", clipboardText);
-    openTabs(userInput);
+    util.openTabs(userInput);
   }).catch(function (err) {
     // api.echoerr('Failed to read clipboard');
     var userInput = prompt("Enter query:");
-    openTabs(userInput);
+    util.openTabs(userInput);
   });
 });
-
-const openTabs = function (userInput) {
-  if (userInput !== null) {
-    var urls = [
-      "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-      "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-      "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-      "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-      "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-      "https://perplexity.ai?q=" + encodeURIComponent(userInput),
-      "https://grok.com?q=" + encodeURIComponent(userInput),
-    ];
-    urls.forEach(function (url) {
-      api.tabOpenLink(url);
-    });
-  }
-};
-
-// Helper function to press Enter key
-var pressEnter = function (element) {
-  var enterEvent = new KeyboardEvent('keydown', {
-    bubbles: true,
-    cancelable: true,
-    key: 'Enter',
-    code: 'Enter',
-    keyCode: 13,
-    which: 13
-  });
-  element.dispatchEvent(enterEvent);
-};
 
 const delay_in_ms = 1000;
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -131,7 +101,7 @@ if (window.location.hostname === "gemini.google.com") {
       document.execCommand('insertText', false, promptToPaste);
       
       await delay(delay_in_ms);
-      pressEnter(inputBox);
+      util.pressEnter(inputBox);
       history.replaceState(null, null, ' ');
     })();
   }
@@ -154,7 +124,7 @@ if (window.location.hostname === "claude.ai") {
       if (submitButton) {
         submitButton.click();
       } else {
-        pressEnter(inputBox);
+        util.pressEnter(inputBox);
       }
       history.replaceState(null, null, ' ');
     })();
@@ -178,7 +148,7 @@ if (window.location.hostname === "www.doubao.com") {
       if (submitButton) {
         submitButton.click();
       } else {
-        pressEnter(inputBox);
+        util.pressEnter(inputBox);
       }
       history.replaceState(null, null, ' ');
     })();
@@ -198,7 +168,7 @@ if (window.location.hostname.includes("yandex.ru")) {
       inputBox.dispatchEvent(new Event('input', { bubbles: true }));
       inputBox.dispatchEvent(new Event('change', { bubbles: true }));
       await delay(delay_in_ms);
-      pressEnter(inputBox);
+      util.pressEnter(inputBox);
     })();
   }
 }
@@ -207,36 +177,72 @@ if (window.location.hostname.includes("yandex.ru")) {
 // UTILITY FUNCTIONS
 // ================================
 
-util = {}
-util.createURLItem = (title, url, sanitize = true) => {
-  let t = title
-  let u = url
-  if (sanitize) {
-    t = util.escape(t)
-    u = new URL(u).toString()
-  }
-  return util.createSuggestionItem(`
-      <div class="title">${t}</div>
-      <div class="url">${u}</div>
-    `, { url: u })
-}
+var util = {
+  openTabs: function (userInput) {
+    if (userInput !== null) {
+      var urls = [
+        "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
+        "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
+        "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
+        "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
+        "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
+        "https://perplexity.ai?q=" + encodeURIComponent(userInput),
+        "https://grok.com?q=" + encodeURIComponent(userInput),
+      ];
+      urls.forEach(function (url) {
+        api.tabOpenLink(url);
+      });
+    }
+  },
 
-util.escape = (str) =>
-  String(str).replace(/[&<>"'`=/]/g, (s) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#39;",
-    "/": "&#x2F;",
-    "`": "&#x60;",
-    "=": "&#x3D;",
-  }[s]))
+  // Helper function to press Enter key
+  pressEnter: function (element) {
+    var enterEvent = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'Enter',
+      code: 'Enter',
+      keyCode: 13,
+      which: 13
+    });
+    element.dispatchEvent(enterEvent);
+  },
 
-util.createSuggestionItem = (html, props = {}) => {
-  const li = document.createElement("li");
-  li.innerHTML = html;
-  return { html: li.outerHTML, props };
+  createURLItem: function (title, url, sanitize) {
+    if (sanitize === void 0) { sanitize = true; }
+    var t = title;
+    var u = url;
+    if (sanitize) {
+      t = util.escape(t);
+      u = new URL(u).toString();
+    }
+    return util.createSuggestionItem(
+      '\n      <div class="title">' + t + '</div>\n      <div class="url">' + u + '</div>\n    ',
+      { url: u }
+    );
+  },
+
+  escape: function (str) {
+    return String(str).replace(/[&<>"'`=/]/g, function (s) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;",
+        "/": "&#x2F;",
+        "`": "&#x60;",
+        "=": "&#x3D;",
+      }[s];
+    });
+  },
+
+  createSuggestionItem: function (html, props) {
+    if (props === void 0) { props = {}; }
+    var li = document.createElement("li");
+    li.innerHTML = html;
+    return { html: li.outerHTML, props: props };
+  },
 };
 
 // ================================
