@@ -56,10 +56,8 @@ api.mapkey('gq', 'Review current tab in Gemini', function () {
   var link = window.location.href;
   var promptText = link + " provide a detailed summary";
   var userInput = prompt("Edit prompt:", " provide a detailed summary");
-  if (userInput !== null) {
-    var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
-    api.tabOpenLink(targetUrl);
-  }
+  var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
+  api.tabOpenLink(targetUrl);
 });
 
 api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function () {
