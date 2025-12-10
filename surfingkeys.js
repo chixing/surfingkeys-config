@@ -177,18 +177,22 @@ if (window.location.hostname.includes("yandex.ru")) {
 // UTILITY FUNCTIONS
 // ================================
 
+const aiQueryBases = [
+  "https://chatgpt.com/?q=",
+  "https://www.doubao.com/chat#sk_prompt=",
+  "https://alice.yandex.ru/?q=",
+  "https://claude.ai#sk_prompt=",
+  "https://gemini.google.com/app#sk_prompt=",
+  "https://perplexity.ai?q=",
+  "https://grok.com?q=",
+];
+
 var util = {
   openTabs: function (userInput) {
     if (userInput !== null) {
-      var urls = [
-        "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-        "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-        "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-        "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-        "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-        "https://perplexity.ai?q=" + encodeURIComponent(userInput),
-        "https://grok.com?q=" + encodeURIComponent(userInput),
-      ];
+      var urls = aiQueryBases.map(function (base) {
+        return base + encodeURIComponent(userInput);
+      });
       urls.forEach(function (url) {
         api.tabOpenLink(url);
       });
