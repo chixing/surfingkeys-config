@@ -47,7 +47,7 @@ api.mapkey('gw', 'Yank link and search in Gemini', function () {
     var link = element.href;
     var promptText = link + " provide a detailed summary";
     var userInput = prompt("Edit prompt:", " provide a detailed summary");
-    if (userInput !== null) {
+    if (link !== null) {
       var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
       api.tabOpenLink(targetUrl);
     }
