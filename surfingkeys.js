@@ -72,7 +72,7 @@ api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', fun
   });
 });
 
-const openTabs = function (userInput) {
+util.openTabs = function (userInput) {
   if (userInput !== null) {
     var urls = [
       "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
@@ -89,8 +89,7 @@ const openTabs = function (userInput) {
   }
 };
 
-// Helper function to press Enter key
-var pressEnter = function (element) {
+util.pressEnter = function (element) {
   var enterEvent = new KeyboardEvent('keydown', {
     bubbles: true,
     cancelable: true,
