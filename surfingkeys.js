@@ -34,179 +34,76 @@ api.iunmap("<Ctrl-a>");  // Unmap select all
 
 // Chrome utilities
 
-api.mapkey('gp', '#12Open Passwords', function () {
-  api.tabOpenLink("chrome://password-manager/passwords");
+api.mapkey('gp', '#12Open Passwords', function() {
+    api.tabOpenLink("chrome://password-manager/passwords");
 });
 
-api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function () {
-  api.tabOpenLink("chrome://extensions/shortcuts");
+api.mapkey('gs', '#12Open Chrome Extensions Shortcuts', function() {
+    api.tabOpenLink("chrome://extensions/shortcuts");
 });
 
-api.mapkey('gw', 'Yank link and search in Gemini', function () {
-  api.Hints.create("a[href]", function (element) {
-    var link = element.href;
-    var promptText = link + " provide a detailed summary";
-    var userInput = prompt("Edit prompt:", " provide a detailed summary");
-    var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + " " + userInput);
-    api.tabOpenLink(targetUrl);
-  });
-});
-
-api.mapkey('gq', 'Review current tab in Gemini', function () {
-  var link = window.location.href;
-  var promptText = link + " provide a detailed summary";
-  var userInput = prompt("Edit prompt:", " provide a detailed summary");
-  var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + userInput);
-  api.tabOpenLink(targetUrl);
-});
-
-api.mapkey('gr', 'Pop up input with clipboard, then open multiple AI sites', function () {
-  // Get clipboard content
-  navigator.clipboard.readText().then(function (clipboardText) {
-    var userInput = prompt("Edit query:", clipboardText);
-    openTabs(userInput);
-  }).catch(function (err) {
-    // api.echoerr('Failed to read clipboard');
-    var userInput = prompt("Enter query:");
-    openTabs(userInput);
-  });
-});
-
-const openTabs = function (userInput) {
-  if (userInput !== null) {
-    var urls = [
-      "https://chatgpt.com/?q=" + encodeURIComponent(userInput),
-      "https://www.doubao.com/chat#sk_prompt=" + encodeURIComponent(userInput),
-      "https://alice.yandex.ru/?q=" + encodeURIComponent(userInput),
-      "https://claude.ai#sk_prompt=" + encodeURIComponent(userInput),
-      "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput),
-      "https://perplexity.ai?q=" + encodeURIComponent(userInput),
-      "https://grok.com?q=" + encodeURIComponent(userInput),
-    ];
-    urls.forEach(function (url) {
-      api.tabOpenLink(url);
+api.mapkey('gw', 'Yank link and search in Gemini', function() {
+    api.Hints.create("", function(element) {
+        var link = element.href;
+        var promptText = link + " provide a detailed summary";
+        var userInput = prompt("Edit prompt:", promptText);
+        if (userInput !== null) {
+            var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput);
+            api.tabOpenLink(targetUrl);
+        }
     });
-  }
-};
+});
 
-const delay_in_ms = 1000;
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+api.mapkey('gq', 'Review current tab in Gemini', function() {
+    var link = window.location.href;
+    var promptText = link + " provide a detailed summary";
+    var userInput = prompt("Edit prompt:", promptText);
+    if (userInput !== null) {
+        var targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(userInput);
+        api.tabOpenLink(targetUrl);
+    }
+});
 
-// ChatGPT
-if (window.location.hostname === "chatgpt.com") {
-  var urlParams = new URLSearchParams(window.location.search);
-  var promptParam = urlParams.get('q');
-  if (promptParam) {
-    (async () => {
-      await delay(delay_in_ms);
-      var inputBox = document.querySelector('[name="prompt-textarea"]');
-      await delay(delay_in_ms);
-      var submitButton = document.getElementById('composer-submit-button');
-      submitButton.click();
-    })();
-  }
-}
-
-// Gemini
+// checks if the current site is Gemini and if there's a prompt in the URL hash.
+// If so, it pastes the prompt into the input box and simulates pressing Enter.
 if (window.location.hostname === "gemini.google.com") {
-  if (window.location.hash.startsWith("#sk_prompt=")) {
-    const promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    (async () => {
-      await delay(delay_in_ms);
-      const inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
-      inputBox.focus();
-      document.execCommand('insertText', false, promptToPaste);
-      
-      await delay(delay_in_ms);
-      pressEnter(inputBox);
-      history.replaceState(null, null, ' ');
-    })();
-  }
-}
+    if (window.location.hash.startsWith("#sk_prompt=")) {
+        var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
 
-// Claude
-if (window.location.hostname === "claude.ai") {
-  if (window.location.hash.startsWith("#sk_prompt=")) {
-    var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    (async () => {
-      await delay(delay_in_ms);
-      var inputBox = document.querySelector('div[contenteditable="true"]');
-      inputBox.focus();
-      document.execCommand('insertText', false, promptToPaste);
-      await delay(delay_in_ms);
-      var submitButton = document.querySelector('button[type="submit"]') ||
-        document.querySelector('button.send-button') ||
-        document.querySelector('button[aria-label*="send" i]') ||
-        document.querySelector('button svg[class*="send"]')?.closest('button');
-      if (submitButton) {
-        submitButton.click();
-      } else {
-        pressEnter(inputBox);
-      }
-      history.replaceState(null, null, ' ');
-    })();
-  }
-}
-
-// Doubao
-if (window.location.hostname === "www.doubao.com") {
-  if (window.location.hash.startsWith("#sk_prompt=")) {
-    var promptToPaste = decodeURIComponent(window.location.hash.substring(11));
-    (async () => {
-      await delay(delay_in_ms);
-      var inputBox = document.querySelector('textarea[placeholder], div[contenteditable="true"]');
-      inputBox.value = promptToPaste;
-      inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-      await delay(delay_in_ms);
-      var submitButton = document.querySelector('button[type="submit"]') ||
-        document.querySelector('button.send-button') ||
-        document.querySelector('button[aria-label*="send" i]') ||
-        document.querySelector('button svg[class*="send"]')?.closest('button');
-      if (submitButton) {
-        submitButton.click();
-      } else {
-        pressEnter(inputBox);
-      }
-      history.replaceState(null, null, ' ');
-    })();
-  }
-}
-
-// Yandex Alice
-if (window.location.hostname.includes("yandex.ru")) {
-  var urlParams = new URLSearchParams(window.location.search);
-  var promptToPaste = urlParams.get('q');
-  if (promptToPaste) {
-    (async () => {
-      await delay(delay_in_ms);
-      var inputBox = document.querySelector('textarea[placeholder], input[type="text"], input[class*="input"], div[contenteditable="true"]');
-      inputBox.focus();
-      inputBox.value = promptToPaste;
-      inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-      inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-      await delay(delay_in_ms);
-      pressEnter(inputBox);
-    })();
-  }
+        var checkExist = setInterval(function() {
+            var inputBox = document.querySelector('div[contenteditable="true"][role="textbox"]');
+            
+            if (inputBox) {
+                clearInterval(checkExist);
+                inputBox.focus();
+                
+                // 1. Insert the text
+                document.execCommand('insertText', false, promptToPaste);
+                
+                // 2. Wait a split second for the app to register the text
+                setTimeout(function() {
+                    // 3. Create and dispatch the Enter key event
+                    var enterEvent = new KeyboardEvent('keydown', {
+                        bubbles: true,
+                        cancelable: true,
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        which: 13
+                    });
+                    inputBox.dispatchEvent(enterEvent);
+                    
+                    // Clean URL
+                    history.replaceState(null, null, ' ');
+                }, 300); 
+            }
+        }, 500);
+    }
 }
 
 // ================================
 // UTILITY FUNCTIONS
 // ================================
-
-// Helper function to press Enter key
-var pressEnter = function (element) {
-  var enterEvent = new KeyboardEvent('keydown', {
-    bubbles: true,
-    cancelable: true,
-    key: 'Enter',
-    code: 'Enter',
-    keyCode: 13,
-    which: 13
-  });
-  element.dispatchEvent(enterEvent);
-};
-
 util = {}
 util.createURLItem = (title, url, sanitize = true) => {
   let t = title
@@ -223,14 +120,14 @@ util.createURLItem = (title, url, sanitize = true) => {
 
 util.escape = (str) =>
   String(str).replace(/[&<>"'`=/]/g, (s) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
+    "&":  "&amp;",
+    "<":  "&lt;",
+    ">":  "&gt;",
     "\"": "&quot;",
-    "'": "&#39;",
-    "/": "&#x2F;",
-    "`": "&#x60;",
-    "=": "&#x3D;",
+    "'":  "&#39;",
+    "/":  "&#x2F;",
+    "`":  "&#x60;",
+    "=":  "&#x3D;",
   }[s]))
 
 util.createSuggestionItem = (html, props = {}) => {
@@ -246,11 +143,11 @@ completions = {}
 
 // E-commerce
 completions.amazon = {
-  alias: "a",
-  name: "amazon",
+  alias:  "a",
+  name:   "amazon",
   search: "https://smile.amazon.com/s/?field-keywords=",
-  compl: "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
-  callback: (response) => JSON.parse(response.text)[1]
+  compl:  "https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=",
+  callback: (response) => JSON.parse(response.text)[1] 
 }
 
 // Local services
@@ -354,8 +251,8 @@ for (const c in completions) {
 // ================================
 
 // Hints styling
-api.Hints.style('border: solid 2px #373B41 !important; color: #52C196 !important; background: initial !important; background-color: #1D1F21 !important; font-size: 11pt !important; font-weight: lighter !important;');
-api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important; font-size: 11pt !important; font-weight: lighter !important;", "text");
+api.Hints.style('border: solid 2px #373B41; color:#52C196; background: initial; background-color: #1D1F21;');
+api.Hints.style("border: solid 2px #373B41 !important; padding: 1px !important; color: #C5C8C6 !important; background: #1D1F21 !important;", "text");
 
 // Visual mode styling
 api.Visual.style('marks', 'background-color: #52C19699;');
