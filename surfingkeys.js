@@ -177,7 +177,7 @@ if (window.location.hostname.includes("yandex.ru")) {
 // UTILITY FUNCTIONS
 // ================================
 
-const aiQueryBases = [
+const aiSearch = [
   "https://chatgpt.com/?q=",
   "https://www.doubao.com/chat#sk_prompt=",
   "https://alice.yandex.ru/?q=",
