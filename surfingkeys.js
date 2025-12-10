@@ -1,8 +1,5 @@
 /**
  * SurfingKeys Configuration
- * 
- * A professional, modular configuration for SurfingKeys.
- * Includes custom keybindings, search engines, and AI automation integrations.
  */
 
 // =============================================================================
