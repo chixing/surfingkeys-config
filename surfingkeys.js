@@ -210,12 +210,10 @@ api.mapkey('gq', 'Summarize current page in Gemini', () => {
 api.mapkey('gr', 'Multi-AI Search (Clipboard/Input)', () => {
   navigator.clipboard.readText()
     .then(text => {
-      const query = prompt("Edit query:", text);
-      util.openAiTabs(query, AI_URLS);
+      util.showAiSelector(text);
     })
     .catch(() => {
-      const query = prompt("Enter query:");
-      util.openAiTabs(query, AI_URLS);
+      util.showAiSelector('');
     });
 });
 
