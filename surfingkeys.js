@@ -91,6 +91,14 @@ class AiSelector {
     queryInput.focus();
     queryInput.select();
 
+    // Enter key submits the form
+    queryInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.handleSubmit(overlay, queryInput);
+      }
+    });
+
     this.setupEventListeners(overlay);
   }
 
