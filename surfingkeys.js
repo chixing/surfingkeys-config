@@ -90,6 +90,9 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+    // Disable SurfingKeys while dialog is open
+    api.disable();
+
     queryInput.focus();
     queryInput.select();
 
