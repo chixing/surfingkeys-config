@@ -91,7 +91,6 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Focus immediately while in user gesture context
     queryInput.focus();
     queryInput.select();
 
@@ -511,14 +510,8 @@ class AiSelector {
     const input = document.getElementById('sk-ai-query-input');
     if (input && !this.lastQuery) {
       input.value = text;
-      // Only refocus if the input lost focus (happens due to async Promise)
-      // Use setTimeout to ensure value update completes first
-      setTimeout(() => {
-        if (document.activeElement !== input) {
-          input.focus();
-          input.select();
-        }
-      }, 0);
+      input.focus();
+      input.select();
     }
   }
 }
