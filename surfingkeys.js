@@ -38,6 +38,18 @@ Object.assign(settings, {
 // =============================================================================
 // 2. AI SELECTOR CLASS
 // =============================================================================
+
+// AI Service Names
+const AI_SERVICES = {
+  CHATGPT: 'ChatGPT',
+  DOUBAO: 'Doubao',
+  ALICE: 'Alice (Yandex)',
+  CLAUDE: 'Claude',
+  GEMINI: 'Gemini',
+  PERPLEXITY: 'Perplexity',
+  GROK: 'Grok'
+};
+
 class AiSelector {
   constructor(config) {
     this.config = config;
