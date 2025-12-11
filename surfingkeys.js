@@ -90,14 +90,9 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Delay focus to ensure DOM is rendered
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        queryInput.focus();
-        queryInput.setSelectionRange(0, queryInput.value.length);
-      });
-    });
-
+    // Setup event listeners first
+    this.setupEventListeners(overlay, queryInput);
+    
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -106,7 +101,13 @@ class AiSelector {
       }
     });
 
-    this.setupEventListeners(overlay, queryInput);
+    // Delay focus to ensure DOM is rendered and event listeners are ready
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        queryInput.focus();
+        queryInput.setSelectionRange(0, queryInput.value.length);
+      });
+    });
   }
 
   createOverlay() {
