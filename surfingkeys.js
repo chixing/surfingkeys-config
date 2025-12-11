@@ -52,14 +52,14 @@ class AiSelector {
     ];
   }
 
-  show(initialQuery = '') {
+  show(initialQuery = '', selectedServices = null) {
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
     const title = this.createTitle();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(initialQuery);
     const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
-    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes();
+    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput);
 
@@ -213,7 +213,7 @@ class AiSelector {
     return { label, select };
   }
 
-  createServicesCheckboxes() {
+  createServicesCheckboxes(selectedServices = null) {
     const label = document.createElement('label');
     label.textContent = 'Select AI Services:';
     label.style.cssText = `
@@ -237,7 +237,8 @@ class AiSelector {
     `;
 
     this.services.forEach((service, index) => {
-      const checkboxWrapper = this.createCheckbox(service, index);
+      const isChecked = selectedServices ? selectedServices.includes(service.name) : service.checked;
+      const checkboxWrapper = this.createCheckbox(service, index, isChecked);
       container.appendChild(checkboxWrapper);
     });
 
@@ -312,7 +313,7 @@ class AiSelector {
     return container;
   }
 
-  createCheckbox(service, index) {
+  createCheckbox(service, index, isChecked = true) {
     const wrapper = document.createElement('label');
     wrapper.style.cssText = `
       display: flex;
@@ -331,7 +332,7 @@ class AiSelector {
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.checked = service.checked;
+    checkbox.checked = isChecked;
     checkbox.id = `sk-ai-${index}`;
     checkbox.style.cssText = `
       margin-right: 10px;
@@ -594,6 +595,13 @@ api.mapkey('grr', 'Multi-AI Search (Clipboard/Input)', () => {
   navigator.clipboard.readText()
     .then(text => selector.show(text))
     .catch(() => selector.show(''));
+});
+
+api.mapkey('grc', 'ChatGPT-only Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['ChatGPT']))
+    .catch(() => selector.show('', ['ChatGPT']));
 });
 
 // =============================================================================
