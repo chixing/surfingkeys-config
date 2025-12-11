@@ -108,13 +108,13 @@ class AiSelector {
       }
     });
 
-    // Click outside closes dialog
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
-      }
-    });
+    // // Click outside closes dialog
+    // overlay.addEventListener('click', (e) => {
+    //   if (e.target === overlay) {
+    //     this.lastQuery = queryInput.value;
+    //     document.body.removeChild(overlay);
+    //   }
+    // });
 
     document.body.appendChild(overlay);
   }
