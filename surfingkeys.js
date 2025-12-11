@@ -488,8 +488,9 @@ class AiSelector {
       return;
     }
 
+    const checkboxes = this.servicesContainer.querySelectorAll('input[type="checkbox"]');
     const selectedUrls = this.services
-      .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
+      .filter((_, index) => checkboxes[index]?.checked)
       .map(service => service.url);
 
     if (selectedUrls.length === 0) {
