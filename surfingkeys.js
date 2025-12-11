@@ -76,9 +76,6 @@ class AiSelector {
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput);
-    
-    // Store reference for checkbox access
-    this.servicesContainer = servicesContainer;
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -93,33 +90,24 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Use Front.showPopup pattern - blur active element first
-    if (document.activeElement) {
-      document.activeElement.blur();
-    }
-    
     queryInput.focus();
     queryInput.select();
 
-    // Enter key submits the form (capture phase)
+    // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
-      e.stopPropagation();
-      e.stopImmediatePropagation();
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         this.handleSubmit(overlay, queryInput);
       }
-    }, true);
+    });
 
-    // ESC key closes dialog (capture phase)
+    // ESC key closes dialog
     overlay.addEventListener('keydown', (e) => {
-      e.stopPropagation();
-      e.stopImmediatePropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
       }
-    }, true);
+    });
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
@@ -134,7 +122,6 @@ class AiSelector {
   createOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'sk-ai-selector-overlay';
-    overlay.tabIndex = -1;
     overlay.style.cssText = `
       position: fixed;
       top: 0;
@@ -326,8 +313,10 @@ class AiSelector {
       selectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     selectAllBtn.onclick = () => {
-      const checkboxes = this.servicesContainer.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(cb => cb.checked = true);
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = true;
+      });
     };
 
     const unselectAllBtn = document.createElement('button');
@@ -351,8 +340,10 @@ class AiSelector {
       unselectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     unselectAllBtn.onclick = () => {
-      const checkboxes = this.servicesContainer.querySelectorAll('input[type="checkbox"]');
-      checkboxes.forEach(cb => cb.checked = false);
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = false;
+      });
     };
 
     container.appendChild(selectAllBtn);
@@ -484,9 +475,8 @@ class AiSelector {
       return;
     }
 
-    const checkboxes = this.servicesContainer.querySelectorAll('input[type="checkbox"]');
     const selectedUrls = this.services
-      .filter((_, index) => checkboxes[index]?.checked)
+      .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
       .map(service => service.url);
 
     if (selectedUrls.length === 0) {
