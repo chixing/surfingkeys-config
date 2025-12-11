@@ -500,7 +500,7 @@ class AiSelector {
 
     // Combine query with prompt template if provided
     const promptTemplate = promptInput.value.trim();
-    const combinedQuery = promptTemplate ? `${query} ${promptTemplate}` : query;
+    const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
     document.body.removeChild(overlay);
