@@ -602,56 +602,56 @@ api.iunmap("<Ctrl-a>");
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-api.mapkey('gww', 'Multi-AI Search (Clipboard/Input)', () => {
+api.mapkey('aaw', 'Multi-AI Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text))
     .catch(() => selector.show(''));
 });
 
-api.mapkey('gwc', 'ChatGPT Search (Clipboard/Input)', () => {
+api.mapkey('aac', 'ChatGPT Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.CHATGPT]))
     .catch(() => selector.show('', [AI_SERVICES.CHATGPT]));
 });
 
-api.mapkey('gwd', 'Doubao Search (Clipboard/Input)', () => {
+api.mapkey('aad', 'Doubao Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.DOUBAO]))
     .catch(() => selector.show('', [AI_SERVICES.DOUBAO]));
 });
 
-api.mapkey('gwa', 'Alice Search (Clipboard/Input)', () => {
+api.mapkey('aaa', 'Alice Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.ALICE]))
     .catch(() => selector.show('', [AI_SERVICES.ALICE]));
 });
 
-api.mapkey('gwe', 'Claude Search (Clipboard/Input)', () => {
+api.mapkey('aae', 'Claude Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.CLAUDE]))
     .catch(() => selector.show('', [AI_SERVICES.CLAUDE]));
 });
 
-api.mapkey('gwg', 'Gemini Search (Clipboard/Input)', () => {
+api.mapkey('aag', 'Gemini Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.GEMINI]))
     .catch(() => selector.show('', [AI_SERVICES.GEMINI]));
 });
 
-api.mapkey('gwp', 'Perplexity Search (Clipboard/Input)', () => {
+api.mapkey('aap', 'Perplexity Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.PERPLEXITY]))
     .catch(() => selector.show('', [AI_SERVICES.PERPLEXITY]));
 });
 
-api.mapkey('gwk', 'Grok Search (Clipboard/Input)', () => {
+api.mapkey('aak', 'Grok Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.GROK]))
