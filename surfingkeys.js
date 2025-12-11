@@ -72,16 +72,16 @@ class AiSelector {
     const title = this.createTitle();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
+    const { label: promptLabel, input: promptInput } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons(overlay, queryInput);
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
     dialog.appendChild(queryInput);
-    dialog.appendChild(templateLabel);
-    dialog.appendChild(templateSelect);
+    dialog.appendChild(promptLabel);
+    dialog.appendChild(promptInput);
     dialog.appendChild(servicesLabel);
     dialog.appendChild(selectAllButtons);
     dialog.appendChild(servicesContainer);
@@ -97,7 +97,7 @@ class AiSelector {
     queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        this.handleSubmit(overlay, queryInput);
+        this.handleSubmit(overlay, queryInput, promptInput);
       }
     });
 
@@ -196,9 +196,9 @@ class AiSelector {
     return { label, input };
   }
 
-  createPromptTemplateDropdown(queryInput) {
+  createPromptInput() {
     const label = document.createElement('label');
-    label.textContent = 'Prompt Template:';
+    label.textContent = 'Prompt Template (optional):';
     label.style.cssText = `
       display: block;
       margin-bottom: 8px;
@@ -206,10 +206,12 @@ class AiSelector {
       font-size: 14px;
     `;
 
-    const select = document.createElement('select');
-    select.style.cssText = `
+    const input = document.createElement('textarea');
+    input.rows = 2;
+    input.placeholder = 'e.g., provide a detailed summary';
+    input.style.cssText = `
       width: 100%;
-      padding: 10px 12px;
+      padding: 12px;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
       border-radius: 4px;
@@ -217,39 +219,11 @@ class AiSelector {
       font-family: ${this.config.theme.font};
       font-size: ${this.config.theme.fontSize};
       margin-bottom: 20px;
-      cursor: pointer;
+      resize: vertical;
       box-sizing: border-box;
     `;
 
-    const templates = [
-      { value: '', label: 'None' },
-      { value: ' provide a detailed summary', label: 'Detailed Summary' },
-      { value: ' provide short summary with external links to related resources', label: 'Short Summary with Links' },
-      { value: ' fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
-      { value: ' explain this in simple terms suitable for beginners', label: 'Explain Simply' }
-    ];
-
-    templates.forEach(template => {
-      const option = document.createElement('option');
-      option.value = template.value;
-      option.textContent = template.label;
-      select.appendChild(option);
-    });
-
-    // Update query when template changes
-    select.addEventListener('change', () => {
-      const currentQuery = queryInput.value.trim();
-      // Remove old template if exists
-      const baseQuery = currentQuery
-        .replace(/ provide a detailed summary$/, '')
-        .replace(/ provide short summary with external links to related resources$/, '')
-        .replace(/ fact-check the key claims and provide sources$/, '')
-        .replace(/ explain this in simple terms suitable for beginners$/, '')
-        .trim();
-      queryInput.value = baseQuery + select.value;
-    });
-
-    return { label, select };
+    return { label, input };
   }
 
   createServicesCheckboxes(selectedServices = null) {
@@ -394,7 +368,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(overlay, queryInput) {
+  createButtons(overlay, queryInput, promptInput) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -403,7 +377,7 @@ class AiSelector {
     `;
 
     const cancelBtn = this.createCancelButton(overlay, queryInput);
-    const submitBtn = this.createSubmitButton(overlay, queryInput);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
@@ -438,7 +412,7 @@ class AiSelector {
     return btn;
   }
 
-  createSubmitButton(overlay, queryInput) {
+  createSubmitButton(overlay, queryInput, promptInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -461,11 +435,11 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(overlay, queryInput);
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
     return btn;
   }
 
-  handleSubmit(overlay, queryInput) {
+  handleSubmit(overlay, queryInput, promptInput) {
     const query = queryInput.value.trim();
     if (!query) {
       queryInput.focus();
@@ -488,7 +462,11 @@ class AiSelector {
     // Save query for next time
     this.lastQuery = queryInput.value;
 
-    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
+    // Combine query with prompt template if provided
+    const promptTemplate = promptInput.value.trim();
+    const combinedQuery = promptTemplate ? `${query} ${promptTemplate}` : query;
+
+    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
     document.body.removeChild(overlay);
   }
 
