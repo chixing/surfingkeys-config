@@ -597,11 +597,53 @@ api.mapkey('gww', 'Multi-AI Search (Clipboard/Input)', () => {
     .catch(() => selector.show(''));
 });
 
-api.mapkey('gwc', 'ChatGPT-only Search (Clipboard/Input)', () => {
+api.mapkey('gwc', 'ChatGPT Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, ['ChatGPT']))
     .catch(() => selector.show('', ['ChatGPT']));
+});
+
+api.mapkey('gwd', 'Doubao Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['Doubao']))
+    .catch(() => selector.show('', ['Doubao']));
+});
+
+api.mapkey('gwa', 'Alice Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['Alice (Yandex)']))
+    .catch(() => selector.show('', ['Alice (Yandex)']));
+});
+
+api.mapkey('gwe', 'Claude Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['Claude']))
+    .catch(() => selector.show('', ['Claude']));
+});
+
+api.mapkey('gwg', 'Gemini Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['Gemini']))
+    .catch(() => selector.show('', ['Gemini']));
+});
+
+api.mapkey('gwp', 'Perplexity Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['Perplexity']))
+    .catch(() => selector.show('', ['Perplexity']));
+});
+
+api.mapkey('gwk', 'Grok Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
+  navigator.clipboard.readText()
+    .then(text => selector.show(text, ['Grok']))
+    .catch(() => selector.show('', ['Grok']));
 });
 
 // =============================================================================
