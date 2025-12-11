@@ -517,7 +517,7 @@ class AiSelector {
       setTimeout(() => {
         input.focus();
         input.select();
-      }, 100);
+      }, 500);
     }
   }
 }
