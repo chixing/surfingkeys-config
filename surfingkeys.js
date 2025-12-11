@@ -59,12 +59,14 @@ class AiSelector {
     const title = this.createTitle();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(initialQuery);
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes();
+    const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
     dialog.appendChild(queryInput);
     dialog.appendChild(servicesLabel);
+    dialog.appendChild(selectAllButtons);
     dialog.appendChild(servicesContainer);
     dialog.appendChild(buttonsContainer);
 
