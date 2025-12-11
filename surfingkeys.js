@@ -66,6 +66,11 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
+    // Create a host element with Shadow DOM to isolate from SurfingKeys
+    const host = document.createElement('div');
+    host.id = 'sk-ai-selector-host';
+    const shadow = host.attachShadow({ mode: 'closed' });
+    
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -74,8 +79,8 @@ class AiSelector {
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
-    const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons(overlay, queryInput);
+    const selectAllButtons = this.createSelectAllButtons(shadow);
+    const buttonsContainer = this.createButtons(host, queryInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -88,7 +93,8 @@ class AiSelector {
     dialog.appendChild(buttonsContainer);
 
     overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
+    shadow.appendChild(overlay);
+    document.body.appendChild(host);
 
     queryInput.focus();
     queryInput.select();
@@ -99,9 +105,9 @@ class AiSelector {
       e.stopImmediatePropagation();
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        this.handleSubmit(overlay, queryInput);
+        this.handleSubmit(host, queryInput, shadow);
       }
-    });
+    }, true);
 
     // ESC key closes dialog
     overlay.addEventListener('keydown', (e) => {
@@ -109,15 +115,15 @@ class AiSelector {
       e.stopImmediatePropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        document.body.removeChild(host);
       }
-    });
+    }, true);
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        document.body.removeChild(host);
       }
     });
 
