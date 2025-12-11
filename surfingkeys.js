@@ -91,7 +91,7 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Immediate focus attempt (works when page has user activation)
+    // Focus immediately while in user gesture context
     queryInput.focus();
     queryInput.select();
 
@@ -511,13 +511,13 @@ class AiSelector {
     const input = document.getElementById('sk-ai-query-input');
     if (input && !this.lastQuery) {
       input.value = text;
-    }
-    // Always attempt focus/select after clipboard read completes
-    // This ensures focus even if initial attempt failed due to lack of user activation
-    if (input) {
+      // Only refocus if the input lost focus (happens due to async Promise)
+      // Use setTimeout to ensure value update completes first
       setTimeout(() => {
-        input.focus();
-        input.select();
+        if (document.activeElement !== input) {
+          input.focus();
+          input.select();
+        }
       }, 0);
     }
   }
