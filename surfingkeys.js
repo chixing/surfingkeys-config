@@ -42,13 +42,13 @@ class AiSelector {
   constructor(config) {
     this.config = config;
     this.services = [
-      { name: 'ChatGPT', url: 'https://chatgpt.com/?q=', checked: true },
-      { name: 'Doubao', url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
-      { name: 'Alice (Yandex)', url: 'https://alice.yandex.ru/?q=', checked: true },
-      { name: 'Claude', url: 'https://claude.ai/new#sk_prompt=', checked: true },
-      { name: 'Gemini', url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
-      { name: 'Perplexity', url: 'https://perplexity.ai?q=', checked: true },
-      { name: 'Grok', url: 'https://grok.com?q=', checked: true },
+      { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
+      { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
+      { name: AI_SERVICES.ALICE, url: 'https://alice.yandex.ru/?q=', checked: true },
+      { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },
+      { name: AI_SERVICES.GEMINI, url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
+      { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
+      { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
     ];
   }
 
@@ -600,50 +600,50 @@ api.mapkey('gww', 'Multi-AI Search (Clipboard/Input)', () => {
 api.mapkey('gwc', 'ChatGPT Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['ChatGPT']))
-    .catch(() => selector.show('', ['ChatGPT']));
+    .then(text => selector.show(text, [AI_SERVICES.CHATGPT]))
+    .catch(() => selector.show('', [AI_SERVICES.CHATGPT]));
 });
 
 api.mapkey('gwd', 'Doubao Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['Doubao']))
-    .catch(() => selector.show('', ['Doubao']));
+    .then(text => selector.show(text, [AI_SERVICES.DOUBAO]))
+    .catch(() => selector.show('', [AI_SERVICES.DOUBAO]));
 });
 
 api.mapkey('gwa', 'Alice Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['Alice (Yandex)']))
-    .catch(() => selector.show('', ['Alice (Yandex)']));
+    .then(text => selector.show(text, [AI_SERVICES.ALICE]))
+    .catch(() => selector.show('', [AI_SERVICES.ALICE]));
 });
 
 api.mapkey('gwe', 'Claude Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['Claude']))
-    .catch(() => selector.show('', ['Claude']));
+    .then(text => selector.show(text, [AI_SERVICES.CLAUDE]))
+    .catch(() => selector.show('', [AI_SERVICES.CLAUDE]));
 });
 
 api.mapkey('gwg', 'Gemini Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['Gemini']))
-    .catch(() => selector.show('', ['Gemini']));
+    .then(text => selector.show(text, [AI_SERVICES.GEMINI]))
+    .catch(() => selector.show('', [AI_SERVICES.GEMINI]));
 });
 
 api.mapkey('gwp', 'Perplexity Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['Perplexity']))
-    .catch(() => selector.show('', ['Perplexity']));
+    .then(text => selector.show(text, [AI_SERVICES.PERPLEXITY]))
+    .catch(() => selector.show('', [AI_SERVICES.PERPLEXITY]));
 });
 
 api.mapkey('gwk', 'Grok Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, ['Grok']))
-    .catch(() => selector.show('', ['Grok']));
+    .then(text => selector.show(text, [AI_SERVICES.GROK]))
+    .catch(() => selector.show('', [AI_SERVICES.GROK]));
 });
 
 // =============================================================================
