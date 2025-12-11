@@ -72,7 +72,7 @@ class AiSelector {
     const title = this.createTitle();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: promptLabel, input: promptInput } = this.createPromptInput();
+    const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
@@ -81,6 +81,7 @@ class AiSelector {
     dialog.appendChild(queryLabel);
     dialog.appendChild(queryInput);
     dialog.appendChild(promptLabel);
+    dialog.appendChild(promptSelect);
     dialog.appendChild(promptInput);
     dialog.appendChild(servicesLabel);
     dialog.appendChild(selectAllButtons);
@@ -206,9 +207,39 @@ class AiSelector {
       font-size: 14px;
     `;
 
+    const select = document.createElement('select');
+    select.style.cssText = `
+      width: 100%;
+      padding: 10px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 8px;
+      cursor: pointer;
+      box-sizing: border-box;
+    `;
+
+    const templates = [
+      { value: '', label: 'None' },
+      { value: 'provide a detailed summary', label: 'Detailed Summary' },
+      { value: 'provide short summary with external links to related resources', label: 'Short Summary with Links' },
+      { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
+      { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' }
+    ];
+
+    templates.forEach(template => {
+      const option = document.createElement('option');
+      option.value = template.value;
+      option.textContent = template.label;
+      select.appendChild(option);
+    });
+
     const input = document.createElement('textarea');
     input.rows = 2;
-    input.placeholder = 'e.g., provide a detailed summary';
+    input.placeholder = 'Custom prompt template...';
     input.style.cssText = `
       width: 100%;
       padding: 12px;
@@ -223,7 +254,12 @@ class AiSelector {
       box-sizing: border-box;
     `;
 
-    return { label, input };
+    // Update editable box when dropdown changes
+    select.addEventListener('change', () => {
+      input.value = select.value;
+    });
+
+    return { label, input, select };
   }
 
   createServicesCheckboxes(selectedServices = null) {
