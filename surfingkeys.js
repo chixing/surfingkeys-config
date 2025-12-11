@@ -185,7 +185,9 @@ class AiSelector {
 
     const templates = [
       { value: ' provide a detailed summary', label: 'Detailed Summary' },
-      { value: ' provide short summary with external links to related resources', label: 'Short Summary with Links' }
+      { value: ' provide short summary with external links to related resources', label: 'Short Summary with Links' },
+      { value: ' fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
+      { value: ' explain this in simple terms suitable for beginners', label: 'Explain Simply' }
     ];
 
     templates.forEach(template => {
