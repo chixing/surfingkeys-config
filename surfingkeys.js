@@ -53,6 +53,7 @@ const AI_SERVICES = {
 class AiSelector {
   constructor(config) {
     this.config = config;
+    this.lastQuery = null;
     this.services = [
       { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
       { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
@@ -100,7 +101,7 @@ class AiSelector {
       }
     });
 
-    this.setupEventListeners(overlay);
+    this.setupEventListeners(overlay, queryInput);
   }
 
   createOverlay() {
@@ -384,7 +385,7 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton(overlay);
+    const cancelBtn = this.createCancelButton(overlay, queryInput);
     const submitBtn = this.createSubmitButton(overlay, queryInput);
 
     container.appendChild(cancelBtn);
@@ -392,7 +393,7 @@ class AiSelector {
     return container;
   }
 
-  createCancelButton(overlay) {
+  createCancelButton(overlay, queryInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -412,7 +413,11 @@ class AiSelector {
     btn.onmouseleave = () => {
       btn.style.background = this.config.theme.colors.bgDark;
     };
-    btn.onclick = () => document.body.removeChild(overlay);
+    btn.onclick = () => {
+      // Save query for next time
+      this.lastQuery = queryInput.value;
+      document.body.removeChild(overlay);
+    };
     return btn;
   }
 
@@ -463,19 +468,24 @@ class AiSelector {
       return;
     }
 
+    // Save query for next time
+    this.lastQuery = queryInput.value;
+
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
     document.body.removeChild(overlay);
   }
 
-  setupEventListeners(overlay) {
+  setupEventListeners(overlay, queryInput) {
     overlay.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
       }
     });
 
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
+        this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
       }
     });
