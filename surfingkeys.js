@@ -342,16 +342,6 @@ const util = {
   delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
 
   /**
-   * Open multiple tabs from a list of URLs
-   * @param {string} query 
-   * @param {string[]} baseUrls 
-   */
-  openAiTabs: (query, baseUrls) => {
-    if (!query) return;
-    baseUrls.forEach(base => api.tabOpenLink(base + encodeURIComponent(query)));
-  },
-
-  /**
    * Dispatch a key event to an element
    * @param {HTMLElement} element 
    * @param {string} key 
