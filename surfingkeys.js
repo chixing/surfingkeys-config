@@ -478,8 +478,6 @@ class AiSelector {
   setupEventListeners(overlay, queryInput) {
     overlay.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        e.preventDefault();
-        e.stopPropagation();
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
       }
