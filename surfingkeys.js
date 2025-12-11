@@ -636,12 +636,18 @@ const util = {
 const aiSelector = new AiSelector(CONFIG);
 
 // Simulate user interaction on page load to enable focus/clipboard operations
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.click();
-});
-// Backup for pages that are already loaded
+// Use a hidden dummy element to avoid triggering page event listeners
+const activatePage = () => {
+  const dummy = document.createElement('div');
+  dummy.style.cssText = 'position:fixed;top:-1000px;left:-1000px;width:1px;height:1px;opacity:0;pointer-events:none;';
+  document.body.appendChild(dummy);
+  dummy.click();
+  document.body.removeChild(dummy);
+};
+
+document.addEventListener('DOMContentLoaded', activatePage);
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(() => document.body.click(), 100);
+  setTimeout(activatePage, 100);
 }
 
 // --- Navigation ---
