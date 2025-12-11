@@ -95,6 +95,8 @@ class AiSelector {
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         this.handleSubmit(overlay, queryInput);
@@ -103,6 +105,8 @@ class AiSelector {
 
     // ESC key closes dialog
     overlay.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      e.stopImmediatePropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
@@ -122,6 +126,7 @@ class AiSelector {
   createOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'sk-ai-selector-overlay';
+    overlay.tabIndex = -1;
     overlay.style.cssText = `
       position: fixed;
       top: 0;
