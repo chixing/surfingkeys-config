@@ -95,7 +95,7 @@ class AiSelector {
     setTimeout(() => {
       queryInput.focus();
       queryInput.select();
-    }, 50);
+    }, 500);
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
