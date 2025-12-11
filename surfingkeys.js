@@ -56,6 +56,257 @@ const util = {
   },
 
   /**
+   * Show AI selector dialog with checkboxes
+   * @param {string} initialQuery - Initial query text
+   */
+  showAiSelector: (initialQuery) => {
+    const aiServices = [
+      { name: 'ChatGPT', url: 'https://chatgpt.com/?q=', checked: true },
+      { name: 'Doubao', url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
+      { name: 'Alice (Yandex)', url: 'https://alice.yandex.ru/?q=', checked: true },
+      { name: 'Claude', url: 'https://claude.ai/new#sk_prompt=', checked: true },
+      { name: 'Gemini', url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
+      { name: 'Perplexity', url: 'https://perplexity.ai?q=', checked: true },
+      { name: 'Grok', url: 'https://grok.com?q=', checked: true },
+    ];
+
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'sk-ai-selector-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: ${CONFIG.theme.font};
+    `;
+
+    // Create dialog
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: ${CONFIG.theme.colors.bg};
+      border: 2px solid ${CONFIG.theme.colors.border};
+      border-radius: 8px;
+      padding: 24px;
+      min-width: 480px;
+      max-width: 600px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      color: ${CONFIG.theme.colors.fg};
+    `;
+
+    const title = document.createElement('h2');
+    title.textContent = 'Multi-AI Search';
+    title.style.cssText = `
+      margin: 0 0 16px 0;
+      color: ${CONFIG.theme.colors.accentFg};
+      font-size: 20px;
+      font-weight: 600;
+    `;
+
+    const queryLabel = document.createElement('label');
+    queryLabel.textContent = 'Search Query:';
+    queryLabel.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${CONFIG.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const queryInput = document.createElement('textarea');
+    queryInput.value = initialQuery;
+    queryInput.rows = 3;
+    queryInput.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      background: ${CONFIG.theme.colors.bgDark};
+      border: 1px solid ${CONFIG.theme.colors.border};
+      border-radius: 4px;
+      color: ${CONFIG.theme.colors.fg};
+      font-family: ${CONFIG.theme.font};
+      font-size: ${CONFIG.theme.fontSize};
+      margin-bottom: 20px;
+      resize: vertical;
+      box-sizing: border-box;
+    `;
+
+    const servicesLabel = document.createElement('label');
+    servicesLabel.textContent = 'Select AI Services:';
+    servicesLabel.style.cssText = `
+      display: block;
+      margin-bottom: 12px;
+      color: ${CONFIG.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const servicesContainer = document.createElement('div');
+    servicesContainer.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: ${CONFIG.theme.colors.bgDark};
+      border-radius: 4px;
+      border: 1px solid ${CONFIG.theme.colors.border};
+    `;
+
+    // Create checkboxes
+    aiServices.forEach((service, index) => {
+      const checkboxWrapper = document.createElement('label');
+      checkboxWrapper.style.cssText = `
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 6px;
+        border-radius: 4px;
+        transition: background 0.2s;
+      `;
+      checkboxWrapper.onmouseenter = () => {
+        checkboxWrapper.style.background = CONFIG.theme.colors.border;
+      };
+      checkboxWrapper.onmouseleave = () => {
+        checkboxWrapper.style.background = 'transparent';
+      };
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = service.checked;
+      checkbox.id = `sk-ai-${index}`;
+      checkbox.style.cssText = `
+        margin-right: 10px;
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        accent-color: ${CONFIG.theme.colors.accentFg};
+      `;
+
+      const label = document.createElement('span');
+      label.textContent = service.name;
+      label.style.cssText = `
+        color: ${CONFIG.theme.colors.fg};
+        font-size: 15px;
+        cursor: pointer;
+      `;
+
+      checkboxWrapper.appendChild(checkbox);
+      checkboxWrapper.appendChild(label);
+      servicesContainer.appendChild(checkboxWrapper);
+    });
+
+    // Buttons container
+    const buttonsContainer = document.createElement('div');
+    buttonsContainer.style.cssText = `
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    `;
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.cssText = `
+      padding: 10px 24px;
+      background: ${CONFIG.theme.colors.bgDark};
+      border: 1px solid ${CONFIG.theme.colors.border};
+      border-radius: 4px;
+      color: ${CONFIG.theme.colors.fg};
+      font-family: ${CONFIG.theme.font};
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    cancelBtn.onmouseenter = () => {
+      cancelBtn.style.background = CONFIG.theme.colors.border;
+    };
+    cancelBtn.onmouseleave = () => {
+      cancelBtn.style.background = CONFIG.theme.colors.bgDark;
+    };
+    cancelBtn.onclick = () => document.body.removeChild(overlay);
+
+    const submitBtn = document.createElement('button');
+    submitBtn.textContent = 'Open Selected AIs';
+    submitBtn.style.cssText = `
+      padding: 10px 24px;
+      background: ${CONFIG.theme.colors.accentFg};
+      border: 1px solid ${CONFIG.theme.colors.accentFg};
+      border-radius: 4px;
+      color: ${CONFIG.theme.colors.bgDark};
+      font-family: ${CONFIG.theme.font};
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    submitBtn.onmouseenter = () => {
+      submitBtn.style.background = CONFIG.theme.colors.mainFg;
+      submitBtn.style.borderColor = CONFIG.theme.colors.mainFg;
+    };
+    submitBtn.onmouseleave = () => {
+      submitBtn.style.background = CONFIG.theme.colors.accentFg;
+      submitBtn.style.borderColor = CONFIG.theme.colors.accentFg;
+    };
+    submitBtn.onclick = () => {
+      const query = queryInput.value.trim();
+      if (!query) {
+        queryInput.focus();
+        queryInput.style.borderColor = '#ff6b6b';
+        setTimeout(() => {
+          queryInput.style.borderColor = CONFIG.theme.colors.border;
+        }, 1000);
+        return;
+      }
+
+      const selectedUrls = aiServices
+        .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
+        .map(service => service.url);
+
+      if (selectedUrls.length === 0) {
+        alert('Please select at least one AI service');
+        return;
+      }
+
+      util.openAiTabs(query, selectedUrls);
+      document.body.removeChild(overlay);
+    };
+
+    buttonsContainer.appendChild(cancelBtn);
+    buttonsContainer.appendChild(submitBtn);
+
+    dialog.appendChild(title);
+    dialog.appendChild(queryLabel);
+    dialog.appendChild(queryInput);
+    dialog.appendChild(servicesLabel);
+    dialog.appendChild(servicesContainer);
+    dialog.appendChild(buttonsContainer);
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    // Focus query input and select all
+    queryInput.focus();
+    queryInput.select();
+
+    // Close on Escape
+    overlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(overlay);
+      }
+    });
+
+    // Close on overlay click
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+      }
+    });
+  },
+
+  /**
    * Dispatch a key event to an element
    * @param {HTMLElement} element 
    * @param {string} key 
