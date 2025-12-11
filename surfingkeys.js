@@ -91,10 +91,12 @@ class AiSelector {
     document.body.appendChild(overlay);
 
     // Delay focus to ensure DOM is rendered
-    setTimeout(() => {
-      queryInput.focus();
-      queryInput.select();
-    }, 200);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        queryInput.focus();
+        queryInput.setSelectionRange(0, queryInput.value.length);
+      });
+    });
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
