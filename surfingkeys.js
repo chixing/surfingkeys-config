@@ -91,8 +91,9 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Focus will be handled by updateQuery() after clipboard read
-    // or immediately if no clipboard operation is pending
+    // Immediate focus attempt (works when page has user activation)
+    queryInput.focus();
+    queryInput.select();
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
@@ -508,16 +509,16 @@ class AiSelector {
 
   updateQuery(text) {
     const input = document.getElementById('sk-ai-query-input');
+    if (input && !this.lastQuery) {
+      input.value = text;
+    }
+    // Always attempt focus/select after clipboard read completes
+    // This ensures focus even if initial attempt failed due to lack of user activation
     if (input) {
-      // Only update value if lastQuery is null (first time)
-      if (!this.lastQuery) {
-        input.value = text;
-      }
-      // Always focus and select after DOM is ready
       setTimeout(() => {
         input.focus();
         input.select();
-      }, 100);
+      }, 0);
     }
   }
 }
