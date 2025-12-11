@@ -36,7 +36,374 @@ Object.assign(settings, {
 });
 
 // =============================================================================
-// 2. UTILITIES
+// 2. AI SELECTOR CLASS
+// =============================================================================
+class AiSelector {
+  constructor(config) {
+    this.config = config;
+    this.services = [
+      { name: 'ChatGPT', url: 'https://chatgpt.com/?q=', checked: true },
+      { name: 'Doubao', url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
+      { name: 'Alice (Yandex)', url: 'https://alice.yandex.ru/?q=', checked: true },
+      { name: 'Claude', url: 'https://claude.ai/new#sk_prompt=', checked: true },
+      { name: 'Gemini', url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
+      { name: 'Perplexity', url: 'https://perplexity.ai?q=', checked: true },
+      { name: 'Grok', url: 'https://grok.com?q=', checked: true },
+    ];
+  }
+
+  show(initialQuery = '') {
+    const overlay = this.createOverlay();
+    const dialog = this.createDialog();
+    
+    const title = this.createTitle();
+    const { label: queryLabel, input: queryInput } = this.createQueryInput(initialQuery);
+    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes();
+    const selectAllButtons = this.createSelectAllButtons();
+    const buttonsContainer = this.createButtons(overlay, queryInput);
+
+    dialog.appendChild(title);
+    dialog.appendChild(queryLabel);
+    dialog.appendChild(queryInput);
+    dialog.appendChild(servicesLabel);
+    dialog.appendChild(selectAllButtons);
+    dialog.appendChild(servicesContainer);
+    dialog.appendChild(buttonsContainer);
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    queryInput.focus();
+    queryInput.select();
+
+    this.setupEventListeners(overlay);
+  }
+
+  createOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'sk-ai-selector-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: ${this.config.theme.font};
+    `;
+    return overlay;
+  }
+
+  createDialog() {
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: ${this.config.theme.colors.bg};
+      border: 2px solid ${this.config.theme.colors.border};
+      border-radius: 8px;
+      padding: 24px;
+      min-width: 480px;
+      max-width: 600px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      color: ${this.config.theme.colors.fg};
+    `;
+    return dialog;
+  }
+
+  createTitle() {
+    const title = document.createElement('h2');
+    title.textContent = 'Multi-AI Search';
+    title.style.cssText = `
+      margin: 0 0 16px 0;
+      color: ${this.config.theme.colors.accentFg};
+      font-size: 20px;
+      font-weight: 600;
+    `;
+    return title;
+  }
+
+  createQueryInput(initialQuery) {
+    const label = document.createElement('label');
+    label.textContent = 'Search Query:';
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const input = document.createElement('textarea');
+    input.value = initialQuery;
+    input.rows = 3;
+    input.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 20px;
+      resize: vertical;
+      box-sizing: border-box;
+    `;
+
+    return { label, input };
+  }
+
+  createServicesCheckboxes() {
+    const label = document.createElement('label');
+    label.textContent = 'Select AI Services:';
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'sk-services-container';
+    container.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: ${this.config.theme.colors.bgDark};
+      border-radius: 4px;
+      border: 1px solid ${this.config.theme.colors.border};
+    `;
+
+    this.services.forEach((service, index) => {
+      const checkboxWrapper = this.createCheckbox(service, index);
+      container.appendChild(checkboxWrapper);
+    });
+
+    return { label, container };
+  }
+
+  createSelectAllButtons() {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: flex-start;
+    `;
+
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = 'Select All';
+    selectAllBtn.type = 'button';
+    selectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.accentFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    selectAllBtn.onmouseenter = () => {
+      selectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    selectAllBtn.onmouseleave = () => {
+      selectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    selectAllBtn.onclick = () => {
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = true;
+      });
+    };
+
+    const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.textContent = 'Unselect All';
+    unselectAllBtn.type = 'button';
+    unselectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.infoFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    unselectAllBtn.onmouseenter = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    unselectAllBtn.onmouseleave = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    unselectAllBtn.onclick = () => {
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = false;
+      });
+    };
+
+    container.appendChild(selectAllBtn);
+    container.appendChild(unselectAllBtn);
+    return container;
+  }
+
+  createCheckbox(service, index) {
+    const wrapper = document.createElement('label');
+    wrapper.style.cssText = `
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    `;
+    wrapper.onmouseenter = () => {
+      wrapper.style.background = this.config.theme.colors.border;
+    };
+    wrapper.onmouseleave = () => {
+      wrapper.style.background = 'transparent';
+    };
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = service.checked;
+    checkbox.id = `sk-ai-${index}`;
+    checkbox.style.cssText = `
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: ${this.config.theme.colors.accentFg};
+    `;
+
+    const label = document.createElement('span');
+    label.textContent = service.name;
+    label.style.cssText = `
+      color: ${this.config.theme.colors.fg};
+      font-size: 15px;
+      cursor: pointer;
+    `;
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(label);
+    return wrapper;
+  }
+
+  createButtons(overlay, queryInput) {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    `;
+
+    const cancelBtn = this.createCancelButton(overlay);
+    const submitBtn = this.createSubmitButton(overlay, queryInput);
+
+    container.appendChild(cancelBtn);
+    container.appendChild(submitBtn);
+    return container;
+  }
+
+  createCancelButton(overlay) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Cancel';
+    btn.style.cssText = `
+      padding: 10px 24px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    btn.onmouseenter = () => {
+      btn.style.background = this.config.theme.colors.border;
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = this.config.theme.colors.bgDark;
+    };
+    btn.onclick = () => document.body.removeChild(overlay);
+    return btn;
+  }
+
+  createSubmitButton(overlay, queryInput) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Open Selected AIs';
+    btn.style.cssText = `
+      padding: 10px 24px;
+      background: ${this.config.theme.colors.accentFg};
+      border: 1px solid ${this.config.theme.colors.accentFg};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.bgDark};
+      font-family: ${this.config.theme.font};
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    btn.onmouseenter = () => {
+      btn.style.background = this.config.theme.colors.mainFg;
+      btn.style.borderColor = this.config.theme.colors.mainFg;
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = this.config.theme.colors.accentFg;
+      btn.style.borderColor = this.config.theme.colors.accentFg;
+    };
+    btn.onclick = () => this.handleSubmit(overlay, queryInput);
+    return btn;
+  }
+
+  handleSubmit(overlay, queryInput) {
+    const query = queryInput.value.trim();
+    if (!query) {
+      queryInput.focus();
+      queryInput.style.borderColor = '#ff6b6b';
+      setTimeout(() => {
+        queryInput.style.borderColor = this.config.theme.colors.border;
+      }, 1000);
+      return;
+    }
+
+    const selectedUrls = this.services
+      .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
+      .map(service => service.url);
+
+    if (selectedUrls.length === 0) {
+      alert('Please select at least one AI service');
+      return;
+    }
+
+    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
+    document.body.removeChild(overlay);
+  }
+
+  setupEventListeners(overlay) {
+    overlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.body.removeChild(overlay);
+      }
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        document.body.removeChild(overlay);
+      }
+    });
+  }
+}
+
+// =============================================================================
+// 3. UTILITIES
 // =============================================================================
 const util = {
   /**
@@ -44,16 +411,6 @@ const util = {
    * @param {number} ms 
    */
   delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
-
-  /**
-   * Open multiple tabs from a list of URLs
-   * @param {string} query 
-   * @param {string[]} baseUrls 
-   */
-  openAiTabs: (query, baseUrls) => {
-    if (!query) return;
-    baseUrls.forEach(base => api.tabOpenLink(base + encodeURIComponent(query)));
-  },
 
   /**
    * Dispatch a key event to an element
@@ -151,7 +508,7 @@ const util = {
 };
 
 // =============================================================================
-// 3. KEY MAPPINGS
+// 4. KEY MAPPINGS
 // =============================================================================
 
 // --- Navigation ---
@@ -208,19 +565,14 @@ api.mapkey('gq', 'Summarize current page in Gemini', () => {
 });
 
 api.mapkey('gr', 'Multi-AI Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => {
-      const query = prompt("Edit query:", text);
-      util.openAiTabs(query, AI_URLS);
-    })
-    .catch(() => {
-      const query = prompt("Enter query:");
-      util.openAiTabs(query, AI_URLS);
-    });
+    .then(text => selector.show(text))
+    .catch(() => selector.show(''));
 });
 
 // =============================================================================
-// 4. SITE-SPECIFIC AUTOMATION
+// 5. SITE-SPECIFIC AUTOMATION
 // =============================================================================
 
 const siteAutomations = [
@@ -295,7 +647,7 @@ siteAutomations.forEach(site => {
 });
 
 // =============================================================================
-// 5. SEARCH ENGINES
+// 6. SEARCH ENGINES
 // =============================================================================
 
 const searchEngines = {
@@ -339,7 +691,7 @@ Object.entries(searchEngines).forEach(([name, conf]) => {
 });
 
 // =============================================================================
-// 6. THEME & STYLING
+// 7. THEME & STYLING
 // =============================================================================
 
 // Hints
