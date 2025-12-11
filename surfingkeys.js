@@ -636,57 +636,49 @@ api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extension
 api.mapkey('aaa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aac', 'ChatGPT Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.CHATGPT]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aad', 'Doubao Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.DOUBAO]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aay', 'Alice Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.ALICE]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aae', 'Claude Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.CLAUDE]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aag', 'Gemini Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GEMINI]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aap', 'Perplexity Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.PERPLEXITY]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('aak', 'Grok Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GROK]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 // =============================================================================
