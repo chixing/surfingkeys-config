@@ -504,13 +504,10 @@ api.mapkey('gq', 'Summarize current page in Gemini', () => {
 });
 
 api.mapkey('gr', 'Multi-AI Search (Clipboard/Input)', () => {
+  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => {
-      util.showAiSelector(text);
-    })
-    .catch(() => {
-      util.showAiSelector('');
-    });
+    .then(text => selector.show(text))
+    .catch(() => selector.show(''));
 });
 
 // =============================================================================
