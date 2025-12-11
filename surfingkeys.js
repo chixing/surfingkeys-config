@@ -90,11 +90,8 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Focus and select text after DOM is rendered
-    requestAnimationFrame(() => {
-      queryInput.focus();
-      queryInput.setSelectionRange(0, queryInput.value.length);
-    });
+    queryInput.focus();
+    queryInput.select();
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
