@@ -222,6 +222,7 @@ class AiSelector {
     `;
 
     const templates = [
+      { value: '', label: 'None' },
       { value: ' provide a detailed summary', label: 'Detailed Summary' },
       { value: ' provide short summary with external links to related resources', label: 'Short Summary with Links' },
       { value: ' fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
