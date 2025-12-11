@@ -66,17 +66,28 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
+    console.log('[AI Selector] ========== SHOW METHOD CALLED ==========');
+    console.log('[AI Selector] initialQuery:', initialQuery);
+    console.log('[AI Selector] selectedServices:', selectedServices);
+    console.log('[AI Selector] lastQuery:', this.lastQuery);
+    
     const overlay = this.createOverlay();
+    console.log('[AI Selector] Overlay created');
     const dialog = this.createDialog();
+    console.log('[AI Selector] Dialog created');
     
     const title = this.createTitle();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
+    console.log('[AI Selector] Query text to use:', queryText);
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
+    console.log('[AI Selector] Query input created, ID:', queryInput.id);
+    console.log('[AI Selector] Query input value:', queryInput.value);
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
+    console.log('[AI Selector] Appending elements to dialog...');
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
     dialog.appendChild(queryInput);
@@ -88,15 +99,29 @@ class AiSelector {
     dialog.appendChild(servicesContainer);
     dialog.appendChild(buttonsContainer);
 
+    console.log('[AI Selector] Appending dialog to overlay...');
     overlay.appendChild(dialog);
+    console.log('[AI Selector] Appending overlay to body...');
     document.body.appendChild(overlay);
 
+    console.log('[AI Selector] DOM structure added, attempting to focus queryInput...');
+    console.log('[AI Selector] queryInput element:', queryInput);
+    console.log('[AI Selector] queryInput in DOM:', document.contains(queryInput));
+    console.log('[AI Selector] document.activeElement BEFORE focus:', document.activeElement);
+    
     queryInput.focus();
+    console.log('[AI Selector] queryInput.focus() called');
+    console.log('[AI Selector] document.activeElement AFTER focus:', document.activeElement);
+    console.log('[AI Selector] Is queryInput focused?', document.activeElement === queryInput);
+    
     queryInput.select();
+    console.log('[AI Selector] queryInput.select() called');
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
+      console.log('[AI Selector] Query input keydown:', e.key);
       if (e.key === 'Enter' && !e.shiftKey) {
+        console.log('[AI Selector] Enter pressed, submitting form...');
         e.preventDefault();
         this.handleSubmit(overlay, queryInput, promptInput);
       }
@@ -104,7 +129,9 @@ class AiSelector {
 
     // ESC key closes dialog
     overlay.addEventListener('keydown', (e) => {
+      console.log('[AI Selector] Overlay keydown:', e.key);
       if (e.key === 'Escape') {
+        console.log('[AI Selector] Escape pressed, closing dialog...');
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
       }
@@ -112,15 +139,21 @@ class AiSelector {
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
+      console.log('[AI Selector] Overlay clicked, target:', e.target);
       if (e.target === overlay) {
+        console.log('[AI Selector] Clicked outside dialog, closing...');
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
       }
     });
+    
+    console.log('[AI Selector] Event listeners attached');
+    console.log('[AI Selector] ========== SHOW METHOD COMPLETE ==========');
 
   }
 
   createOverlay() {
+    console.log('[AI Selector] Creating overlay...');
     const overlay = document.createElement('div');
     overlay.id = 'sk-ai-selector-overlay';
     overlay.style.cssText = `
@@ -136,6 +169,12 @@ class AiSelector {
       justify-content: center;
       font-family: ${this.config.theme.font};
     `;
+    
+    overlay.addEventListener('DOMNodeInserted', () => {
+      console.log('[AI Selector] Overlay inserted into DOM');
+    });
+    
+    console.log('[AI Selector] Overlay created with z-index:', overlay.style.zIndex);
     return overlay;
   }
 
@@ -167,6 +206,7 @@ class AiSelector {
   }
 
   createQueryInput(initialQuery) {
+    console.log('[AI Selector] createQueryInput called with:', initialQuery);
     const label = document.createElement('label');
     label.textContent = 'Search Query:';
     label.style.cssText = `
@@ -193,7 +233,19 @@ class AiSelector {
       resize: vertical;
       box-sizing: border-box;
     `;
+    
+    // Add event listeners for debugging
+    input.addEventListener('focus', () => {
+      console.log('[AI Selector] Query input FOCUS event fired');
+      console.log('[AI Selector] Current value:', input.value);
+    });
+    
+    input.addEventListener('blur', () => {
+      console.log('[AI Selector] Query input BLUR event fired');
+      console.log('[AI Selector] New activeElement:', document.activeElement);
+    });
 
+    console.log('[AI Selector] Query input element created with ID:', input.id);
     return { label, input };
   }
 
@@ -476,8 +528,11 @@ class AiSelector {
   }
 
   handleSubmit(overlay, queryInput, promptInput) {
+    console.log('[AI Selector] ========== HANDLE SUBMIT CALLED ==========');
     const query = queryInput.value.trim();
+    console.log('[AI Selector] Query value:', query);
     if (!query) {
+      console.log('[AI Selector] Empty query, requesting focus...');
       queryInput.focus();
       queryInput.style.borderColor = '#ff6b6b';
       setTimeout(() => {
@@ -489,29 +544,61 @@ class AiSelector {
     const selectedUrls = this.services
       .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
       .map(service => service.url);
+    console.log('[AI Selector] Selected URLs:', selectedUrls);
 
     if (selectedUrls.length === 0) {
+      console.log('[AI Selector] No services selected');
       alert('Please select at least one AI service');
       return;
     }
 
     // Save query for next time
     this.lastQuery = queryInput.value;
+    console.log('[AI Selector] Saved lastQuery:', this.lastQuery);
 
     // Combine query with prompt template if provided
     const promptTemplate = promptInput.value.trim();
+    console.log('[AI Selector] Prompt template:', promptTemplate);
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
+    console.log('[AI Selector] Combined query:', combinedQuery);
 
-    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
+    console.log('[AI Selector] Opening tabs...');
+    selectedUrls.forEach(url => {
+      const fullUrl = url + encodeURIComponent(combinedQuery);
+      console.log('[AI Selector] Opening:', fullUrl);
+      api.tabOpenLink(fullUrl);
+    });
+    console.log('[AI Selector] Removing overlay...');
     document.body.removeChild(overlay);
+    console.log('[AI Selector] ========== HANDLE SUBMIT COMPLETE ==========');
   }
 
   updateQuery(text) {
+    console.log('[AI Selector] ========== UPDATE QUERY CALLED ==========');
+    console.log('[AI Selector] updateQuery text:', text);
+    console.log('[AI Selector] lastQuery:', this.lastQuery);
+    
     const input = document.getElementById('sk-ai-query-input');
+    console.log('[AI Selector] Input element found:', input);
+    console.log('[AI Selector] Input element in DOM:', input ? document.contains(input) : 'N/A');
+    console.log('[AI Selector] Condition check - input exists:', !!input, ', lastQuery is null:', !this.lastQuery);
+    
     if (input && !this.lastQuery) {
+      console.log('[AI Selector] Updating query input with clipboard text...');
+      console.log('[AI Selector] Old value:', input.value);
       input.value = text;
+      console.log('[AI Selector] New value:', input.value);
+      console.log('[AI Selector] document.activeElement BEFORE updateQuery focus:', document.activeElement);
       input.focus();
+      console.log('[AI Selector] focus() called from updateQuery');
+      console.log('[AI Selector] document.activeElement AFTER updateQuery focus:', document.activeElement);
+      console.log('[AI Selector] Is input focused?', document.activeElement === input);
       input.select();
+      console.log('[AI Selector] select() called from updateQuery');
+    } else {
+      console.log('[AI Selector] NOT updating query - condition failed');
+      if (!input) console.log('[AI Selector] Reason: input not found');
+      if (this.lastQuery) console.log('[AI Selector] Reason: lastQuery exists:', this.lastQuery);
     }
   }
 }
@@ -649,15 +736,37 @@ api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-m
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
 api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
+  console.log('[Mapkey] ========== aa TRIGGERED ==========');
+  console.log('[Mapkey] Calling aiSelector.show with empty string...');
   aiSelector.show('');
+  console.log('[Mapkey] aiSelector.show returned, reading clipboard...');
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text));
+    .then(text => {
+      console.log('[Mapkey] Clipboard text received:', text);
+      console.log('[Mapkey] Calling aiSelector.updateQuery...');
+      aiSelector.updateQuery(text);
+      console.log('[Mapkey] aiSelector.updateQuery returned');
+    })
+    .catch(err => {
+      console.error('[Mapkey] Clipboard read error:', err);
+    });
 });
 
 api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', () => {
+  console.log('[Mapkey] ========== ac TRIGGERED ==========');
+  console.log('[Mapkey] Calling aiSelector.show with ChatGPT...');
   aiSelector.show('', [AI_SERVICES.CHATGPT]);
+  console.log('[Mapkey] aiSelector.show returned, reading clipboard...');
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text));
+    .then(text => {
+      console.log('[Mapkey] Clipboard text received:', text);
+      console.log('[Mapkey] Calling aiSelector.updateQuery...');
+      aiSelector.updateQuery(text);
+      console.log('[Mapkey] aiSelector.updateQuery returned');
+    })
+    .catch(err => {
+      console.error('[Mapkey] Clipboard read error:', err);
+    });
 });
 
 api.mapkey('ad', 'Doubao Search (Clipboard/Input)', () => {
