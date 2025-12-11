@@ -420,6 +420,7 @@ class AiSelector {
       // Save query for next time
       this.lastQuery = queryInput.value;
       document.body.removeChild(overlay);
+      api.enable();
     };
     return btn;
   }
@@ -476,6 +477,7 @@ class AiSelector {
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
     document.body.removeChild(overlay);
+    api.enable();
   }
 
   setupEventListeners(overlay, queryInput) {
@@ -483,6 +485,7 @@ class AiSelector {
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
+        api.enable();
       }
     });
 
@@ -490,6 +493,7 @@ class AiSelector {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
+        api.enable();
       }
     });
   }
