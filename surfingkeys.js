@@ -589,14 +589,6 @@ api.iunmap("<Ctrl-a>");
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-api.mapkey('gw', 'Yank link and summarize in AI', () => {
-  api.Hints.create("a[href]", (element) => {
-    const link = element.href;
-    const selector = new AiSelector(CONFIG);
-    selector.show(link);
-  });
-});
-
 api.mapkey('gr', 'Multi-AI Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
