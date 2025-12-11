@@ -649,6 +649,10 @@ api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-m
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
 api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
+  // Request focus immediately to establish user activation
+  if (document.activeElement) {
+    document.activeElement.blur();
+  }
   aiSelector.show('');
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
