@@ -493,7 +493,7 @@ class AiSelector {
 
   updateQuery(text) {
     const input = document.getElementById('sk-ai-query-input');
-    if (input) {
+    if (input && !this.lastQuery) {
       input.value = text;
       input.focus();
       input.select();
