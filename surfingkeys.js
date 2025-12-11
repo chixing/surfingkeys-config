@@ -72,16 +72,17 @@ class AiSelector {
     const title = this.createTitle();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
+    const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons(overlay, queryInput);
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
     dialog.appendChild(queryInput);
-    dialog.appendChild(templateLabel);
-    dialog.appendChild(templateSelect);
+    dialog.appendChild(promptLabel);
+    dialog.appendChild(promptSelect);
+    dialog.appendChild(promptInput);
     dialog.appendChild(servicesLabel);
     dialog.appendChild(selectAllButtons);
     dialog.appendChild(servicesContainer);
@@ -97,7 +98,7 @@ class AiSelector {
     queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        this.handleSubmit(overlay, queryInput);
+        this.handleSubmit(overlay, queryInput, promptInput);
       }
     });
 
@@ -196,9 +197,9 @@ class AiSelector {
     return { label, input };
   }
 
-  createPromptTemplateDropdown(queryInput) {
+  createPromptInput() {
     const label = document.createElement('label');
-    label.textContent = 'Prompt Template:';
+    label.textContent = 'Prompt Template (optional):';
     label.style.cssText = `
       display: block;
       margin-bottom: 8px;
@@ -216,16 +217,17 @@ class AiSelector {
       color: ${this.config.theme.colors.fg};
       font-family: ${this.config.theme.font};
       font-size: ${this.config.theme.fontSize};
-      margin-bottom: 20px;
+      margin-bottom: 8px;
       cursor: pointer;
       box-sizing: border-box;
     `;
 
     const templates = [
-      { value: ' provide a detailed summary', label: 'Detailed Summary' },
-      { value: ' provide short summary with external links to related resources', label: 'Short Summary with Links' },
-      { value: ' fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
-      { value: ' explain this in simple terms suitable for beginners', label: 'Explain Simply' }
+      { value: '', label: 'None' },
+      { value: 'provide a detailed summary', label: 'Detailed Summary' },
+      { value: 'provide short summary with external links to related resources', label: 'Short Summary with Links' },
+      { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
+      { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' }
     ];
 
     templates.forEach(template => {
@@ -235,20 +237,29 @@ class AiSelector {
       select.appendChild(option);
     });
 
-    // Update query when template changes
+    const input = document.createElement('textarea');
+    input.rows = 2;
+    input.placeholder = 'Custom prompt template...';
+    input.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 20px;
+      resize: vertical;
+      box-sizing: border-box;
+    `;
+
+    // Update editable box when dropdown changes
     select.addEventListener('change', () => {
-      const currentQuery = queryInput.value.trim();
-      // Remove old template if exists
-      const baseQuery = currentQuery
-        .replace(/ provide a detailed summary$/, '')
-        .replace(/ provide short summary with external links to related resources$/, '')
-        .replace(/ fact-check the key claims and provide sources$/, '')
-        .replace(/ explain this in simple terms suitable for beginners$/, '')
-        .trim();
-      queryInput.value = baseQuery + select.value;
+      input.value = select.value;
     });
 
-    return { label, select };
+    return { label, input, select };
   }
 
   createServicesCheckboxes(selectedServices = null) {
@@ -393,7 +404,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(overlay, queryInput) {
+  createButtons(overlay, queryInput, promptInput) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -402,7 +413,7 @@ class AiSelector {
     `;
 
     const cancelBtn = this.createCancelButton(overlay, queryInput);
-    const submitBtn = this.createSubmitButton(overlay, queryInput);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
@@ -437,7 +448,7 @@ class AiSelector {
     return btn;
   }
 
-  createSubmitButton(overlay, queryInput) {
+  createSubmitButton(overlay, queryInput, promptInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -460,11 +471,11 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(overlay, queryInput);
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
     return btn;
   }
 
-  handleSubmit(overlay, queryInput) {
+  handleSubmit(overlay, queryInput, promptInput) {
     const query = queryInput.value.trim();
     if (!query) {
       queryInput.focus();
@@ -487,16 +498,23 @@ class AiSelector {
     // Save query for next time
     this.lastQuery = queryInput.value;
 
-    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
+    // Combine query with prompt template if provided
+    const promptTemplate = promptInput.value.trim();
+    const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
+
+    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
     document.body.removeChild(overlay);
   }
 
   updateQuery(text) {
     const input = document.getElementById('sk-ai-query-input');
-    if (input) {
+    if (input && !this.lastQuery) {
       input.value = text;
-      input.focus();
-      input.select();
+      // Use setTimeout to avoid race conditions with async clipboard operations
+      setTimeout(() => {
+        input.focus();
+        input.select();
+      }, 50);
     }
   }
 }
@@ -633,60 +651,52 @@ api.iunmap("<Ctrl-a>");
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-api.mapkey('aaa', 'Multi-AI Search (Clipboard/Input)', () => {
+api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aac', 'ChatGPT Search (Clipboard/Input)', () => {
+api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.CHATGPT]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aad', 'Doubao Search (Clipboard/Input)', () => {
+api.mapkey('ad', 'Doubao Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.DOUBAO]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aay', 'Alice Search (Clipboard/Input)', () => {
+api.mapkey('ay', 'Alice Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.ALICE]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aae', 'Claude Search (Clipboard/Input)', () => {
+api.mapkey('ae', 'Claude Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.CLAUDE]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aag', 'Gemini Search (Clipboard/Input)', () => {
+api.mapkey('ag', 'Gemini Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GEMINI]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aap', 'Perplexity Search (Clipboard/Input)', () => {
+api.mapkey('ap', 'Perplexity Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.PERPLEXITY]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
-api.mapkey('aak', 'Grok Search (Clipboard/Input)', () => {
+api.mapkey('ak', 'Grok Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GROK]);
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {});
+    .then(text => aiSelector.updateQuery(text));
 });
 
 // =============================================================================
