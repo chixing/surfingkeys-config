@@ -174,6 +174,19 @@ class AiSelector {
       console.log('[AI Selector] Overlay inserted into DOM');
     });
     
+    // Track any focus events on the overlay itself
+    overlay.addEventListener('focus', (e) => {
+      console.log('[AI Selector] ⚠️ Overlay received focus event! Target:', e.target);
+    }, true);
+    
+    overlay.addEventListener('focusin', (e) => {
+      console.log('[AI Selector] Overlay focusin - target:', e.target.tagName, e.target.id);
+    }, true);
+    
+    overlay.addEventListener('focusout', (e) => {
+      console.log('[AI Selector] ⚠️ Overlay focusout - target:', e.target.tagName, e.target.id, 'relatedTarget:', e.relatedTarget);
+    }, true);
+    
     console.log('[AI Selector] Overlay created with z-index:', overlay.style.zIndex);
     return overlay;
   }
@@ -235,14 +248,20 @@ class AiSelector {
     `;
     
     // Add event listeners for debugging
-    input.addEventListener('focus', () => {
+    input.addEventListener('focus', (e) => {
       console.log('[AI Selector] Query input FOCUS event fired');
+      console.log('[AI Selector] Focus event target:', e.target);
+      console.log('[AI Selector] Focus event relatedTarget:', e.relatedTarget);
       console.log('[AI Selector] Current value:', input.value);
     });
     
-    input.addEventListener('blur', () => {
-      console.log('[AI Selector] Query input BLUR event fired');
+    input.addEventListener('blur', (e) => {
+      console.log('[AI Selector] ⚠️ Query input BLUR event fired!');
+      console.log('[AI Selector] Blur event target:', e.target);
+      console.log('[AI Selector] Blur event relatedTarget:', e.relatedTarget);
       console.log('[AI Selector] New activeElement:', document.activeElement);
+      console.log('[AI Selector] Blur stack trace:');
+      console.trace();
     });
 
     console.log('[AI Selector] Query input element created with ID:', input.id);
@@ -589,12 +608,31 @@ class AiSelector {
       input.value = text;
       console.log('[AI Selector] New value:', input.value);
       console.log('[AI Selector] document.activeElement BEFORE updateQuery focus:', document.activeElement);
-      input.focus();
-      console.log('[AI Selector] focus() called from updateQuery');
-      console.log('[AI Selector] document.activeElement AFTER updateQuery focus:', document.activeElement);
-      console.log('[AI Selector] Is input focused?', document.activeElement === input);
-      input.select();
-      console.log('[AI Selector] select() called from updateQuery');
+      
+      // Use setTimeout to avoid race conditions with async operations
+      console.log('[AI Selector] Scheduling focus/select with setTimeout...');
+      setTimeout(() => {
+        console.log('[AI Selector] setTimeout callback executing...');
+        console.log('[AI Selector] activeElement before setTimeout focus:', document.activeElement);
+        input.focus();
+        console.log('[AI Selector] focus() called from updateQuery (in setTimeout)');
+        console.log('[AI Selector] activeElement after setTimeout focus:', document.activeElement);
+        console.log('[AI Selector] Is input focused?', document.activeElement === input);
+        input.select();
+        console.log('[AI Selector] select() called from updateQuery (in setTimeout)');
+        
+        // Double-check after a brief moment
+        setTimeout(() => {
+          console.log('[AI Selector] Final focus check after 50ms:');
+          console.log('[AI Selector] activeElement:', document.activeElement);
+          console.log('[AI Selector] Is still focused?', document.activeElement === input);
+          if (document.activeElement !== input) {
+            console.log('[AI Selector] 🔧 Focus was lost! Re-focusing...');
+            input.focus();
+            input.select();
+          }
+        }, 50);
+      }, 0);
     } else {
       console.log('[AI Selector] NOT updating query - condition failed');
       if (!input) console.log('[AI Selector] Reason: input not found');
@@ -714,6 +752,25 @@ const util = {
 
 // Create a single shared AiSelector instance
 const aiSelector = new AiSelector(CONFIG);
+
+// Global focus debugging
+let focusDebugEnabled = false;
+window.enableAiSelectorFocusDebug = () => {
+  focusDebugEnabled = true;
+  document.addEventListener('focus', (e) => {
+    if (focusDebugEnabled) {
+      console.log('[Global Focus] Focus event on:', e.target.tagName, e.target.id, e.target.className);
+    }
+  }, true);
+  
+  document.addEventListener('blur', (e) => {
+    if (focusDebugEnabled) {
+      console.log('[Global Blur] Blur event on:', e.target.tagName, e.target.id, e.target.className);
+    }
+  }, true);
+  
+  console.log('[Focus Debug] Global focus/blur tracking enabled');
+};
 
 // --- Navigation ---
 api.map('K', '[['); // Previous page
