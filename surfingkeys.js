@@ -531,17 +531,6 @@ api.iunmap("<Ctrl-a>");
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-// AI Workflows
-const AI_URLS = [
-  "https://chatgpt.com/?q=",
-  "https://www.doubao.com/chat#sk_prompt=",
-  "https://alice.yandex.ru/?q=",
-  "https://claude.ai/new#sk_prompt=",
-  "https://gemini.google.com/app#sk_prompt=",
-  "https://perplexity.ai?q=",
-  "https://grok.com?q=",
-];
-
 api.mapkey('gw', 'Yank link and summarize in Gemini', () => {
   api.Hints.create("a[href]", (element) => {
     const link = element.href;
