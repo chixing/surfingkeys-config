@@ -58,6 +58,7 @@ class AiSelector {
     
     const title = this.createTitle();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(initialQuery);
+    const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes();
     const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput);
@@ -65,6 +66,8 @@ class AiSelector {
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
     dialog.appendChild(queryInput);
+    dialog.appendChild(templateLabel);
+    dialog.appendChild(templateSelect);
     dialog.appendChild(servicesLabel);
     dialog.appendChild(selectAllButtons);
     dialog.appendChild(servicesContainer);
@@ -153,6 +156,57 @@ class AiSelector {
     `;
 
     return { label, input };
+  }
+
+  createPromptTemplateDropdown(queryInput) {
+    const label = document.createElement('label');
+    label.textContent = 'Prompt Template:';
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const select = document.createElement('select');
+    select.style.cssText = `
+      width: 100%;
+      padding: 10px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 20px;
+      cursor: pointer;
+      box-sizing: border-box;
+    `;
+
+    const templates = [
+      { value: ' provide a detailed summary', label: 'Detailed Summary' },
+      { value: ' provide short summary with external links to related resources', label: 'Short Summary with Links' }
+    ];
+
+    templates.forEach(template => {
+      const option = document.createElement('option');
+      option.value = template.value;
+      option.textContent = template.label;
+      select.appendChild(option);
+    });
+
+    // Update query when template changes
+    select.addEventListener('change', () => {
+      const currentQuery = queryInput.value.trim();
+      // Remove old template if exists
+      const baseQuery = currentQuery
+        .replace(/ provide a detailed summary$/, '')
+        .replace(/ provide short summary with external links to related resources$/, '')
+        .trim();
+      queryInput.value = baseQuery + select.value;
+    });
+
+    return { label, select };
   }
 
   createServicesCheckboxes() {
@@ -535,7 +589,7 @@ api.mapkey('gw', 'Yank link and summarize in AI', () => {
   api.Hints.create("a[href]", (element) => {
     const link = element.href;
     const selector = new AiSelector(CONFIG);
-    selector.show(link + " provide a detailed summary");
+    selector.show(link);
   });
 });
 
