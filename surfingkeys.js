@@ -88,7 +88,6 @@ class AiSelector {
     dialog.appendChild(buttonsContainer);
 
     overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
 
     queryInput.focus();
     queryInput.select();
@@ -116,6 +115,8 @@ class AiSelector {
         document.body.removeChild(overlay);
       }
     });
+
+    document.body.appendChild(overlay);
   }
 
   createOverlay() {
