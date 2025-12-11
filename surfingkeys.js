@@ -160,12 +160,13 @@ class AiSelector {
     label.textContent = 'Select AI Services:';
     label.style.cssText = `
       display: block;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
       color: ${this.config.theme.colors.mainFg};
       font-size: 14px;
     `;
 
     const container = document.createElement('div');
+    container.id = 'sk-services-container';
     container.style.cssText = `
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -183,6 +184,74 @@ class AiSelector {
     });
 
     return { label, container };
+  }
+
+  createSelectAllButtons() {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: flex-start;
+    `;
+
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = 'Select All';
+    selectAllBtn.type = 'button';
+    selectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.accentFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    selectAllBtn.onmouseenter = () => {
+      selectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    selectAllBtn.onmouseleave = () => {
+      selectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    selectAllBtn.onclick = () => {
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = true;
+      });
+    };
+
+    const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.textContent = 'Unselect All';
+    unselectAllBtn.type = 'button';
+    unselectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.infoFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    unselectAllBtn.onmouseenter = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    unselectAllBtn.onmouseleave = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    unselectAllBtn.onclick = () => {
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = false;
+      });
+    };
+
+    container.appendChild(selectAllBtn);
+    container.appendChild(unselectAllBtn);
+    return container;
   }
 
   createCheckbox(service, index) {
