@@ -325,7 +325,7 @@ const searchEngines = {
     })
   },
   libhunt: { alias: "l", search: "https://www.libhunt.com/search?query=" },
-  chatgpt: { alias: "z", search: "https://chatgpt.com/?q=" },
+  // chatgpt: { alias: "z", search: "https://chatgpt.com/?q=" },
   yandex:  { alias: "n", search: "https://yandex.com/search/?text=" },
   skidrow: { alias: "k", search: "https://www.skidrowreloaded.com/?s=" },
   anna:    { alias: "c", search: "https://www.annas-archive.org/search?q=" },
