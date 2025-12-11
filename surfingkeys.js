@@ -326,10 +326,8 @@ class AiSelector {
       selectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     selectAllBtn.onclick = () => {
-      this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`);
-        if (checkbox) checkbox.checked = true;
-      });
+      const checkboxes = this.servicesContainer.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = true);
     };
 
     const unselectAllBtn = document.createElement('button');
@@ -353,10 +351,8 @@ class AiSelector {
       unselectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     unselectAllBtn.onclick = () => {
-      this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`);
-        if (checkbox) checkbox.checked = false;
-      });
+      const checkboxes = this.servicesContainer.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach(cb => cb.checked = false);
     };
 
     container.appendChild(selectAllBtn);
