@@ -543,16 +543,6 @@ api.mapkey('gw', 'Yank link and summarize in Gemini', () => {
   });
 });
 
-api.mapkey('gq', 'Summarize current page in Gemini', () => {
-  const link = window.location.href;
-  const defaultPrompt = " provide a detailed summary";
-  const userInput = prompt("Edit prompt:", defaultPrompt);
-  if (userInput !== null) {
-    const targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + " " + userInput);
-    api.tabOpenLink(targetUrl);
-  }
-});
-
 api.mapkey('gr', 'Multi-AI Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
