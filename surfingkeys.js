@@ -101,7 +101,21 @@ class AiSelector {
       }
     });
 
-    this.setupEventListeners(overlay, queryInput);
+    // ESC key closes dialog
+    overlay.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
+      }
+    });
+
+    // Click outside closes dialog
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
+      }
+    });
   }
 
   createOverlay() {
