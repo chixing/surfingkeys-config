@@ -635,15 +635,6 @@ const util = {
 // Create a single shared AiSelector instance
 const aiSelector = new AiSelector(CONFIG);
 
-// Simulate user interaction on page load to enable focus/clipboard operations
-document.addEventListener('DOMContentLoaded', () => {
-  document.body.click();
-});
-// Backup for pages that are already loaded
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  setTimeout(() => document.body.click(), 100);
-}
-
 // --- Navigation ---
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
