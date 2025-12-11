@@ -204,6 +204,8 @@ class AiSelector {
       const baseQuery = currentQuery
         .replace(/ provide a detailed summary$/, '')
         .replace(/ provide short summary with external links to related resources$/, '')
+        .replace(/ fact-check the key claims and provide sources$/, '')
+        .replace(/ explain this in simple terms suitable for beginners$/, '')
         .trim();
       queryInput.value = baseQuery + select.value;
     });
