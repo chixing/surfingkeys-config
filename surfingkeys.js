@@ -66,11 +66,6 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
-    // Create a host element with Shadow DOM to isolate from SurfingKeys
-    const host = document.createElement('div');
-    host.id = 'sk-ai-selector-host';
-    const shadow = host.attachShadow({ mode: 'closed' });
-    
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -79,8 +74,11 @@ class AiSelector {
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
-    const selectAllButtons = this.createSelectAllButtons(shadow);
-    const buttonsContainer = this.createButtons(host, queryInput);
+    const selectAllButtons = this.createSelectAllButtons();
+    const buttonsContainer = this.createButtons(overlay, queryInput);
+    
+    // Store reference for checkbox access
+    this.servicesContainer = servicesContainer;
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -93,29 +91,33 @@ class AiSelector {
     dialog.appendChild(buttonsContainer);
 
     overlay.appendChild(dialog);
-    shadow.appendChild(overlay);
-    document.body.appendChild(host);
+    document.body.appendChild(overlay);
 
+    // Use Front.showPopup pattern - blur active element first
+    if (document.activeElement) {
+      document.activeElement.blur();
+    }
+    
     queryInput.focus();
     queryInput.select();
 
-    // Enter key submits the form
+    // Enter key submits the form (capture phase)
     queryInput.addEventListener('keydown', (e) => {
       e.stopPropagation();
       e.stopImmediatePropagation();
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        this.handleSubmit(host, queryInput, shadow);
+        this.handleSubmit(overlay, queryInput);
       }
     }, true);
 
-    // ESC key closes dialog
+    // ESC key closes dialog (capture phase)
     overlay.addEventListener('keydown', (e) => {
       e.stopPropagation();
       e.stopImmediatePropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
-        document.body.removeChild(host);
+        document.body.removeChild(overlay);
       }
     }, true);
 
@@ -123,7 +125,7 @@ class AiSelector {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
-        document.body.removeChild(host);
+        document.body.removeChild(overlay);
       }
     });
 
