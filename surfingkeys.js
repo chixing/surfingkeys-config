@@ -627,59 +627,51 @@ api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-m
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
 api.mapkey('aaa', 'Multi-AI Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text))
-    .catch(() => selector.show(''));
+    .then(text => aiSelector.show(text))
+    .catch(() => aiSelector.show(''));
 });
 
 api.mapkey('aac', 'ChatGPT Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.CHATGPT]))
-    .catch(() => selector.show('', [AI_SERVICES.CHATGPT]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.CHATGPT]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.CHATGPT]));
 });
 
 api.mapkey('aad', 'Doubao Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.DOUBAO]))
-    .catch(() => selector.show('', [AI_SERVICES.DOUBAO]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.DOUBAO]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.DOUBAO]));
 });
 
 api.mapkey('aay', 'Alice Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.ALICE]))
-    .catch(() => selector.show('', [AI_SERVICES.ALICE]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.ALICE]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.ALICE]));
 });
 
 api.mapkey('aae', 'Claude Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.CLAUDE]))
-    .catch(() => selector.show('', [AI_SERVICES.CLAUDE]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.CLAUDE]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.CLAUDE]));
 });
 
 api.mapkey('aag', 'Gemini Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.GEMINI]))
-    .catch(() => selector.show('', [AI_SERVICES.GEMINI]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.GEMINI]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.GEMINI]));
 });
 
 api.mapkey('aap', 'Perplexity Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.PERPLEXITY]))
-    .catch(() => selector.show('', [AI_SERVICES.PERPLEXITY]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.PERPLEXITY]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.PERPLEXITY]));
 });
 
 api.mapkey('aak', 'Grok Search (Clipboard/Input)', () => {
-  const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
-    .then(text => selector.show(text, [AI_SERVICES.GROK]))
-    .catch(() => selector.show('', [AI_SERVICES.GROK]));
+    .then(text => aiSelector.show(text, [AI_SERVICES.GROK]))
+    .catch(() => aiSelector.show('', [AI_SERVICES.GROK]));
 });
 
 // =============================================================================
