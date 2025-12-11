@@ -597,7 +597,7 @@ api.mapkey('gww', 'Multi-AI Search (Clipboard/Input)', () => {
     .catch(() => selector.show(''));
 });
 
-api.mapkey('gw', 'ChatGPT-only Search (Clipboard/Input)', () => {
+api.mapkey('gwc', 'ChatGPT-only Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, ['ChatGPT']))
