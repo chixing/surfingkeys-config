@@ -511,7 +511,7 @@ api.mapkey('gr', 'Multi-AI Search (Clipboard/Input)', () => {
 });
 
 // =============================================================================
-// 4. SITE-SPECIFIC AUTOMATION
+// 5. SITE-SPECIFIC AUTOMATION
 // =============================================================================
 
 const siteAutomations = [
