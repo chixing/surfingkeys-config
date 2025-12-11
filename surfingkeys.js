@@ -91,11 +91,8 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Use setTimeout to avoid race conditions with focus management
-    setTimeout(() => {
-      queryInput.focus();
-      queryInput.select();
-    }, 50);
+    // Focus will be handled by updateQuery() after clipboard read
+    // or immediately if no clipboard operation is pending
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
