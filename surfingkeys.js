@@ -488,22 +488,6 @@ class AiSelector {
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
     document.body.removeChild(overlay);
   }
-
-  setupEventListeners(overlay, queryInput) {
-    overlay.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
-      }
-    });
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
-      }
-    });
-  }
 }
 
 // =============================================================================
