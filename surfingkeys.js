@@ -603,6 +603,9 @@ const util = {
 // 4. KEY MAPPINGS
 // =============================================================================
 
+// Create a single shared AiSelector instance
+const aiSelector = new AiSelector(CONFIG);
+
 // --- Navigation ---
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
