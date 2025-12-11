@@ -651,11 +651,7 @@ api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extension
 api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
-    .then(text => aiSelector.updateQuery(text))
-    .catch(() => {
-      // Clipboard permission denied - likely needs user gesture
-      aiSelector.updateQuery('');
-    });
+    .then(text => aiSelector.updateQuery(text));
 });
 
 api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', () => {
