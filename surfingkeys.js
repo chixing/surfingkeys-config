@@ -644,7 +644,7 @@ api.mapkey('aad', 'Doubao Search (Clipboard/Input)', () => {
     .catch(() => selector.show('', [AI_SERVICES.DOUBAO]));
 });
 
-api.mapkey('aai', 'Alice Search (Clipboard/Input)', () => {
+api.mapkey('aay', 'Alice Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.ALICE]))
