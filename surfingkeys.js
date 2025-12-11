@@ -91,6 +91,7 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+
     queryInput.focus();
     queryInput.select();
 
