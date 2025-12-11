@@ -90,14 +90,8 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Disable SurfingKeys to prevent it from intercepting events
-    api.disable();
-
-    // Focus with a small delay to ensure DOM is ready
-    setTimeout(() => {
-      queryInput.focus();
-      queryInput.select();
-    }, 50);
+    queryInput.focus();
+    queryInput.select();
 
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
@@ -112,7 +106,6 @@ class AiSelector {
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
-        api.enable();
       }
     });
 
@@ -121,7 +114,6 @@ class AiSelector {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
-        api.enable();
       }
     });
 
@@ -440,7 +432,6 @@ class AiSelector {
       // Save query for next time
       this.lastQuery = queryInput.value;
       document.body.removeChild(overlay);
-      api.enable();
     };
     return btn;
   }
@@ -497,7 +488,6 @@ class AiSelector {
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(query)));
     document.body.removeChild(overlay);
-    api.enable();
   }
 }
 
