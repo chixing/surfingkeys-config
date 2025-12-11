@@ -54,7 +54,6 @@ class AiSelector {
   constructor(config) {
     this.config = config;
     this.lastQuery = null;
-    this.firstShow = true;
     this.services = [
       { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
       { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
@@ -67,21 +66,6 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
-    // Workaround: First show doesn't focus properly, so close and reopen
-    if (this.firstShow) {
-      this.firstShow = false;
-      this._show(initialQuery, selectedServices);
-      setTimeout(() => {
-        const overlay = document.getElementById('sk-ai-selector-overlay');
-        if (overlay) overlay.remove();
-        this._show(initialQuery, selectedServices);
-      }, 10);
-      return;
-    }
-    this._show(initialQuery, selectedServices);
-  }
-
-  _show(initialQuery = '', selectedServices = null) {
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -106,9 +90,9 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    // Setup event listeners first
-    this.setupEventListeners(overlay, queryInput);
-    
+    queryInput.focus();
+    queryInput.select();
+
     // Enter key submits the form
     queryInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -117,13 +101,7 @@ class AiSelector {
       }
     });
 
-    // Delay focus to ensure DOM is rendered and event listeners are ready
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        queryInput.focus();
-        queryInput.setSelectionRange(0, queryInput.value.length);
-      });
-    });
+    this.setupEventListeners(overlay, queryInput);
   }
 
   createOverlay() {
