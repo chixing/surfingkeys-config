@@ -623,7 +623,7 @@ api.iunmap("<Ctrl-a>");
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-api.mapkey('aaw', 'Multi-AI Search (Clipboard/Input)', () => {
+api.mapkey('aaa', 'Multi-AI Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text))
@@ -644,7 +644,7 @@ api.mapkey('aad', 'Doubao Search (Clipboard/Input)', () => {
     .catch(() => selector.show('', [AI_SERVICES.DOUBAO]));
 });
 
-api.mapkey('aaa', 'Alice Search (Clipboard/Input)', () => {
+api.mapkey('aai', 'Alice Search (Clipboard/Input)', () => {
   const selector = new AiSelector(CONFIG);
   navigator.clipboard.readText()
     .then(text => selector.show(text, [AI_SERVICES.ALICE]))
