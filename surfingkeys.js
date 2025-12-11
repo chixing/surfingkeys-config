@@ -531,15 +531,11 @@ api.iunmap("<Ctrl-a>");
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-api.mapkey('gw', 'Yank link and summarize in Gemini', () => {
+api.mapkey('gw', 'Yank link and summarize in AI', () => {
   api.Hints.create("a[href]", (element) => {
     const link = element.href;
-    const defaultPrompt = " provide a detailed summary";
-    const userInput = prompt("Edit prompt:", defaultPrompt);
-    if (userInput !== null) {
-      const targetUrl = "https://gemini.google.com/app#sk_prompt=" + encodeURIComponent(link + " " + userInput);
-      api.tabOpenLink(targetUrl);
-    }
+    const selector = new AiSelector(CONFIG);
+    selector.show(link + " provide a detailed summary");
   });
 });
 
