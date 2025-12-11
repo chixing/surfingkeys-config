@@ -69,7 +69,8 @@ class AiSelector {
     const dialog = this.createDialog();
     
     const title = this.createTitle();
-    const { label: queryLabel, input: queryInput } = this.createQueryInput(initialQuery);
+    const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
+    const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: templateLabel, select: templateSelect } = this.createPromptTemplateDropdown(queryInput);
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
