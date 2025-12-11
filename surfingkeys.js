@@ -508,9 +508,12 @@ class AiSelector {
 
   updateQuery(text) {
     const input = document.getElementById('sk-ai-query-input');
-    if (input && !this.lastQuery) {
-      input.value = text;
-      // Use setTimeout to avoid race conditions with async clipboard operations
+    if (input) {
+      // Only update value if lastQuery is null (first time)
+      if (!this.lastQuery) {
+        input.value = text;
+      }
+      // Always focus and select after DOM is ready
       setTimeout(() => {
         input.focus();
         input.select();
