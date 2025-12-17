@@ -763,6 +763,19 @@ const siteAutomations = [
     }
   }
 ];
+{
+  host: "perplexity.ai",
+  run: () => util.injectPrompt({
+    selector: 'textarea[placeholder], div[contenteditable="true"]',
+    useValue: true,
+    dispatchEvents: true,
+    submitSelector: () => 
+      document.querySelector('button[type="submit"]') ||
+      document.querySelector('button.send-button') ||
+      document.querySelector('button[aria-label*="send" i]') ||
+      document.querySelector('button svg[class*="send"]')?.closest('button')
+  })
+},
 
 // Execute matching automation
 const currentHost = window.location.hostname;
