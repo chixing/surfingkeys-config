@@ -646,84 +646,70 @@ api.iunmap("<Ctrl-a>");
 // --- Custom Actions ---
 // Copy image shortcut - press 'ye' to show hints for images, then select one to copy to clipboard
 api.mapkey('ye', 'Copy image to clipboard', function() {
-    // "context7" from mcp.json is not directly relevant to image copy issues in Surfingkeys.
-    // However, this logic can be made more robust and explicit, with better error reporting.
-
     api.Hints.create('img', async function(element) {
         try {
-            // Try multiple lazy-load and source-handling attributes
-            let imageUrl = element.src 
-                || element.getAttribute('data-src')
-                || element.getAttribute('data-lazy-src')
-                || element.currentSrc;
-
-            // Handle srcset (pick highest resolution if available)
+            // Get image source - try multiple attributes for lazy-loaded images
+            let imageUrl = element.src || element.getAttribute('data-src') || element.getAttribute('data-lazy-src');
+            
+            // Handle srcset (responsive images)
             if (!imageUrl && element.srcset) {
-                const srcsetArr = element.srcset.split(',')
-                    .map(v => v.trim().split(' ')[0])
-                    .filter(Boolean);
-                if (srcsetArr.length) imageUrl = srcsetArr[srcsetArr.length - 1];
+                const srcset = element.srcset.split(',');
+                imageUrl = srcset[0].trim().split(' ')[0];
             }
-
-            if (!imageUrl) {
-                api.Front.showBanner('Could not find image source', 'error');
-                return;
-            }
-
-            // If the image is base64, copy directly
-            if (imageUrl.startsWith('data:')) {
-                try {
-                    const response = await fetch(imageUrl);
-                    const blob = await response.blob();
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ [blob.type]: blob })
-                    ]);
-                    api.Front.showBanner('Image copied to clipboard!', 'success');
-                } catch (err) {
-                    api.Front.showBanner('Error copying base64 image: ' + err.message, 'error');
-                }
-                return;
-            }
-
-            // For normal images, try direct CORS fetch
-            try {
-                const response = await fetch(imageUrl, { mode: 'cors' });
-                if (!response.ok) throw new Error('Failed to fetch image (' + response.status + ')');
+            
+            // Handle base64 images
+            if (imageUrl && imageUrl.startsWith('data:')) {
+                const response = await fetch(imageUrl);
                 const blob = await response.blob();
                 await navigator.clipboard.write([
                     new ClipboardItem({ [blob.type]: blob })
                 ]);
                 api.Front.showBanner('Image copied to clipboard!', 'success');
                 return;
-            } catch (networkError) {
-                // If direct fetch fails, try using canvas (may only work for same-origin images)
-                try {
-                    const img = new window.Image();
-                    img.crossOrigin = 'anonymous'; // Request anonymous if possible
-                    img.onload = async function() {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        canvas.toBlob(async function(blob) {
-                            if (blob) {
-                                await navigator.clipboard.write([
-                                    new ClipboardItem({ [blob.type]: blob })
-                                ]);
-                                api.Front.showBanner('Image copied to clipboard!', 'success');
-                            } else {
-                                api.Front.showBanner('Failed to copy image (canvas empty)', 'error');
-                            }
-                        });
-                    };
-                    img.onerror = function(e) {
-                        api.Front.showBanner('Failed to load image for copy (possible CORS/block): ' + (e?.message || ''), 'error');
-                    };
-                    img.src = imageUrl;
-                } catch (canvasError) {
-                    api.Front.showBanner('Canvas copy failed: ' + canvasError.message, 'error');
+            }
+            
+            if (!imageUrl) {
+                api.Front.showBanner('Could not find image source', 'error');
+                return;
+            }
+            
+            // Handle cross-origin images - try to fetch through a proxy or use canvas
+            try {
+                const response = await fetch(imageUrl, { mode: 'cors' });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch image');
                 }
+                const blob = await response.blob();
+                await navigator.clipboard.write([
+                    new ClipboardItem({ [blob.type]: blob })
+                ]);
+                api.Front.showBanner('Image copied to clipboard!', 'success');
+            } catch (error) {
+                // Fallback: use canvas to copy image (works for same-origin)
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                
+                img.onload = async function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob(async function(blob) {
+                        if (blob) {
+                            await navigator.clipboard.write([
+                                new ClipboardItem({ [blob.type]: blob })
+                            ]);
+                            api.Front.showBanner('Image copied to clipboard!', 'success');
+                        } else {
+                            api.Front.showBanner('Failed to copy image (canvas empty)', 'error');
+                        }
+                    });
+                };
+                img.onerror = function() {
+                    api.Front.showBanner('Failed to load image for copy', 'error');
+                };
+                img.src = imageUrl;
             }
         } catch (e) {
             api.Front.showBanner('Error copying image: ' + e.message, 'error');
