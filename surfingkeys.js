@@ -658,67 +658,57 @@ api.mapkey('ye', 'Copy image to clipboard', function() {
             return;
         }
 
-        const copyToClipboard = async (blob) => {
+        // Helper to copy a PNG blob to clipboard
+        const copyPngToClipboard = async (blob) => {
             try {
-                // Ensure we have a valid blob and the clipboard API is available
                 if (!blob) throw new Error('Empty blob');
-                if (!navigator.clipboard || !navigator.clipboard.write) {
-                    throw new Error('Clipboard API unavailable');
-                }
-
-                // Most browsers only support image/png for ClipboardItem
-                // If it's not PNG, we might need to convert it, but let's try first
-                const data = [new ClipboardItem({ [blob.type]: blob })];
+                const data = [new ClipboardItem({ 'image/png': blob })];
                 await navigator.clipboard.write(data);
                 api.Front.showBanner('Image copied to clipboard!', 'success');
             } catch (err) {
-                console.error('Clipboard write failed:', err);
-                // Fallback: Copy the URL to clipboard using SurfingKeys' reliable method
                 api.Clipboard.write(imageUrl);
-                api.Front.showBanner('Copied URL (Image copy failed: ' + err.message + ')', 'warning');
+                api.Front.showBanner('Copied URL (Clipboard write failed)', 'warning');
             }
         };
 
-        // If it's a data URL, we can fetch it directly
-        if (imageUrl.startsWith('data:')) {
-            fetch(imageUrl).then(r => r.blob()).then(copyToClipboard).catch(e => {
-                api.Clipboard.write(imageUrl);
-                api.Front.showBanner('Copied URL (Data fetch failed)', 'warning');
-            });
-        } else {
-            // Try to fetch with CORS, fallback to canvas if it fails
-            fetch(imageUrl, { mode: 'cors' })
-                .then(r => {
-                    if (!r.ok) throw new Error('Fetch failed');
-                    return r.blob();
-                })
-                .then(copyToClipboard)
-                .catch(() => {
-                    // Fallback: use canvas to copy image (works for same-origin or CORS-enabled)
-                    const img = new Image();
-                    img.crossOrigin = 'anonymous';
-                    img.onload = function() {
+        // Use canvas to convert any image format to PNG
+        const convertAndCopy = (url) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; 
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(copyPngToClipboard, 'image/png');
+            };
+            img.onerror = function() {
+                // If canvas fails (usually CORS), try fetching the blob first
+                fetch(url).then(r => r.blob()).then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const img2 = new Image();
+                    img2.onload = function() {
                         const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
+                        canvas.width = img2.width;
+                        canvas.height = img2.height;
                         const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-                        canvas.toBlob(blob => {
-                            if (blob) {
-                                copyToClipboard(blob);
-                            } else {
-                                api.Clipboard.write(imageUrl);
-                                api.Front.showBanner('Copied URL (Canvas empty)', 'warning');
-                            }
+                        ctx.drawImage(img2, 0, 0);
+                        canvas.toBlob(b => {
+                            URL.revokeObjectURL(blobUrl);
+                            copyPngToClipboard(b);
                         }, 'image/png');
                     };
-                    img.onerror = function() {
-                        api.Clipboard.write(imageUrl);
-                        api.Front.showBanner('Copied URL (Image load failed)', 'warning');
-                    };
-                    img.src = imageUrl;
+                    img2.src = blobUrl;
+                }).catch(() => {
+                    api.Clipboard.write(imageUrl);
+                    api.Front.showBanner('Copied URL (Image load failed)', 'warning');
                 });
-        }
+            };
+            img.src = url;
+        };
+
+        convertAndCopy(imageUrl);
     });
 });
 
