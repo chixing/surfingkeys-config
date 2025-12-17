@@ -646,83 +646,70 @@ api.iunmap("<Ctrl-a>");
 // --- Custom Actions ---
 // Copy image shortcut - press 'ye' to show hints for images, then select one to copy to clipboard
 api.mapkey('ye', 'Copy image to clipboard', function() {
-  api.Hints.create('img', function(element) {
-    const pickSrcset = (srcset) => {
-      return srcset
-        .split(',')
-        .map(s => s.trim())
-        .map(entry => {
-          const [url, size] = entry.split(/\s+/);
-          const width = size && size.endsWith('w') ? parseInt(size, 10) : 0;
-          return { url, width };
-        })
-        .sort((a, b) => b.width - a.width)[0]?.url;
-    };
+    api.Hints.create('img', function(element) {
+        let imageUrl = element.src || element.getAttribute('data-src') || element.getAttribute('data-lazy-src');
+        if (!imageUrl && element.srcset) {
+            const srcset = element.srcset.split(',');
+            imageUrl = srcset[0].trim().split(' ')[0];
+        }
+        
+        if (!imageUrl) {
+            api.Front.showBanner('Could not find image source', 'error');
+            return;
+        }
 
-    const imageUrl =
-      element.currentSrc ||
-      element.src ||
-      element.getAttribute('data-src') ||
-      element.getAttribute('data-lazy-src') ||
-      (element.srcset && pickSrcset(element.srcset));
+        // Helper to copy a PNG blob to clipboard
+        const copyPngToClipboard = async (blob) => {
+            try {
+                if (!blob) throw new Error('Empty blob');
+                const data = [new ClipboardItem({ 'image/png': blob })];
+                await navigator.clipboard.write(data);
+                api.Front.showBanner('Image copied to clipboard!', 'success');
+            } catch (err) {
+                api.Clipboard.write(imageUrl);
+                api.Front.showBanner('Copied URL (Clipboard write failed)', 'warning');
+            }
+        };
 
-    if (!imageUrl) {
-      api.Front.showBanner('Could not find image source', 'error');
-      return;
-    }
+        // Use canvas to convert any image format to PNG
+        const convertAndCopy = (url) => {
+            const img = new Image();
+            img.crossOrigin = 'anonymous'; 
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                canvas.toBlob(copyPngToClipboard, 'image/png');
+            };
+            img.onerror = function() {
+                // If canvas fails (usually CORS), try fetching the blob first
+                fetch(url).then(r => r.blob()).then(blob => {
+                    const blobUrl = URL.createObjectURL(blob);
+                    const img2 = new Image();
+                    img2.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img2.width;
+                        canvas.height = img2.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img2, 0, 0);
+                        canvas.toBlob(b => {
+                            URL.revokeObjectURL(blobUrl);
+                            copyPngToClipboard(b);
+                        }, 'image/png');
+                    };
+                    img2.src = blobUrl;
+                }).catch(() => {
+                    api.Clipboard.write(imageUrl);
+                    api.Front.showBanner('Copied URL (Image load failed)', 'warning');
+                });
+            };
+            img.src = url;
+        };
 
-    // Helper to copy a PNG blob to clipboard
-    const copyPngToClipboard = async (blob) => {
-      try {
-        if (!blob) throw new Error('Empty blob');
-        const data = [new ClipboardItem({ 'image/png': blob })];
-        await navigator.clipboard.write(data);
-        api.Front.showBanner('Image copied to clipboard!', 'success');
-      } catch (err) {
-        api.Clipboard.write(imageUrl);
-        api.Front.showBanner('Copied URL (Clipboard write failed)', 'warning');
-      }
-    };
-
-    // Use canvas to convert any image format to PNG
-    const convertAndCopy = (url) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous'; 
-      img.onload = function() {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        canvas.toBlob(copyPngToClipboard, 'image/png');
-      };
-      img.onerror = function() {
-        // If canvas fails (usually CORS), try fetching the blob first
-        fetch(url).then(r => r.blob()).then(blob => {
-          const blobUrl = URL.createObjectURL(blob);
-          const img2 = new Image();
-          img2.onload = function() {
-            const canvas = document.createElement('canvas');
-            canvas.width = img2.width;
-            canvas.height = img2.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img2, 0, 0);
-            canvas.toBlob(b => {
-              URL.revokeObjectURL(blobUrl);
-              copyPngToClipboard(b);
-            }, 'image/png');
-          };
-          img2.src = blobUrl;
-        }).catch(() => {
-          api.Clipboard.write(imageUrl);
-          api.Front.showBanner('Copied URL (Image load failed)', 'warning');
-        });
-      };
-      img.src = url;
-    };
-
-    convertAndCopy(imageUrl);
-  });
+        convertAndCopy(imageUrl);
+    });
 });
 
 // Chrome Internal Pages
