@@ -75,23 +75,7 @@ class AiSelector {
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
-
-    const close = () => {
-      this.lastQuery = queryInput.value;
-      if (document.body.contains(overlay)) {
-        document.body.removeChild(overlay);
-      }
-    };
-
-    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput, close);
-
-    // Prevent keys from leaking to the page (especially for YouTube)
-    [queryInput, promptInput, promptSelect].forEach(el => {
-      el.addEventListener('keydown', e => {
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-      });
-    });
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -115,12 +99,13 @@ class AiSelector {
     overlay.addEventListener('keydown', (e) => {
       e.stopPropagation();
       if (e.key === 'Escape') {
-        close();
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
       } else if (e.key === 'Enter') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          this.handleSubmit(overlay, queryInput, promptInput, close);
+          this.handleSubmit(overlay, queryInput, promptInput);
         }
       }
     });
@@ -128,7 +113,8 @@ class AiSelector {
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        close();
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
       }
     });
 
@@ -418,7 +404,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(overlay, queryInput, promptInput, closeCallback) {
+  createButtons(overlay, queryInput, promptInput) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -426,15 +412,15 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton(overlay, queryInput, closeCallback);
-    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput, closeCallback);
+    const cancelBtn = this.createCancelButton(overlay, queryInput);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
     return container;
   }
 
-  createCancelButton(overlay, queryInput, closeCallback) {
+  createCancelButton(overlay, queryInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -455,17 +441,14 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.bgDark;
     };
     btn.onclick = () => {
-      if (closeCallback) {
-        closeCallback();
-      } else {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
-      }
+      // Save query for next time
+      this.lastQuery = queryInput.value;
+      document.body.removeChild(overlay);
     };
     return btn;
   }
 
-  createSubmitButton(overlay, queryInput, promptInput, closeCallback) {
+  createSubmitButton(overlay, queryInput, promptInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -488,11 +471,11 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput, closeCallback);
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
     return btn;
   }
 
-  handleSubmit(overlay, queryInput, promptInput, closeCallback) {
+  handleSubmit(overlay, queryInput, promptInput) {
     const query = queryInput.value.trim();
     if (!query) {
       queryInput.focus();
@@ -520,12 +503,7 @@ class AiSelector {
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    
-    if (closeCallback) {
-      closeCallback();
-    } else {
-      document.body.removeChild(overlay);
-    }
+    document.body.removeChild(overlay);
   }
 
   updateQuery(text) {
