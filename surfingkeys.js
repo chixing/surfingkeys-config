@@ -97,6 +97,12 @@ class AiSelector {
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
+      // Allow arrow keys to work in the dropdown select
+      const isSelect = e.target.tagName === 'SELECT';
+      if (isSelect && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        return; // Let browser handle arrow keys in dropdown
+      }
+      
       e.stopPropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
