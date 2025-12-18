@@ -97,17 +97,7 @@ class AiSelector {
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
-      // Always stop propagation to prevent other extensions from capturing keys
       e.stopPropagation();
-      
-      // For arrow keys in select/input elements, allow default behavior
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        const isFormElement = ['SELECT', 'INPUT', 'TEXTAREA'].includes(e.target.tagName);
-        if (isFormElement) {
-          return; // Allow default browser behavior for form navigation
-        }
-      }
-      
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
