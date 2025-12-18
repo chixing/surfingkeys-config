@@ -646,7 +646,11 @@ const aiSelector = new AiSelector(CONFIG);
 // --- Navigation ---
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
-api.map('T', 'T<Space>'); // search existing tabs 
+
+// --- Tab Search ---
+api.mapkey('T', '#3Search tabs', function() {
+    api.Front.openOmnibar({type: "Tabs"});
+});
 
 // --- Convenience ---
 api.map('q', 'p');  // Left hand passthrough
