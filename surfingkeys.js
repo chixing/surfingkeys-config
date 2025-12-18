@@ -97,6 +97,7 @@ class AiSelector {
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
+      e.stopPropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
