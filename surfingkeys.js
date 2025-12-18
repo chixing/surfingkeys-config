@@ -646,7 +646,7 @@ const aiSelector = new AiSelector(CONFIG);
 // --- Navigation ---
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
-api.map('T', 'T<Space>'); // T then space
+api.map('T', 'T<Space>'); // search existing tabs 
 
 // --- Convenience ---
 api.map('q', 'p');  // Left hand passthrough
