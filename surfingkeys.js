@@ -97,6 +97,21 @@ class AiSelector {
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
+      // Handle j/k for select navigation when select is focused
+      if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const select = e.target;
+        const currentIndex = select.selectedIndex;
+        if (e.key === 'j' && currentIndex < select.options.length - 1) {
+          select.selectedIndex = currentIndex + 1;
+        } else if (e.key === 'k' && currentIndex > 0) {
+          select.selectedIndex = currentIndex - 1;
+        }
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      
       e.stopPropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
