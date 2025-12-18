@@ -66,10 +66,6 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
-    if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-      api.toggleKeyboardService(false);
-    }
-
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -85,9 +81,6 @@ class AiSelector {
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
       }
-      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-        api.toggleKeyboardService(true);
-      }
     };
 
     const buttonsContainer = this.createButtons(overlay, queryInput, promptInput, close);
@@ -95,8 +88,8 @@ class AiSelector {
     // Prevent keys from leaking to the page (especially for YouTube)
     [queryInput, promptInput, promptSelect].forEach(el => {
       el.addEventListener('keydown', e => {
-        if (e.key === 'Escape' || e.key === 'Enter') return;
         e.stopPropagation();
+        e.stopImmediatePropagation();
       });
     });
 
@@ -467,9 +460,6 @@ class AiSelector {
       } else {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
-        if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-          api.toggleKeyboardService(true);
-        }
       }
     };
     return btn;
@@ -535,9 +525,6 @@ class AiSelector {
       closeCallback();
     } else {
       document.body.removeChild(overlay);
-      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-        api.toggleKeyboardService(true);
-      }
     }
   }
 
