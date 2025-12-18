@@ -525,9 +525,6 @@ class AiSelector {
       closeCallback();
     } else {
       document.body.removeChild(overlay);
-      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-        api.toggleKeyboardService(true);
-      }
     }
   }
 
