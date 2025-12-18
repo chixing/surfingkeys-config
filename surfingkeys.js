@@ -467,6 +467,9 @@ class AiSelector {
       } else {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
+        if (typeof api !== 'undefined' && api.toggleKeyboardService) {
+          api.toggleKeyboardService(true);
+        }
       }
     };
     return btn;
