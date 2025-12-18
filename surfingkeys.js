@@ -642,12 +642,6 @@ api.map('zv', 'v'); // Caret mode
 // --- Unmappings ---
 api.iunmap("<Ctrl-a>");
 
-// --- Arrow key passthrough (prevent other extensions from capturing) ---
-api.map('<ArrowUp>', 'k');     // Arrow up = scroll up
-api.map('<ArrowDown>', 'j');   // Arrow down = scroll down  
-api.map('<ArrowLeft>', 'h');   // Arrow left = scroll left
-api.map('<ArrowRight>', 'l');  // Arrow right = scroll right
-
 // --- Custom Actions ---
 // Copy image shortcut - press 'ye' to show hints for images, then select one to copy to clipboard
 api.mapkey('ye', 'Copy image to clipboard', function() {
