@@ -495,7 +495,7 @@ class AiSelector {
     return btn;
   }
 
-  handleSubmit(overlay, queryInput, promptInput) {
+  handleSubmit(overlay, queryInput, promptInput, closeCallback) {
     const query = queryInput.value.trim();
     if (!query) {
       queryInput.focus();
@@ -523,7 +523,15 @@ class AiSelector {
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    document.body.removeChild(overlay);
+    
+    if (closeCallback) {
+      closeCallback();
+    } else {
+      document.body.removeChild(overlay);
+      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
+        api.toggleKeyboardService(true);
+      }
+    }
   }
 
   updateQuery(text) {
