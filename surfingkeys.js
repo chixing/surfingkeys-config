@@ -79,7 +79,18 @@ class AiSelector {
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
+
+    const close = () => {
+      this.lastQuery = queryInput.value;
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
+        api.toggleKeyboardService(true);
+      }
+    };
+
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput, close);
 
     // Prevent keys from leaking to the page (especially for YouTube)
     [queryInput, promptInput, promptSelect].forEach(el => {
@@ -106,16 +117,6 @@ class AiSelector {
 
     queryInput.focus();
     queryInput.select();
-
-    const close = () => {
-      this.lastQuery = queryInput.value;
-      if (document.body.contains(overlay)) {
-        document.body.removeChild(overlay);
-      }
-      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-        api.toggleKeyboardService(true);
-      }
-    };
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
