@@ -95,20 +95,9 @@ class AiSelector {
     queryInput.focus();
     queryInput.select();
 
-    // Handle Enter and Escape keys - use capture phase to intercept before other extensions
+    // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
-      // For arrow keys, prevent other extensions from capturing them
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
-        // Manually trigger native select behavior
-        if (e.target.tagName === 'SELECT') {
-          // Browser will handle this natively
-        }
-        return;
-      }
-      
+      e.stopPropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
@@ -119,7 +108,7 @@ class AiSelector {
           this.handleSubmit(overlay, queryInput, promptInput);
         }
       }
-    }, true); // true = capture phase
+    });
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
