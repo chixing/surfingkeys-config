@@ -424,7 +424,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(overlay, queryInput, promptInput) {
+  createButtons(overlay, queryInput, promptInput, closeCallback) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -432,15 +432,15 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton(overlay, queryInput);
-    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
+    const cancelBtn = this.createCancelButton(overlay, queryInput, closeCallback);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput, closeCallback);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
     return container;
   }
 
-  createCancelButton(overlay, queryInput) {
+  createCancelButton(overlay, queryInput, closeCallback) {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -461,14 +461,20 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.bgDark;
     };
     btn.onclick = () => {
-      // Save query for next time
-      this.lastQuery = queryInput.value;
-      document.body.removeChild(overlay);
+      if (closeCallback) {
+        closeCallback();
+      } else {
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
+        if (typeof api !== 'undefined' && api.toggleKeyboardService) {
+          api.toggleKeyboardService(true);
+        }
+      }
     };
     return btn;
   }
 
-  createSubmitButton(overlay, queryInput, promptInput) {
+  createSubmitButton(overlay, queryInput, promptInput, closeCallback) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -491,7 +497,7 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput, closeCallback);
     return btn;
   }
 
