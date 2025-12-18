@@ -97,6 +97,21 @@ class AiSelector {
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
+      // Manually handle arrow keys for select element to bypass other extensions
+      if (e.target.tagName === 'SELECT' && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const select = e.target;
+        const currentIndex = select.selectedIndex;
+        if (e.key === 'ArrowDown' && currentIndex < select.options.length - 1) {
+          select.selectedIndex = currentIndex + 1;
+        } else if (e.key === 'ArrowUp' && currentIndex > 0) {
+          select.selectedIndex = currentIndex - 1;
+        }
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      
       e.stopPropagation();
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
