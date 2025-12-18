@@ -95,19 +95,17 @@ class AiSelector {
     queryInput.focus();
     queryInput.select();
 
-    // Enter key submits the form
-    queryInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        this.handleSubmit(overlay, queryInput, promptInput);
-      }
-    });
-
-    // ESC key closes dialog
+    // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
+      } else if (e.key === 'Enter') {
+        const isTextArea = e.target.tagName === 'TEXTAREA';
+        if (!isTextArea || (isTextArea && !e.shiftKey)) {
+          e.preventDefault();
+          this.handleSubmit(overlay, queryInput, promptInput);
+        }
       }
     });
 
