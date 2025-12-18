@@ -245,6 +245,8 @@ class AiSelector {
       { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' }
     ];
 
+    const temp = 'hint: you are a helpful assistant.';
+
     templates.forEach(template => {
       const option = document.createElement('option');
       option.value = template.value;
