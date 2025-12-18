@@ -66,6 +66,10 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
+    if (typeof api !== 'undefined' && api.toggleKeyboardService) {
+      api.toggleKeyboardService(false);
+    }
+
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -76,6 +80,14 @@ class AiSelector {
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
     const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
+
+    // Prevent keys from leaking to the page (especially for YouTube)
+    [queryInput, promptInput, promptSelect].forEach(el => {
+      el.addEventListener('keydown', e => {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+      });
+    });
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -95,17 +107,26 @@ class AiSelector {
     queryInput.focus();
     queryInput.select();
 
+    const close = () => {
+      this.lastQuery = queryInput.value;
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
+        api.toggleKeyboardService(true);
+      }
+    };
+
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
       e.stopPropagation();
       if (e.key === 'Escape') {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        close();
       } else if (e.key === 'Enter') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          this.handleSubmit(overlay, queryInput, promptInput);
+          this.handleSubmit(overlay, queryInput, promptInput, close);
         }
       }
     });
@@ -113,8 +134,7 @@ class AiSelector {
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        close();
       }
     });
 
