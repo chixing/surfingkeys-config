@@ -66,10 +66,6 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
-    if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-      api.toggleKeyboardService(false);
-    }
-
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -84,9 +80,6 @@ class AiSelector {
       this.lastQuery = queryInput.value;
       if (document.body.contains(overlay)) {
         document.body.removeChild(overlay);
-      }
-      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-        api.toggleKeyboardService(true);
       }
     };
 
@@ -467,9 +460,6 @@ class AiSelector {
       } else {
         this.lastQuery = queryInput.value;
         document.body.removeChild(overlay);
-        if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-          api.toggleKeyboardService(true);
-        }
       }
     };
     return btn;
@@ -535,9 +525,6 @@ class AiSelector {
       closeCallback();
     } else {
       document.body.removeChild(overlay);
-      if (typeof api !== 'undefined' && api.toggleKeyboardService) {
-        api.toggleKeyboardService(true);
-      }
     }
   }
 
