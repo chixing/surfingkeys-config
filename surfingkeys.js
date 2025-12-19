@@ -662,8 +662,6 @@ api.map('zv', 'v'); // Caret mode
 // --- Unmappings ---
 api.iunmap("<Ctrl-a>");
 
-// --- Omnibar Navigation ---
-api.cmap('<Ctrl-.>', '<Ctrl-,>'); // Change omnibar navigation to Ctrl+>
 
 // --- Custom Actions ---
 // Copy image shortcut - press 'ye' to show hints for images, then select one to copy to clipboard
