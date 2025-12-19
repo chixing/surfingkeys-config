@@ -663,7 +663,7 @@ api.map('zv', 'v'); // Caret mode
 api.iunmap("<Ctrl-a>");
 
 // --- Omnibar Navigation ---
-api.cmap('<Ctrl-Shift-.>', '<Ctrl-,>'); // Ctrl+Shift+. to go to previous page in omnibar
+api.cmap('<Ctrl->>', '<Ctrl-,>'); // Ctrl+Shift+. (Ctrl+>) to go to previous page in omnibar
 
 // --- Custom Actions ---
 // Copy image shortcut - press 'ye' to show hints for images, then select one to copy to clipboard
