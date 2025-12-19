@@ -980,6 +980,7 @@ input { font-family: var(--font); font-weight: var(--font-weight); }
 .sk_theme .omnibar_highlight { color: var(--accent-fg); }
 .sk_theme .omnibar_timestamp { color: var(--info-fg); }
 .sk_theme .omnibar_visitcount { color: var(--accent-fg); }
+.sk_theme .omnibar_folder { color: var(--main-fg); }
 
 .sk_theme #sk_omnibarSearchResult ul li:nth-child(odd) { background: var(--bg-dark); }
 .sk_theme #sk_omnibarSearchResult ul li.focused { background: var(--border); }
