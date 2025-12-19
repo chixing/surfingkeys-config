@@ -21,7 +21,7 @@ const CONFIG = {
       border: "#505558",
       mainFg: "#7EB3E8",
       accentFg: "#6FDD99",
-      infoFg: "#B894D4",
+      infoFg: "#A8C5E8",
       select: "#707578"
     }
   }
