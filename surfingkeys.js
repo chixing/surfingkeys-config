@@ -985,7 +985,7 @@ input { font-family: var(--font); font-weight: var(--font-weight); }
 .sk_theme #sk_omnibarSearchResult ul li:nth-child(odd) { background: var(--bg-dark); }
 .sk_theme #sk_omnibarSearchResult ul li.focused { background: var(--border); }
 .sk_theme #sk_omnibarSearchResult ul li { padding: 0.4em; }
-.sk_theme #sk_omnibarSearchResult { max-height: none !important; }
+.sk_theme #sk_omnibarSearchResult { max-height: 80vh !important; }
 
 .sk_theme #sk_omnibarSearchArea { border-top-color: var(--border); border-bottom-color: var(--border); padding-bottom: 0.5rem; }
 .sk_theme #sk_omnibarSearchArea input, .sk_theme #sk_omnibarSearchArea span { font-size: var(--font-size); }
