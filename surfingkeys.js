@@ -19,9 +19,9 @@ const CONFIG = {
       bg: "#3A3D42",
       bgDark: "#2D2F34",
       border: "#505558",
-      mainFg: "#A8D5FF",
+      mainFg: "#7EB3E8",
       accentFg: "#6FDD99",
-      infoFg: "#D4A5E3",
+      infoFg: "#B894D4",
       select: "#707578"
     }
   }
