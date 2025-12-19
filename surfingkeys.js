@@ -17,6 +17,7 @@ const CONFIG = {
     colors: {
       fg: "#E8EAED",
       bg: "#3A3D42",
+      catppuccin: "#1e1e2e",
       bgDark: "#2D2F34",
       border: "#505558",
       mainFg: "#7EB3E8",
