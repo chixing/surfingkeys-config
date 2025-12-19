@@ -15,14 +15,14 @@ const CONFIG = {
     font: "'Monaco', 'Consolas', 'Courier New', monospace",
     fontSize: "16px",
     colors: {
-      fg: "#FFF5E1",
-      bg: "#2B1B17",
-      bgDark: "#1F1311",
-      border: "#5A4842",
-      mainFg: "#FF8C42",
-      accentFg: "#FF5722",
-      infoFg: "#FFB347",
-      select: "#6B4E3D"
+      fg: "#c6d0f5",
+      bg: "#303446",
+      bgDark: "#292c3c",
+      border: "#414559",
+      mainFg: "#8caaee",
+      accentFg: "#a6d189",
+      infoFg: "#ca9ee6",
+      select: "#51576d"
     }
   }
 };
