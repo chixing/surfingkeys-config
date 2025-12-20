@@ -258,6 +258,7 @@ class AiSelector {
 
     const input = document.createElement('textarea');
     input.rows = 2;
+    input.value = 'provide a short TL;DR summary';
     input.placeholder = 'Custom prompt template...';
     input.style.cssText = `
       width: 100%;
