@@ -241,16 +241,18 @@ class AiSelector {
     const templates = [
       { value: '', label: 'None' },
       { value: 'provide a detailed summary', label: 'Detailed Summary' },
-      { value: 'provide a short TL;DR summary', label: 'TL;DR' },
+      { value: 'provide a short TL;DR summary', label: 'TL;DR', default: true },
       { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
       { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' }
     ];
+
+    const defaultTemplate = templates.find(t => t.default) || templates[0];
 
     templates.forEach(template => {
       const option = document.createElement('option');
       option.value = template.value;
       option.textContent = template.label;
-      if (template.label === 'TL;DR') {
+      if (template.default) {
         option.selected = true;
       }
       select.appendChild(option);
@@ -258,7 +260,7 @@ class AiSelector {
 
     const input = document.createElement('textarea');
     input.rows = 2;
-    input.value = 'provide a short TL;DR summary';
+    input.value = defaultTemplate.value;
     input.placeholder = 'Custom prompt template...';
     input.style.cssText = `
       width: 100%;
