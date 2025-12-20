@@ -250,6 +250,9 @@ class AiSelector {
       const option = document.createElement('option');
       option.value = template.value;
       option.textContent = template.label;
+      if (template.label === 'TL;DR') {
+        option.selected = true;
+      }
       select.appendChild(option);
     });
 
