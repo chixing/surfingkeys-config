@@ -153,31 +153,73 @@ class AiSelector {
     document.addEventListener('focus', this.focusHandler, true);
     document.addEventListener('focusin', this.focusHandler, true);
 
-    // Counter to prevent infinite focus loops
+    // Simulate a user click to trigger SurfingKeys' insert mode
+    // This is how SK normally allows focus - when user clicks an input
+    const simulateClick = () => {
+      const rect = queryInput.getBoundingClientRect();
+      const clickEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2
+      });
+      queryInput.dispatchEvent(clickEvent);
+    };
+
+    // Also try mousedown which is what SK likely listens to
+    const simulateMousedown = () => {
+      const rect = queryInput.getBoundingClientRect();
+      const mousedownEvent = new MouseEvent('mousedown', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.top + rect.height / 2
+      });
+      queryInput.dispatchEvent(mousedownEvent);
+    };
+
+    // Counter for focus attempts
     let focusAttempts = 0;
-    const maxFocusAttempts = 20;
+    const maxFocusAttempts = 50;
+    let focusEstablished = false;
 
     // Fight back against SurfingKeys blur by re-focusing
     const blurHandler = (e) => {
+      // Stop fighting if focus was established (user typed something)
+      if (focusEstablished) return;
+
       // Only re-focus if dialog is still open and we haven't exceeded attempts
       if (this.overlay && this.overlay.parentNode && focusAttempts < maxFocusAttempts) {
         focusAttempts++;
-        console.log(`[AiSelector] Blur detected, re-focusing (attempt ${focusAttempts})`);
         // Use requestAnimationFrame to re-focus after the blur completes
         requestAnimationFrame(() => {
-          if (this.overlay && this.overlay.parentNode) {
+          if (this.overlay && this.overlay.parentNode && !focusEstablished) {
+            // Every 5th attempt, try simulating a click
+            if (focusAttempts % 5 === 0) {
+              simulateMousedown();
+              simulateClick();
+            }
             queryInput.focus();
           }
         });
       }
     };
 
+    // Mark focus as established when user starts typing
+    queryInput.addEventListener('input', () => {
+      focusEstablished = true;
+    });
+
     queryInput.addEventListener('blur', blurHandler);
 
     // Store blur handler for cleanup
     this.blurHandler = blurHandler;
 
-    // Initial focus
+    // Try multiple approaches to establish focus
+    simulateMousedown();
+    simulateClick();
     queryInput.focus();
     queryInput.select();
 
