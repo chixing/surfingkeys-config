@@ -875,7 +875,9 @@ api.map('J', ']]'); // Next page
 api.mapkey('T', '#3Choose a tab', function() {
     api.Normal.feedkeys('ot');
     api.Normal.feedkeys('\x1b');
-    api.Front.openOmnibar({type: "Tabs"});
+    setTimeout(function() {
+        api.Front.openOmnibar({type: "Tabs"});
+    }, 50);
 });
 
 // --- Convenience ---
