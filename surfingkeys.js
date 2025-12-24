@@ -92,9 +92,14 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+    const focusQueryBox = () => {
+      queryInput.focus({ preventScroll: true });
+      queryInput.select();
+    };
 
-    queryInput.focus();
-    queryInput.select();
+    focusQueryBox();               // immediate, same user gesture
+    requestAnimationFrame(focusQueryBox); // next frame after layout
+    setTimeout(focusQueryBox, 30); // fallback if something steals focus
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
