@@ -92,30 +92,6 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
-    const forceFocusQuery = () => {
-      if (document.activeElement === queryInput) return;
-      ['pointerdown', 'mousedown', 'mouseup', 'click'].forEach(type => {
-        queryInput.dispatchEvent(new Event(type, { bubbles: true, cancelable: true }));
-      });
-      queryInput.focus({ preventScroll: true });
-      queryInput.select();
-    };
-
-    // keep focus even if something steals it
-    const trapFocus = (e) => {
-      if (e.target !== queryInput) {
-        queryInput.focus({ preventScroll: true });
-        queryInput.select();
-      }
-    };
-    overlay.addEventListener('focusin', trapFocus);
-
-    // initial tries + retries
-    forceFocusQuery();
-    requestAnimationFrame(forceFocusQuery);
-    setTimeout(forceFocusQuery, 30);
-    setTimeout(forceFocusQuery, 120);
-
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
       // Handle j/k for select navigation when select is focused
