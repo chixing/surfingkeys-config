@@ -924,7 +924,7 @@ api.mapkey('H', '#8Open opened URL in current tab', function() {
 });
 
 api.mapkey('?', '#0Show usage', function() {
-    api.Front.showUsage();
+    api.Front.showPopup('usage');
     focusSKInput();
 });
 
