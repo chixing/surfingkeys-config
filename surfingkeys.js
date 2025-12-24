@@ -872,9 +872,7 @@ api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
 // --- Tab Search ---
-api.mapkey('T', '#3Choose a tab', function() {
-    api.Front.openOmnibar({type: "Tabs"});
-});
+api.map('T', 'ot');
 
 // --- Convenience ---
 api.map('q', 'p');  // Left hand passthrough
