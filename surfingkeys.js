@@ -111,6 +111,11 @@ class AiSelector {
       e.sk_suppressed = true;
       e.sk_stopPropagation = true;
 
+      // Allow Tab to work normally for focus navigation
+      if (e.key === 'Tab') {
+        return; // Don't stopPropagation, let Tab navigate between elements
+      }
+
       // Handle j/k for select navigation when select is focused
       if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
