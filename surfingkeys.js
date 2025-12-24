@@ -67,11 +67,6 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
-    // Create a host element for Shadow DOM isolation
-    const host = document.createElement('div');
-    host.id = 'sk-ai-selector-host';
-    const shadow = host.attachShadow({ mode: 'open' });
-
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -79,17 +74,9 @@ class AiSelector {
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
-    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices, shadow);
-    const selectAllButtons = this.createSelectAllButtons(shadow);
-    
-    const cleanup = () => {
-      if (this.focusGuard) clearInterval(this.focusGuard);
-      if (document.body.contains(host)) {
-        document.body.removeChild(host);
-      }
-    };
-
-    const buttonsContainer = this.createButtons(host, queryInput, promptInput, shadow, cleanup);
+    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
+    const selectAllButtons = this.createSelectAllButtons();
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -103,75 +90,50 @@ class AiSelector {
     dialog.appendChild(buttonsContainer);
 
     overlay.appendChild(dialog);
-    shadow.appendChild(overlay);
-    document.body.appendChild(host);
+    document.body.appendChild(overlay);
 
-    // Focus logic
-    const focusInput = () => {
-      const attempt = () => {
-        api.Normal.passFocus(true);
-        queryInput.focus();
-        queryInput.select();
-        queryInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
-      };
-      attempt();
-      setTimeout(attempt, 10);
-      setTimeout(attempt, 50);
-      setTimeout(attempt, 150);
-    };
 
-    focusInput();
+    queryInput.focus();
+    queryInput.select();
 
-    // Aggressive focus recovery
-    this.focusGuard = setInterval(() => {
-      const active = shadow.activeElement;
-      if (!active || !['TEXTAREA', 'SELECT', 'INPUT'].includes(active.tagName)) {
-        api.Normal.passFocus(true);
-        queryInput.focus();
-      }
-    }, 100);
-
-    // Key handling
-    const handleKey = (e) => {
-      if (e.key === 'Escape') {
+    // Handle Enter and Escape keys
+    overlay.addEventListener('keydown', (e) => {
+      // Handle j/k for select navigation when select is focused
+      if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
         e.stopPropagation();
-        e.stopImmediatePropagation();
+        const select = e.target;
+        const currentIndex = select.selectedIndex;
+        if (e.key === 'j' && currentIndex < select.options.length - 1) {
+          select.selectedIndex = currentIndex + 1;
+        } else if (e.key === 'k' && currentIndex > 0) {
+          select.selectedIndex = currentIndex - 1;
+        }
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      
+      e.stopPropagation();
+      if (e.key === 'Escape') {
         this.lastQuery = queryInput.value;
-        cleanup();
-      } else if (e.key === 'Enter' && e.target.tagName !== 'SELECT') {
+        document.body.removeChild(overlay);
+      } else if (e.key === 'Enter') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          e.stopPropagation();
-          this.handleSubmit(host, queryInput, promptInput, shadow, cleanup);
+          this.handleSubmit(overlay, queryInput, promptInput);
         }
       }
-    };
-
-    // Attach listeners to all inputs to catch keys before SurfingKeys
-    [queryInput, promptInput, promptSelect].forEach(el => {
-      el.addEventListener('keydown', handleKey, true);
-    });
-
-    // Close on blur (handles Esc and clicking outside)
-    queryInput.addEventListener('blur', (e) => {
-      setTimeout(() => {
-        const active = shadow.activeElement;
-        if (!active || !['TEXTAREA', 'SELECT', 'INPUT'].includes(active.tagName)) {
-          this.lastQuery = queryInput.value;
-          cleanup();
-        }
-      }, 50);
     });
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
-        cleanup();
+        document.body.removeChild(overlay);
       }
     });
+
   }
 
   createOverlay() {
@@ -234,7 +196,6 @@ class AiSelector {
     input.id = 'sk-ai-query-input';
     input.value = initialQuery;
     input.rows = 3;
-    input.enableAutoFocus = true; // Bypass SurfingKeys focus protection
     input.style.cssText = `
       width: 100%;
       padding: 12px;
@@ -301,7 +262,6 @@ class AiSelector {
     input.rows = 2;
     input.value = defaultTemplate.value;
     input.placeholder = 'Custom prompt template...';
-    input.enableAutoFocus = true; // Bypass SurfingKeys focus protection
     input.style.cssText = `
       width: 100%;
       padding: 12px;
@@ -324,7 +284,7 @@ class AiSelector {
     return { label, input, select };
   }
 
-  createServicesCheckboxes(selectedServices = null, shadow = null) {
+  createServicesCheckboxes(selectedServices = null) {
     const label = document.createElement('label');
     label.textContent = 'Select AI Services:';
     label.style.cssText = `
@@ -356,7 +316,7 @@ class AiSelector {
     return { label, container };
   }
 
-  createSelectAllButtons(shadow = null) {
+  createSelectAllButtons() {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -386,9 +346,8 @@ class AiSelector {
       selectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     selectAllBtn.onclick = () => {
-      const root = shadow || document;
       this.services.forEach((_, index) => {
-        const checkbox = root.getElementById(`sk-ai-${index}`);
+        const checkbox = document.getElementById(`sk-ai-${index}`);
         if (checkbox) checkbox.checked = true;
       });
     };
@@ -414,9 +373,8 @@ class AiSelector {
       unselectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     unselectAllBtn.onclick = () => {
-      const root = shadow || document;
       this.services.forEach((_, index) => {
-        const checkbox = root.getElementById(`sk-ai-${index}`);
+        const checkbox = document.getElementById(`sk-ai-${index}`);
         if (checkbox) checkbox.checked = false;
       });
     };
@@ -468,7 +426,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(host, queryInput, promptInput, shadow = null, cleanup = null) {
+  createButtons(overlay, queryInput, promptInput) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -476,15 +434,15 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton(host, queryInput, cleanup);
-    const submitBtn = this.createSubmitButton(host, queryInput, promptInput, shadow, cleanup);
+    const cancelBtn = this.createCancelButton(overlay, queryInput);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
     return container;
   }
 
-  createCancelButton(host, queryInput, cleanup = null) {
+  createCancelButton(overlay, queryInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -507,13 +465,12 @@ class AiSelector {
     btn.onclick = () => {
       // Save query for next time
       this.lastQuery = queryInput.value;
-      if (cleanup) cleanup();
-      else document.body.removeChild(host);
+      document.body.removeChild(overlay);
     };
     return btn;
   }
 
-  createSubmitButton(host, queryInput, promptInput, shadow = null, cleanup = null) {
+  createSubmitButton(overlay, queryInput, promptInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -536,14 +493,13 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(host, queryInput, promptInput, shadow, cleanup);
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
     return btn;
   }
 
-  handleSubmit(host, queryInput, promptInput, shadow = null, cleanup = null) {
+  handleSubmit(overlay, queryInput, promptInput) {
     const query = queryInput.value.trim();
     if (!query) {
-      api.Normal.passFocus(true);
       queryInput.focus();
       queryInput.style.borderColor = '#ff6b6b';
       setTimeout(() => {
@@ -552,12 +508,8 @@ class AiSelector {
       return;
     }
 
-    const root = shadow || document;
     const selectedUrls = this.services
-      .filter((_, index) => {
-        const cb = root.getElementById(`sk-ai-${index}`);
-        return cb && cb.checked;
-      })
+      .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
       .map(service => service.url);
 
     if (selectedUrls.length === 0) {
@@ -573,18 +525,13 @@ class AiSelector {
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    
-    if (cleanup) cleanup();
-    else document.body.removeChild(host);
+    document.body.removeChild(overlay);
   }
 
   updateQuery(text) {
-    const host = document.getElementById('sk-ai-selector-host');
-    const root = host ? host.shadowRoot : document;
-    const input = root.getElementById('sk-ai-query-input');
+    const input = document.getElementById('sk-ai-query-input');
     if (input && !this.lastQuery) {
       input.value = text;
-      api.Normal.passFocus(true);
       input.focus();
       input.select();
     }
@@ -802,56 +749,48 @@ api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.CHATGPT]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ad', 'Doubao Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.DOUBAO]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ay', 'Alice Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.ALICE]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ae', 'Claude Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.CLAUDE]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ag', 'Gemini Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GEMINI]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ap', 'Perplexity Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.PERPLEXITY]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 api.mapkey('ak', 'Grok Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GROK]);
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
-  return true;
 });
 
 // =============================================================================
