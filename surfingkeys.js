@@ -871,9 +871,31 @@ const aiSelector = new AiSelector(CONFIG);
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
-// --- Tab Search (same as ot - open omnibar with tab search) ---
+// --- Tab Search (simulate 'o' then 't' keystrokes) ---
 api.mapkey('T', '#3Choose a tab', function() {
-    api.Front.openOmnibar({type: "URLs", extra: "t "});
+    // Simulate pressing 'o' to open omnibar
+    const oEvent = new KeyboardEvent('keydown', {
+        key: 'o',
+        code: 'KeyO',
+        keyCode: 79,
+        which: 79,
+        bubbles: true,
+        cancelable: true
+    });
+    document.dispatchEvent(oEvent);
+
+    // Then simulate 't' after a short delay
+    setTimeout(() => {
+        const tEvent = new KeyboardEvent('keydown', {
+            key: 't',
+            code: 'KeyT',
+            keyCode: 84,
+            which: 84,
+            bubbles: true,
+            cancelable: true
+        });
+        document.dispatchEvent(tEvent);
+    }, 100);
 });
 
 // --- Convenience ---
