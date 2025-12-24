@@ -871,13 +871,10 @@ const aiSelector = new AiSelector(CONFIG);
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
-// --- Tab Search (simulate 'o' then switch to Tabs) ---
+// --- Tab Search (workaround for focus bug) ---
 api.mapkey('T', '#3Choose a tab', function() {
     api.Normal.feedkeys('o');
-    // Switch to Tabs after omnibar opens and gains focus
-    setTimeout(() => {
-        api.Front.chooseTab();
-    }, 200);
+    api.Front.openOmnibar({type: "Tabs"});
 });
 
 // --- Convenience ---
