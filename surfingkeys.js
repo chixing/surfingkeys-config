@@ -64,11 +64,6 @@ class AiSelector {
       { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
       { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
     ];
-    
-    // Create a dedicated SurfingKeys Mode for the AI Selector
-    // This is the "secret sauce" that prevents the page and SurfingKeys 
-    // from stealing focus or intercepting keys while the dialogue is open.
-    this.mode = new api.Mode("AiSelector");
   }
 
   show(initialQuery = '', selectedServices = null) {
