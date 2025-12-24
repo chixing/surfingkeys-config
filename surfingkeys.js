@@ -36,8 +36,10 @@ Object.assign(settings, {
 });
 
 // =============================================================================
-// 2. AI SELECTOR CLASS
+// 2. AI SELECTOR CLASS (TEMPORARILY DISABLED FOR DEBUGGING)
 // =============================================================================
+
+/**** DISABLED FOR TESTING - START ***
 
 /**
  * SurfingKeys Integration Notes:
@@ -755,6 +757,8 @@ class AiSelector {
   }
 }
 
+*** DISABLED FOR TESTING - END ****/
+
 // =============================================================================
 // 3. UTILITIES
 // =============================================================================
@@ -865,7 +869,7 @@ const util = {
 // =============================================================================
 
 // Create a single shared AiSelector instance
-const aiSelector = new AiSelector(CONFIG);
+// const aiSelector = new AiSelector(CONFIG);  // DISABLED FOR TESTING
 
 // --- Navigation ---
 api.map('K', '[['); // Previous page
@@ -962,6 +966,7 @@ api.mapkey('ye', 'Copy image to clipboard', function() {
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
+/**** AI MAPPINGS DISABLED FOR TESTING ***
 api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
@@ -1009,6 +1014,7 @@ api.mapkey('ak', 'Grok Search (Clipboard/Input)', () => {
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
 });
+*** AI MAPPINGS DISABLED FOR TESTING ****/
 
 // =============================================================================
 // 5. SITE-SPECIFIC AUTOMATION
