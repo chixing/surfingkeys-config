@@ -930,8 +930,8 @@ api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
 // --- Tab Search ---
-api.mapkey('T', '#3Search tabs', function() {
-    api.Front.openOmnibar({type: "Tabs"});
+api.mapkey('T', '#3Choose a tab', function() {
+    api.Front.chooseTab();
     focusSKInput();
 });
 
