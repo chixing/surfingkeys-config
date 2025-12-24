@@ -461,7 +461,27 @@ class AiSelector {
       { value: 'provide a detailed summary', label: 'Detailed Summary' },
       { value: 'provide a short TL;DR summary', label: 'TL;DR', default: true },
       { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
-      { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' }
+      { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' },
+      { 
+        value: `Role: Act as a Senior Staff Engineer and System Architect. Your goal is to explain the provided article to another engineer who is new to this specific domain but possesses a high level of general technical literacy.
+
+Task: Analyze the article and provide a narrative-driven explanation. Do not use bulleted lists or standard summaries. Instead, tell the "story" of the technology.
+
+1. The Technical Narrative: Describe the project as a journey of architectural decisions. Start with the "system state" before the intervention—the technical bottlenecks, the scaling limits, or the data consistency issues that existed. Move through the implementation phase: explain the "why" behind the specific choices made (e.g., why this specific algorithm, why this data ingestion pattern). Describe the "friction points" encountered during engineering and how they were overcome. End with the current system's impact on performance, throughput, or reliability.
+
+2. The Engineering Glossary (Integrated): Do not limit yourself to 5-10 terms. Identify and define every technical term, acronym, or industry-specific concept mentioned in the article. Define these terms with technical precision (e.g., don't just say "it's a fast database," explain its consistency model or indexing strategy). These definitions should be woven naturally into the story or provided in a dedicated section that maintains a professional, technical tone.
+
+3. The Broader Engineering Context: Situate this work within the current landscape of software engineering and infrastructure. How does this approach align with or deviate from industry standards (like CAP theorem trade-offs, microservices patterns, or MLOps best practices)? Discuss the "technical debt" or future-proofing considerations mentioned or implied. Explain the ripple effects this has on the larger tech stack it interacts with.
+
+Tone and Style:
+
+Audience: An engineer looking to deeply understand the "how" and "why."
+
+Format: Prose/Story form only. No bullet points.
+
+Language: Use precise technical vocabulary (latency, idempotency, sharding, backpressure, etc.) while ensuring every term is defined upon first use.`, 
+        label: 'Senior Staff Engineer Narrative' 
+      }
     ];
 
     const defaultTemplate = templates.find(t => t.default) || templates[0];
@@ -872,7 +892,9 @@ api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
 // --- Tab Search ---
-api.map('T', 'ot');
+api.mapkey('T', '#3Choose a tab', function() {
+    api.Front.openOmnibar({type: "Tabs"});
+});
 
 // --- Convenience ---
 api.map('q', 'p');  // Left hand passthrough
