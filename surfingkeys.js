@@ -195,6 +195,15 @@ class AiSelector {
       // Stop fighting if focus was established (user typed something)
       if (focusEstablished) return;
 
+      // Check if focus is moving to another element in our dialog
+      // If so, don't fight it - user is navigating within the dialog
+      const newFocusTarget = e.relatedTarget;
+      if (newFocusTarget && this.overlay && this.overlay.contains(newFocusTarget)) {
+        // Focus is moving to another element in our dialog, allow it
+        focusEstablished = true; // Stop fighting, user is interacting
+        return;
+      }
+
       // Only re-focus if dialog is still open and we haven't exceeded attempts
       if (this.overlay && this.overlay.parentNode && focusAttempts < maxFocusAttempts) {
         focusAttempts++;
