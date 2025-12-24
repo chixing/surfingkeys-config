@@ -115,6 +115,7 @@ class AiSelector {
 
     // Enter the custom mode - this suppresses SurfingKeys' Normal mode
     this.mode.enter();
+    window.focus(); // Ensure window is focused
 
     // Synchronous focus with SurfingKeys focus-pass
     const focusInput = () => {
