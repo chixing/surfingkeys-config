@@ -39,7 +39,7 @@ Object.assign(settings, {
 // 2. AI SELECTOR CLASS (TEMPORARILY DISABLED FOR DEBUGGING)
 // =============================================================================
 
-/**** DISABLED FOR TESTING - START ***
+/* DISABLED FOR TESTING - START
 
 /**
  * SurfingKeys Integration Notes:
@@ -757,7 +757,7 @@ class AiSelector {
   }
 }
 
-*** DISABLED FOR TESTING - END ****/
+// DISABLED FOR TESTING - END */
 
 // =============================================================================
 // 3. UTILITIES
@@ -966,7 +966,7 @@ api.mapkey('ye', 'Copy image to clipboard', function() {
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-/**** AI MAPPINGS DISABLED FOR TESTING ***
+/* AI MAPPINGS DISABLED FOR TESTING
 api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
@@ -1014,7 +1014,7 @@ api.mapkey('ak', 'Grok Search (Clipboard/Input)', () => {
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
 });
-*** AI MAPPINGS DISABLED FOR TESTING ****/
+AI MAPPINGS DISABLED FOR TESTING */
 
 // =============================================================================
 // 5. SITE-SPECIFIC AUTOMATION
