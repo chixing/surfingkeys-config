@@ -758,64 +758,6 @@ class AiSelector {
 // =============================================================================
 // 3. UTILITIES
 // =============================================================================
-
-/**
- * Focus helper for SurfingKeys UI elements.
- * SK's UI is in a shadow DOM and sometimes fails to get focus.
- * This function finds and focuses the input element with blur-fighting.
- */
-function focusSKInput() {
-  const findInput = () => {
-    // Try multiple selectors for SK's frontend
-    const selectors = ['#surfingkeys_frontend', '#sk_frame', '[id^="sk_"]'];
-    for (const sel of selectors) {
-      const host = document.querySelector(sel);
-      if (host && host.shadowRoot) {
-        const input = host.shadowRoot.querySelector('input, textarea, [contenteditable="true"]');
-        if (input) return input;
-      }
-    }
-    // Also try iframes
-    const iframes = document.querySelectorAll('iframe[id^="sk_"]');
-    for (const iframe of iframes) {
-      try {
-        const input = iframe.contentDocument?.querySelector('input, textarea');
-        if (input) return input;
-      } catch (e) { /* cross-origin */ }
-    }
-    return null;
-  };
-
-  const simulateClick = (el) => {
-    const rect = el.getBoundingClientRect();
-    const opts = {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      clientX: rect.left + rect.width / 2,
-      clientY: rect.top + rect.height / 2
-    };
-    el.dispatchEvent(new MouseEvent('mousedown', opts));
-    el.dispatchEvent(new MouseEvent('click', opts));
-  };
-
-  const tryFocus = () => {
-    const input = findInput();
-    if (input) {
-      simulateClick(input);
-      input.focus();
-      return input;
-    }
-    return null;
-  };
-
-  // Try with delays since UI takes time to appear
-  setTimeout(() => tryFocus(), 10);
-  setTimeout(() => tryFocus(), 50);
-  setTimeout(() => tryFocus(), 100);
-  setTimeout(() => tryFocus(), 200);
-}
-
 const util = {
   /**
    * Promisified delay
@@ -928,12 +870,6 @@ const aiSelector = new AiSelector(CONFIG);
 // --- Navigation ---
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
-
-// --- Tab Search ---
-api.mapkey('T', '#3Choose a tab', function() {
-    api.Front.chooseTab();
-    focusSKInput();
-});
 
 // --- Convenience ---
 api.map('q', 'p');  // Left hand passthrough
