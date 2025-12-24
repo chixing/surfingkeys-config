@@ -64,180 +64,476 @@ class AiSelector {
       { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
       { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
     ];
-    this.container = document.createElement('div');
-    this.shadow = this.container.attachShadow({ mode: 'open' });
-  }
-
-  createNodes(initialQuery, selectedServices) {
-    const colors = this.config.theme.colors;
-    const font = this.config.theme.font;
-    
-    this.shadow.innerHTML = `
-      <style>
-        .sk_ai_backdrop {
-          position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(0,0,0,0.7); z-index: 2147483646;
-          display: flex; justify-content: center; align-items: center;
-          font-family: ${font};
-        }
-        .sk_ai_dialog {
-          background: ${colors.bg};
-          border: 2px solid ${colors.border};
-          border-radius: 8px;
-          padding: 24px;
-          width: 550px;
-          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-          color: ${colors.fg};
-        }
-        .sk_ai_title {
-          margin: 0 0 16px 0;
-          color: ${colors.accentFg};
-          font-size: 20px;
-          font-weight: 600;
-        }
-        .sk_ai_label {
-          display: block; margin-bottom: 8px; color: ${colors.mainFg}; font-size: 14px;
-        }
-        .sk_ai_input, .sk_ai_select {
-          width: 100%; padding: 12px; background: ${colors.bgDark};
-          border: 1px solid ${colors.border}; border-radius: 4px;
-          color: ${colors.fg}; font-family: ${font}; font-size: 14px;
-          margin-bottom: 15px; box-sizing: border-box; outline: none;
-        }
-        .sk_ai_input:focus { border-color: ${colors.mainFg}; }
-        .sk_ai_services {
-          display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-          margin-bottom: 20px; padding: 12px; background: ${colors.bgDark};
-          border-radius: 4px; border: 1px solid ${colors.border};
-        }
-        .sk_ai_service {
-          display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px;
-          padding: 4px; border-radius: 4px;
-        }
-        .sk_ai_service:hover { background: ${colors.border}; }
-        .sk_ai_buttons { display: flex; gap: 12px; justify-content: flex-end; }
-        .sk_ai_btn {
-          padding: 8px 20px; border-radius: 4px; cursor: pointer; font-family: ${font};
-          font-size: 14px; font-weight: 600; transition: all 0.2s; border: 1px solid transparent;
-        }
-        .sk_ai_btn_cancel { background: ${colors.bgDark}; color: ${colors.fg}; border-color: ${colors.border}; }
-        .sk_ai_btn_submit { background: ${colors.accentFg}; color: ${colors.bgDark}; }
-        .sk_ai_btn_submit:hover { background: ${colors.mainFg}; }
-      </style>
-      <div class="sk_ai_backdrop">
-        <div class="sk_ai_dialog">
-          <div class="sk_ai_title">Multi-AI Search</div>
-          
-          <label class="sk_ai_label">Search Query:</label>
-          <textarea class="sk_ai_input" id="q" rows="3"></textarea>
-          
-          <label class="sk_ai_label">Prompt Template:</label>
-          <select class="sk_ai_select" id="tpl">
-            <option value="">None</option>
-            <option value="provide a detailed summary">Detailed Summary</option>
-            <option value="provide a short TL;DR summary" selected>TL;DR</option>
-            <option value="fact-check the key claims and provide sources">Fact-Check</option>
-            <option value="explain this in simple terms">Explain Simply</option>
-          </select>
-          <textarea class="sk_ai_input" id="tpl_val" rows="2"></textarea>
-          
-          <label class="sk_ai_label">Services:</label>
-          <div class="sk_ai_services" id="svc"></div>
-          
-          <div class="sk_ai_buttons">
-            <button class="sk_ai_btn sk_ai_btn_cancel" id="cancel">Cancel</button>
-            <button class="sk_ai_btn sk_ai_btn_submit" id="submit">Search</button>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const qInput = this.shadow.getElementById('q');
-    const tplSelect = this.shadow.getElementById('tpl');
-    const tplVal = this.shadow.getElementById('tpl_val');
-    const svcContainer = this.shadow.getElementById('svc');
-    const submitBtn = this.shadow.getElementById('submit');
-    const cancelBtn = this.shadow.getElementById('cancel');
-    const backdrop = this.shadow.querySelector('.sk_ai_backdrop');
-
-    // NATIVE FIX: enableAutoFocus
-    qInput.enableAutoFocus = true;
-    tplVal.enableAutoFocus = true;
-
-    qInput.value = this.lastQuery || initialQuery;
-    tplVal.value = tplSelect.value;
-
-    tplSelect.onchange = () => { tplVal.value = tplSelect.value; };
-
-    this.services.forEach((s, i) => {
-      const isChecked = selectedServices ? selectedServices.includes(s.name) : s.checked;
-      const label = document.createElement('label');
-      label.className = 'sk_ai_service';
-      label.innerHTML = `<input type="checkbox" data-idx="${i}" ${isChecked ? 'checked' : ''}> <span>${s.name}</span>`;
-      svcContainer.appendChild(label);
-    });
-
-    const doSubmit = () => {
-      const query = qInput.value.trim();
-      if (!query) return qInput.focus();
-      
-      this.lastQuery = query;
-      const prompt = tplVal.value.trim();
-      const finalQuery = prompt ? `${query}\n${prompt}` : query;
-      
-      const selected = Array.from(svcContainer.querySelectorAll('input:checked'))
-        .map(cb => this.services[cb.dataset.idx].url);
-      
-      if (selected.length === 0) return alert('Select at least one service');
-      
-      selected.forEach(url => api.tabOpenLink(url + encodeURIComponent(finalQuery)));
-      this.hide();
-    };
-
-    submitBtn.onclick = doSubmit;
-    cancelBtn.onclick = () => this.hide();
-    backdrop.onclick = (e) => { if (e.target === backdrop) this.hide(); };
-
-    qInput.onkeydown = (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        doSubmit();
-      }
-    };
   }
 
   show(initialQuery = '', selectedServices = null) {
-    this.createNodes(initialQuery, selectedServices);
+    const overlay = this.createOverlay();
+    const dialog = this.createDialog();
     
-    document.body.appendChild(this.container);
-    
-    // NATIVE FIX: passThrough mode
-    this.mode = api.Normal.passThrough();
-    this.mode.onExit = () => this.hide();
+    const title = this.createTitle();
+    const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
+    const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
+    const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
+    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
+    const selectAllButtons = this.createSelectAllButtons();
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
-    const qInput = this.shadow.getElementById('q');
-    setTimeout(() => {
-      qInput.focus();
-      qInput.select();
-    }, 10);
+    dialog.appendChild(title);
+    dialog.appendChild(queryLabel);
+    dialog.appendChild(queryInput);
+    dialog.appendChild(promptLabel);
+    dialog.appendChild(promptSelect);
+    dialog.appendChild(promptInput);
+    dialog.appendChild(servicesLabel);
+    dialog.appendChild(selectAllButtons);
+    dialog.appendChild(servicesContainer);
+    dialog.appendChild(buttonsContainer);
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+
+    queryInput.focus();
+    queryInput.select();
+
+    // Handle Enter and Escape keys
+    overlay.addEventListener('keydown', (e) => {
+      // Handle j/k for select navigation when select is focused
+      if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const select = e.target;
+        const currentIndex = select.selectedIndex;
+        if (e.key === 'j' && currentIndex < select.options.length - 1) {
+          select.selectedIndex = currentIndex + 1;
+        } else if (e.key === 'k' && currentIndex > 0) {
+          select.selectedIndex = currentIndex - 1;
+        }
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        return;
+      }
+      
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
+      } else if (e.key === 'Enter') {
+        const isTextArea = e.target.tagName === 'TEXTAREA';
+        if (!isTextArea || (isTextArea && !e.shiftKey)) {
+          e.preventDefault();
+          this.handleSubmit(overlay, queryInput, promptInput);
+        }
+      }
+    });
+
+    // Click outside closes dialog
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
+      }
+    });
+
   }
 
-  hide() {
-    if (this.mode) {
-      this.mode.exit();
-      this.mode = null;
+  createOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'sk-ai-selector-overlay';
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2147483647;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: ${this.config.theme.font};
+    `;
+    return overlay;
+  }
+
+  createDialog() {
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+      background: ${this.config.theme.colors.bg};
+      border: 2px solid ${this.config.theme.colors.border};
+      border-radius: 8px;
+      padding: 24px;
+      min-width: 480px;
+      max-width: 600px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      color: ${this.config.theme.colors.fg};
+    `;
+    return dialog;
+  }
+
+  createTitle() {
+    const title = document.createElement('h2');
+    title.textContent = 'Multi-AI Search';
+    title.style.cssText = `
+      margin: 0 0 16px 0;
+      color: ${this.config.theme.colors.accentFg};
+      font-size: 20px;
+      font-weight: 600;
+    `;
+    return title;
+  }
+
+  createQueryInput(initialQuery) {
+    const label = document.createElement('label');
+    label.textContent = 'Search Query:';
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const input = document.createElement('textarea');
+    input.id = 'sk-ai-query-input';
+    input.value = initialQuery;
+    input.rows = 3;
+    input.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 20px;
+      resize: vertical;
+      box-sizing: border-box;
+    `;
+
+    return { label, input };
+  }
+
+  createPromptInput() {
+    const label = document.createElement('label');
+    label.textContent = 'Prompt Template (optional):';
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const select = document.createElement('select');
+    select.style.cssText = `
+      width: 100%;
+      padding: 10px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 8px;
+      cursor: pointer;
+      box-sizing: border-box;
+    `;
+
+    const templates = [
+      { value: '', label: 'None' },
+      { value: 'provide a detailed summary', label: 'Detailed Summary' },
+      { value: 'provide a short TL;DR summary', label: 'TL;DR', default: true },
+      { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
+      { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' }
+    ];
+
+    const defaultTemplate = templates.find(t => t.default) || templates[0];
+
+    templates.forEach(template => {
+      const option = document.createElement('option');
+      option.value = template.value;
+      option.textContent = template.label;
+      if (template.default) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+
+    const input = document.createElement('textarea');
+    input.rows = 2;
+    input.value = defaultTemplate.value;
+    input.placeholder = 'Custom prompt template...';
+    input.style.cssText = `
+      width: 100%;
+      padding: 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: ${this.config.theme.fontSize};
+      margin-bottom: 20px;
+      resize: vertical;
+      box-sizing: border-box;
+    `;
+
+    // Update editable box when dropdown changes
+    select.addEventListener('change', () => {
+      input.value = select.value;
+    });
+
+    return { label, input, select };
+  }
+
+  createServicesCheckboxes(selectedServices = null) {
+    const label = document.createElement('label');
+    label.textContent = 'Select AI Services:';
+    label.style.cssText = `
+      display: block;
+      margin-bottom: 8px;
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 14px;
+    `;
+
+    const container = document.createElement('div');
+    container.id = 'sk-services-container';
+    container.style.cssText = `
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: ${this.config.theme.colors.bgDark};
+      border-radius: 4px;
+      border: 1px solid ${this.config.theme.colors.border};
+    `;
+
+    this.services.forEach((service, index) => {
+      const isChecked = selectedServices ? selectedServices.includes(service.name) : service.checked;
+      const checkboxWrapper = this.createCheckbox(service, index, isChecked);
+      container.appendChild(checkboxWrapper);
+    });
+
+    return { label, container };
+  }
+
+  createSelectAllButtons() {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: flex-start;
+    `;
+
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = 'Select All';
+    selectAllBtn.type = 'button';
+    selectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.accentFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    selectAllBtn.onmouseenter = () => {
+      selectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    selectAllBtn.onmouseleave = () => {
+      selectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    selectAllBtn.onclick = () => {
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = true;
+      });
+    };
+
+    const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.textContent = 'Unselect All';
+    unselectAllBtn.type = 'button';
+    unselectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.infoFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    unselectAllBtn.onmouseenter = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    unselectAllBtn.onmouseleave = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    unselectAllBtn.onclick = () => {
+      this.services.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-ai-${index}`);
+        if (checkbox) checkbox.checked = false;
+      });
+    };
+
+    container.appendChild(selectAllBtn);
+    container.appendChild(unselectAllBtn);
+    return container;
+  }
+
+  createCheckbox(service, index, isChecked = true) {
+    const wrapper = document.createElement('label');
+    wrapper.style.cssText = `
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    `;
+    wrapper.onmouseenter = () => {
+      wrapper.style.background = this.config.theme.colors.border;
+    };
+    wrapper.onmouseleave = () => {
+      wrapper.style.background = 'transparent';
+    };
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = isChecked;
+    checkbox.id = `sk-ai-${index}`;
+    checkbox.style.cssText = `
+      margin-right: 10px;
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: ${this.config.theme.colors.accentFg};
+    `;
+
+    const label = document.createElement('span');
+    label.textContent = service.name;
+    label.style.cssText = `
+      color: ${this.config.theme.colors.fg};
+      font-size: 15px;
+      cursor: pointer;
+    `;
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(label);
+    return wrapper;
+  }
+
+  createButtons(overlay, queryInput, promptInput) {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    `;
+
+    const cancelBtn = this.createCancelButton(overlay, queryInput);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
+
+    container.appendChild(cancelBtn);
+    container.appendChild(submitBtn);
+    return container;
+  }
+
+  createCancelButton(overlay, queryInput) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Cancel';
+    btn.style.cssText = `
+      padding: 10px 24px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    btn.onmouseenter = () => {
+      btn.style.background = this.config.theme.colors.border;
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = this.config.theme.colors.bgDark;
+    };
+    btn.onclick = () => {
+      // Save query for next time
+      this.lastQuery = queryInput.value;
+      document.body.removeChild(overlay);
+    };
+    return btn;
+  }
+
+  createSubmitButton(overlay, queryInput, promptInput) {
+    const btn = document.createElement('button');
+    btn.textContent = 'Open Selected AIs';
+    btn.style.cssText = `
+      padding: 10px 24px;
+      background: ${this.config.theme.colors.accentFg};
+      border: 1px solid ${this.config.theme.colors.accentFg};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.bgDark};
+      font-family: ${this.config.theme.font};
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    btn.onmouseenter = () => {
+      btn.style.background = this.config.theme.colors.mainFg;
+      btn.style.borderColor = this.config.theme.colors.mainFg;
+    };
+    btn.onmouseleave = () => {
+      btn.style.background = this.config.theme.colors.accentFg;
+      btn.style.borderColor = this.config.theme.colors.accentFg;
+    };
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
+    return btn;
+  }
+
+  handleSubmit(overlay, queryInput, promptInput) {
+    const query = queryInput.value.trim();
+    if (!query) {
+      queryInput.focus();
+      queryInput.style.borderColor = '#ff6b6b';
+      setTimeout(() => {
+        queryInput.style.borderColor = this.config.theme.colors.border;
+      }, 1000);
+      return;
     }
-    if (this.container.parentNode) {
-      this.container.remove();
+
+    const selectedUrls = this.services
+      .filter((_, index) => document.getElementById(`sk-ai-${index}`).checked)
+      .map(service => service.url);
+
+    if (selectedUrls.length === 0) {
+      alert('Please select at least one AI service');
+      return;
     }
+
+    // Save query for next time
+    this.lastQuery = queryInput.value;
+
+    // Combine query with prompt template if provided
+    const promptTemplate = promptInput.value.trim();
+    const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
+
+    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
+    document.body.removeChild(overlay);
   }
 
   updateQuery(text) {
-    const qInput = this.shadow.getElementById('q');
-    if (qInput && !this.lastQuery) {
-      qInput.value = text;
-      qInput.focus();
-      qInput.select();
+    const input = document.getElementById('sk-ai-query-input');
+    if (input && !this.lastQuery) {
+      input.value = text;
+      input.focus();
+      input.select();
     }
   }
 }
