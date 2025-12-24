@@ -765,37 +765,55 @@ class AiSelector {
  * This function finds and focuses the input element with blur-fighting.
  */
 function focusSKInput() {
-  const tryFocus = () => {
-    // Find SK's frontend container (shadow host)
-    const skHost = document.querySelector('#surfingkeys_frontend');
-    if (!skHost || !skHost.shadowRoot) return null;
+  const findInput = () => {
+    // Try multiple selectors for SK's frontend
+    const selectors = ['#surfingkeys_frontend', '#sk_frame', '[id^="sk_"]'];
+    for (const sel of selectors) {
+      const host = document.querySelector(sel);
+      if (host && host.shadowRoot) {
+        const input = host.shadowRoot.querySelector('input, textarea, [contenteditable="true"]');
+        if (input) return input;
+      }
+    }
+    // Also try iframes
+    const iframes = document.querySelectorAll('iframe[id^="sk_"]');
+    for (const iframe of iframes) {
+      try {
+        const input = iframe.contentDocument?.querySelector('input, textarea');
+        if (input) return input;
+      } catch (e) { /* cross-origin */ }
+    }
+    return null;
+  };
 
-    // Find input inside shadow DOM
-    const input = skHost.shadowRoot.querySelector('input');
+  const simulateClick = (el) => {
+    const rect = el.getBoundingClientRect();
+    const opts = {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2
+    };
+    el.dispatchEvent(new MouseEvent('mousedown', opts));
+    el.dispatchEvent(new MouseEvent('click', opts));
+  };
+
+  const tryFocus = () => {
+    const input = findInput();
     if (input) {
+      simulateClick(input);
       input.focus();
       return input;
     }
     return null;
   };
 
-  // Try immediately
-  let input = tryFocus();
-
-  // Also try after a short delay (UI might not be ready)
-  const startTime = Date.now();
-  const maxTime = 300;
-
-  const tryUntilFocused = () => {
-    if (Date.now() - startTime > maxTime) return;
-
-    input = tryFocus();
-    if (input && document.activeElement === input) return;
-
-    requestAnimationFrame(tryUntilFocused);
-  };
-
-  requestAnimationFrame(tryUntilFocused);
+  // Try with delays since UI takes time to appear
+  setTimeout(() => tryFocus(), 10);
+  setTimeout(() => tryFocus(), 50);
+  setTimeout(() => tryFocus(), 100);
+  setTimeout(() => tryFocus(), 200);
 }
 
 const util = {
@@ -914,17 +932,6 @@ api.map('J', ']]'); // Next page
 // --- Tab Search ---
 api.mapkey('T', '#3Search tabs', function() {
     api.Front.openOmnibar({type: "Tabs"});
-    focusSKInput();
-});
-
-// --- Focus fixes for SK UI elements ---
-api.mapkey('H', '#8Open opened URL in current tab', function() {
-    api.Front.openOmnibar({type: "History"});
-    focusSKInput();
-});
-
-api.mapkey('?', '#0Show usage', function() {
-    api.Front.showPopup('usage');
     focusSKInput();
 });
 
