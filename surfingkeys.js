@@ -106,59 +106,64 @@ class AiSelector {
     shadow.appendChild(overlay);
     document.body.appendChild(host);
 
-    window.focus(); // Ensure window is focused
-
-    // Synchronous focus with SurfingKeys focus-pass
+    // Focus logic
     const focusInput = () => {
-      api.Normal.passFocus(true);
-      queryInput.focus();
-      queryInput.select();
-      // Trigger Insert Mode by simulating a click/mousedown
-      queryInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+      const attempt = () => {
+        api.Normal.passFocus(true);
+        queryInput.focus();
+        queryInput.select();
+        queryInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
+      };
+      attempt();
+      setTimeout(attempt, 10);
+      setTimeout(attempt, 50);
+      setTimeout(attempt, 150);
     };
 
-    // Initial focus
     focusInput();
 
-    // Aggressive focus recovery for sites that steal focus on load/interaction
+    // Aggressive focus recovery
     this.focusGuard = setInterval(() => {
-      if (shadow.activeElement !== queryInput && 
-          !['TEXTAREA', 'SELECT', 'INPUT'].includes(shadow.activeElement?.tagName)) {
+      const active = shadow.activeElement;
+      if (!active || !['TEXTAREA', 'SELECT', 'INPUT'].includes(active.tagName)) {
         api.Normal.passFocus(true);
         queryInput.focus();
       }
-    }, 50);
+    }, 100);
 
-    // Handle keys directly on the host to prevent SurfingKeys from intercepting
-    host.addEventListener('keydown', (e) => {
-      e.stopPropagation(); // Prevent SurfingKeys from seeing these keys
-      e.stopImmediatePropagation();
-
+    // Key handling
+    const handleKey = (e) => {
       if (e.key === 'Escape') {
         e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
         this.lastQuery = queryInput.value;
         cleanup();
-      } else if (e.key === 'Enter') {
+      } else if (e.key === 'Enter' && e.target.tagName !== 'SELECT') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
+          e.stopPropagation();
           this.handleSubmit(host, queryInput, promptInput, shadow, cleanup);
         }
       }
-      
-      // Handle j/k for select navigation
-      if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
-        e.preventDefault();
-        const select = e.target;
-        const currentIndex = select.selectedIndex;
-        if (e.key === 'j' && currentIndex < select.options.length - 1) {
-          select.selectedIndex = currentIndex + 1;
-        } else if (e.key === 'k' && currentIndex > 0) {
-          select.selectedIndex = currentIndex - 1;
+    };
+
+    // Attach listeners to all inputs to catch keys before SurfingKeys
+    [queryInput, promptInput, promptSelect].forEach(el => {
+      el.addEventListener('keydown', handleKey, true);
+    });
+
+    // Close on blur (handles Esc and clicking outside)
+    queryInput.addEventListener('blur', (e) => {
+      setTimeout(() => {
+        const active = shadow.activeElement;
+        if (!active || !['TEXTAREA', 'SELECT', 'INPUT'].includes(active.tagName)) {
+          this.lastQuery = queryInput.value;
+          cleanup();
         }
-        select.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-    }, true); // Use capture phase to intercept before SurfingKeys
+      }, 50);
+    });
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
