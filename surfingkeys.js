@@ -92,6 +92,10 @@ class AiSelector {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
 
+
+    queryInput.focus();
+    queryInput.select();
+
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
       // Handle j/k for select navigation when select is focused
