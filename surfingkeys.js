@@ -465,7 +465,7 @@ class AiSelector {
       { 
         value: `Role: Act as a Senior Staff Engineer and System Architect. Your goal is to explain the provided article to another engineer who is new to this specific domain but possesses a high level of general technical literacy.
 
-Task: Analyze the article and provide a narrative-driven explanation. Do not use bulleted lists or standard summaries. Instead, tell the "story" of the technology.
+Task: Analyze the article and provide a narrative-driven explanation. Start with a concise TL;DR summary at the very top. Do not use bulleted lists or standard summaries for the main body. Instead, tell the "story" of the technology.
 
 1. The Technical Narrative: Describe the project as a journey of architectural decisions. Start with the "system state" before the intervention—the technical bottlenecks, the scaling limits, or the data consistency issues that existed. Move through the implementation phase: explain the "why" behind the specific choices made (e.g., why this specific algorithm, why this data ingestion pattern). Describe the "friction points" encountered during engineering and how they were overcome. End with the current system's impact on performance, throughput, or reliability.
 
