@@ -873,13 +873,11 @@ api.map('J', ']]'); // Next page
 
 // --- Tab Search (workaround: open regular omnibar first to prime focus) ---
 api.mapkey('T', '#3Choose a tab', function() {
-    // Open regular omnibar first (this gets focus)
+    // Open regular omnibar first (this gets focus), then switch to Tabs
     api.Front.openOmnibar();
-    // Then immediately close and open tabs
     setTimeout(() => {
-        api.Front.hidePopup();
         api.Front.openOmnibar({type: "Tabs"});
-    }, 10);
+    }, 50);
 });
 
 // --- Convenience ---
