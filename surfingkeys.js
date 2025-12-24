@@ -185,46 +185,38 @@ class AiSelector {
       queryInput.dispatchEvent(mousedownEvent);
     };
 
-    // Counter for focus attempts
-    let focusAttempts = 0;
-    const maxFocusAttempts = 50;
-    let focusEstablished = false;
+    // Only fight blur for a short time window after dialog opens
+    const startTime = Date.now();
+    const fightDurationMs = 300; // Only fight for 300ms after open
+    let focusWon = false;
 
     // Fight back against SurfingKeys blur by re-focusing
     const blurHandler = (e) => {
-      // Stop fighting if focus was established (user typed something)
-      if (focusEstablished) return;
+      // Stop fighting after time window or if we've won
+      if (focusWon || Date.now() - startTime > fightDurationMs) return;
 
       // Check if focus is moving to another element in our dialog
-      // If so, don't fight it - user is navigating within the dialog
       const newFocusTarget = e.relatedTarget;
       if (newFocusTarget && this.overlay && this.overlay.contains(newFocusTarget)) {
-        // Focus is moving to another element in our dialog, allow it
-        focusEstablished = true; // Stop fighting, user is interacting
+        focusWon = true;
         return;
       }
 
-      // Only re-focus if dialog is still open and we haven't exceeded attempts
-      if (this.overlay && this.overlay.parentNode && focusAttempts < maxFocusAttempts) {
-        focusAttempts++;
-        // Use requestAnimationFrame to re-focus after the blur completes
+      // Re-focus if dialog is still open
+      if (this.overlay && this.overlay.parentNode) {
         requestAnimationFrame(() => {
-          if (this.overlay && this.overlay.parentNode && !focusEstablished) {
-            // Every 5th attempt, try simulating a click
-            if (focusAttempts % 5 === 0) {
-              simulateMousedown();
-              simulateClick();
-            }
+          if (this.overlay && this.overlay.parentNode && !focusWon) {
+            simulateMousedown();
+            simulateClick();
             queryInput.focus();
+            // Check if we won
+            if (document.activeElement === queryInput) {
+              focusWon = true;
+            }
           }
         });
       }
     };
-
-    // Mark focus as established when user starts typing
-    queryInput.addEventListener('input', () => {
-      focusEstablished = true;
-    });
 
     queryInput.addEventListener('blur', blurHandler);
 
