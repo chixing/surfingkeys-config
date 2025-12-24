@@ -85,7 +85,6 @@ class AiSelector {
     
     const cleanup = () => {
       if (this.focusGuard) clearInterval(this.focusGuard);
-      this.mode.exit();
       if (document.body.contains(host)) {
         document.body.removeChild(host);
       }
@@ -108,8 +107,6 @@ class AiSelector {
     shadow.appendChild(overlay);
     document.body.appendChild(host);
 
-    // Enter the custom mode - this suppresses SurfingKeys' Normal mode
-    this.mode.enter();
     window.focus(); // Ensure window is focused
 
     // Synchronous focus with SurfingKeys focus-pass
@@ -117,6 +114,8 @@ class AiSelector {
       api.Normal.passFocus(true);
       queryInput.focus();
       queryInput.select();
+      // Trigger Insert Mode by simulating a click/mousedown
+      queryInput.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     };
 
     // Initial focus
@@ -131,9 +130,9 @@ class AiSelector {
       }
     }, 50);
 
-    // Handle keys via the Mode system for better isolation
-    this.mode.addEventListener('keydown', (e) => {
-      e.sk_stopPropagation = true; // SurfingKeys specific propagation flag
+    // Handle keys directly on the host to prevent SurfingKeys from intercepting
+    host.addEventListener('keydown', (e) => {
+      e.stopPropagation(); // Prevent SurfingKeys from seeing these keys
       e.stopImmediatePropagation();
 
       if (e.key === 'Escape') {
@@ -160,7 +159,7 @@ class AiSelector {
         }
         select.dispatchEvent(new Event('change', { bubbles: true }));
       }
-    });
+    }, true); // Use capture phase to intercept before SurfingKeys
 
     // Click outside closes dialog
     overlay.addEventListener('click', (e) => {
