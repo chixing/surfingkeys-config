@@ -872,9 +872,10 @@ api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
 // --- Tab Search ---
-api.mapkey('T', '#3Search tabs', function() {
-    api.Front.openOmnibar({type: "Tabs"});
-});
+// TESTING: Comment out to see if default T works
+// api.mapkey('T', '#3Search tabs', function() {
+//     api.Front.openOmnibar({type: "Tabs"});
+// });
 
 // --- Convenience ---
 api.map('q', 'p');  // Left hand passthrough
