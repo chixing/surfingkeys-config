@@ -471,7 +471,7 @@ Task: Analyze the article and provide a narrative-driven explanation. Start with
 
 2. The Engineering Glossary (Integrated): Do not limit yourself to 5-10 terms. Identify and define every technical term, acronym, or industry-specific concept mentioned in the article. Define these terms with technical precision (e.g., don't just say "it's a fast database," explain its consistency model or indexing strategy). These definitions should be woven naturally into the story or provided in a dedicated section that maintains a professional, technical tone.
 
-3. The Broader Engineering Context: Situate this work within the current landscape of software engineering and infrastructure. How does this approach align with or deviate from industry standards (like CAP theorem trade-offs, microservices patterns, or MLOps best practices)? Discuss the "technical debt" or future-proofing considerations mentioned or implied. Explain the ripple effects this has on the larger tech stack it interacts with.
+3. The Broader Engineering Context: Situate this work within the current landscape of software engineering and infrastructure. How does this approach align with or deviate from industry standards. Discuss the "technical debt" or future-proofing considerations mentioned or implied. Explain the ripple effects this has on the larger tech stack it interacts with.
 
 Tone and Style:
 
