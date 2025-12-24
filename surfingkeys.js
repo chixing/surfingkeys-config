@@ -67,6 +67,11 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
+    // Create a host element for Shadow DOM isolation
+    const host = document.createElement('div');
+    host.id = 'sk-ai-selector-host';
+    const shadow = host.attachShadow({ mode: 'open' });
+
     const overlay = this.createOverlay();
     const dialog = this.createDialog();
     
@@ -74,9 +79,9 @@ class AiSelector {
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
-    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
-    const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
+    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices, shadow);
+    const selectAllButtons = this.createSelectAllButtons(shadow);
+    const buttonsContainer = this.createButtons(host, queryInput, promptInput);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -90,18 +95,29 @@ class AiSelector {
     dialog.appendChild(buttonsContainer);
 
     overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
+    shadow.appendChild(overlay);
+    document.body.appendChild(host);
 
-
+    // Synchronous focus - SurfingKeys style
     queryInput.focus();
     queryInput.select();
 
+    // Prevent focus loss - some sites (like ChatGPT) steal focus back
+    const handleFocusLoss = () => {
+      if (document.activeElement !== host) {
+        queryInput.focus();
+      }
+    };
+    window.addEventListener('focus', handleFocusLoss, true);
+
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
+      // Stop propagation to prevent the page from seeing these keys
+      e.stopImmediatePropagation();
+
       // Handle j/k for select navigation when select is focused
       if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
-        e.stopPropagation();
         const select = e.target;
         const currentIndex = select.selectedIndex;
         if (e.key === 'j' && currentIndex < select.options.length - 1) {
@@ -113,15 +129,17 @@ class AiSelector {
         return;
       }
       
-      e.stopPropagation();
       if (e.key === 'Escape') {
+        e.preventDefault();
         this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        window.removeEventListener('focus', handleFocusLoss, true);
+        document.body.removeChild(host);
       } else if (e.key === 'Enter') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          this.handleSubmit(overlay, queryInput, promptInput);
+          window.removeEventListener('focus', handleFocusLoss, true);
+          this.handleSubmit(host, queryInput, promptInput, shadow);
         }
       }
     });
@@ -130,10 +148,10 @@ class AiSelector {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        window.removeEventListener('focus', handleFocusLoss, true);
+        document.body.removeChild(host);
       }
     });
-
   }
 
   createOverlay() {
