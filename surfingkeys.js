@@ -758,10 +758,50 @@ class AiSelector {
 // =============================================================================
 // 3. UTILITIES
 // =============================================================================
+
+/**
+ * Focus helper for SurfingKeys UI elements.
+ * SK's UI is in a shadow DOM and sometimes fails to get focus.
+ * This function finds and focuses the input element with blur-fighting.
+ */
+function focusSKInput() {
+  const tryFocus = () => {
+    // Find SK's frontend container (shadow host)
+    const skHost = document.querySelector('#surfingkeys_frontend');
+    if (!skHost || !skHost.shadowRoot) return null;
+
+    // Find input inside shadow DOM
+    const input = skHost.shadowRoot.querySelector('input');
+    if (input) {
+      input.focus();
+      return input;
+    }
+    return null;
+  };
+
+  // Try immediately
+  let input = tryFocus();
+
+  // Also try after a short delay (UI might not be ready)
+  const startTime = Date.now();
+  const maxTime = 300;
+
+  const tryUntilFocused = () => {
+    if (Date.now() - startTime > maxTime) return;
+
+    input = tryFocus();
+    if (input && document.activeElement === input) return;
+
+    requestAnimationFrame(tryUntilFocused);
+  };
+
+  requestAnimationFrame(tryUntilFocused);
+}
+
 const util = {
   /**
    * Promisified delay
-   * @param {number} ms 
+   * @param {number} ms
    */
   delay: (ms) => new Promise(resolve => setTimeout(resolve, ms)),
 
@@ -874,6 +914,18 @@ api.map('J', ']]'); // Next page
 // --- Tab Search ---
 api.mapkey('T', '#3Search tabs', function() {
     api.Front.openOmnibar({type: "Tabs"});
+    focusSKInput();
+});
+
+// --- Focus fixes for SK UI elements ---
+api.mapkey('H', '#8Open opened URL in current tab', function() {
+    api.Front.openOmnibar({type: "History"});
+    focusSKInput();
+});
+
+api.mapkey('?', '#0Show usage', function() {
+    api.Front.showUsage();
+    focusSKInput();
 });
 
 // --- Convenience ---
