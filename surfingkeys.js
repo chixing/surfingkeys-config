@@ -101,10 +101,20 @@ class AiSelector {
       queryInput.select();
     };
 
-    // Same user-gesture turn, then retries after layout/possible steals
+    // keep focus even if something steals it
+    const trapFocus = (e) => {
+      if (e.target !== queryInput) {
+        queryInput.focus({ preventScroll: true });
+        queryInput.select();
+      }
+    };
+    overlay.addEventListener('focusin', trapFocus);
+
+    // initial tries + retries
     forceFocusQuery();
     requestAnimationFrame(forceFocusQuery);
     setTimeout(forceFocusQuery, 30);
+    setTimeout(forceFocusQuery, 120);
 
     // Handle Enter and Escape keys
     overlay.addEventListener('keydown', (e) => {
