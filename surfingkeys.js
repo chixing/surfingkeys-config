@@ -298,6 +298,7 @@ class AiSelector {
     input.rows = 2;
     input.value = defaultTemplate.value;
     input.placeholder = 'Custom prompt template...';
+    input.enableAutoFocus = true; // Bypass SurfingKeys focus protection
     input.style.cssText = `
       width: 100%;
       padding: 12px;
