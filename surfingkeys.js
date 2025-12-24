@@ -70,7 +70,6 @@ class AiSelector {
     // Create a host element for Shadow DOM isolation
     const host = document.createElement('div');
     host.id = 'sk-ai-selector-host';
-    host.tabIndex = -1; // Make host focusable but not in tab order
     const shadow = host.attachShadow({ mode: 'open' });
 
     const overlay = this.createOverlay();
