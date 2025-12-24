@@ -493,7 +493,7 @@ Task: Deconstruct the article into a narrative of Architectural Evolution. Rathe
 
 3. The Macro-Engineering Perspective: Situate this architecture within the current Infrastructure Landscape. Discuss how this design adheres to or challenges established patterns like the Twelve-Factor App, CAP Theorem constraints, or Microservices Orchestration. Highlight any "Future-Proofing" decisions and identify potential Long-term Technical Debt that this new architecture might eventually incur.
 
-Constraints: Prose/Story form only. No bulleted lists or standard summaries. Maintain an advanced, "engineer-not-layman" tone throughout.`,
+Constraints: Prose/Story form only. No bulleted lists or standard summaries. Maintain an advanced, "engineer-not-layman" tone throughout. KEEP IT CONCISE`,
         label: 'Architectural Review Narrative'
       }
     ];
