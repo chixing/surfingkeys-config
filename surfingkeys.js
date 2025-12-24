@@ -36,46 +36,10 @@ Object.assign(settings, {
 });
 
 // =============================================================================
-// 2. AI SELECTOR CLASS (TEMPORARILY DISABLED FOR DEBUGGING)
+// 2. AI SELECTOR CLASS
 // =============================================================================
 
-/* DISABLED FOR TESTING - START
-
-/**
- * SurfingKeys Integration Notes:
- *
- * SurfingKeys aggressively manages focus to enable its keyboard shortcuts.
- * This creates challenges for custom dialogs that need focused input fields.
- *
- * THE PROBLEM:
- * - SurfingKeys has a persistent focus listener that calls .blur() on any
- *   focused element it doesn't recognize
- * - It intercepts keyboard events at the capture phase before they reach
- *   page elements
- * - The Escape key is captured to close SK's own UI, preventing custom dialogs
- *   from receiving it
- *
- * THE SOLUTION (3-part approach):
- *
- * 1. Mark elements as SurfingKeys-owned:
- *    Set `element.fromSurfingKeys = true` on all dialog elements.
- *    SK's DOM observer checks this flag to identify "safe" elements.
- *
- * 2. Suppress events in capture phase:
- *    Add document-level listeners (capture phase) that set `sk_suppressed = true`
- *    and `sk_stopPropagation = true` on keyboard/focus events. These flags tell
- *    SK's mode stack to ignore the events.
- *
- * 3. Fight blur with time-limited re-focus:
- *    When SK blurs the input, immediately re-focus using requestAnimationFrame.
- *    Also simulate mousedown/click events to trigger SK's "insert mode" (the mode
- *    it enters when you click on an input, which allows focus).
- *
- *    CRITICAL: Only fight for ~300ms after dialog opens, then stop. This allows
- *    the initial focus battle to be won, but doesn't interfere with subsequent
- *    user interactions (clicking other elements, Tab navigation, etc.).
- */
-
+// AI Service Names
 const AI_SERVICES = {
   CHATGPT: 'ChatGPT',
   DOUBAO: 'Doubao',
@@ -86,19 +50,11 @@ const AI_SERVICES = {
   GROK: 'Grok'
 };
 
+
 class AiSelector {
   constructor(config) {
     this.config = config;
     this.lastQuery = null;
-    // Active dialog state
-    this.overlay = null;
-    this.queryInput = null;
-    this.promptInput = null;
-    // Event handlers (stored for cleanup)
-    this.keyHandler = null;
-    this.focusHandler = null;
-    this.blurHandler = null;
-    // AI services configuration
     this.services = [
       { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
       { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
@@ -110,251 +66,75 @@ class AiSelector {
     ];
   }
 
-  // ===========================================================================
-  // Dialog Lifecycle
-  // ===========================================================================
-
   show(initialQuery = '', selectedServices = null) {
-    // Build dialog DOM
-    this.overlay = this.createOverlay();
+    const overlay = this.createOverlay();
     const dialog = this.createDialog();
-    const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
-
+    
     const title = this.createTitle();
+    const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons();
+    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
 
-    this.queryInput = queryInput;
-    this.promptInput = promptInput;
+    dialog.appendChild(title);
+    dialog.appendChild(queryLabel);
+    dialog.appendChild(queryInput);
+    dialog.appendChild(promptLabel);
+    dialog.appendChild(promptSelect);
+    dialog.appendChild(promptInput);
+    dialog.appendChild(servicesLabel);
+    dialog.appendChild(selectAllButtons);
+    dialog.appendChild(servicesContainer);
+    dialog.appendChild(buttonsContainer);
 
-    // Assemble dialog
-    [title, queryLabel, queryInput, promptLabel, promptSelect, promptInput,
-     servicesLabel, selectAllButtons, servicesContainer, buttonsContainer]
-      .forEach(el => dialog.appendChild(el));
-    this.overlay.appendChild(dialog);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
 
-    // Mark elements for SurfingKeys bypass (see class docs)
-    this.markAsSurfingKeys(this.overlay);
 
-    document.body.appendChild(this.overlay);
+    queryInput.focus();
+    queryInput.select();
 
-    // Set up event interception and focus management
-    this.setupKeyboardHandler();
-    this.setupFocusHandler();
-    this.setupInitialFocus(queryInput);
-    this.setupOverlayClickHandler();
-  }
-
-  close() {
-    // Remove keyboard handler
-    if (this.keyHandler) {
-      document.removeEventListener('keydown', this.keyHandler, true);
-      this.keyHandler = null;
-    }
-    // Remove focus handler
-    if (this.focusHandler) {
-      document.removeEventListener('focus', this.focusHandler, true);
-      document.removeEventListener('focusin', this.focusHandler, true);
-      this.focusHandler = null;
-    }
-    // Remove blur handler
-    if (this.blurHandler && this.queryInput) {
-      this.queryInput.removeEventListener('blur', this.blurHandler);
-      this.blurHandler = null;
-    }
-    // Remove overlay from DOM
-    if (this.overlay?.parentNode) {
-      this.overlay.parentNode.removeChild(this.overlay);
-    }
-    // Clear references
-    this.overlay = null;
-    this.queryInput = null;
-    this.promptInput = null;
-  }
-
-  // ===========================================================================
-  // SurfingKeys Integration (see class docs for detailed explanation)
-  // ===========================================================================
-
-  /** Mark element and descendants with fromSurfingKeys flag */
-  markAsSurfingKeys(element) {
-    element.fromSurfingKeys = true;
-    for (const child of element.querySelectorAll('*')) {
-      child.fromSurfingKeys = true;
-    }
-  }
-
-  /** Intercept keyboard events before SurfingKeys processes them */
-  setupKeyboardHandler() {
-    this.keyHandler = (e) => {
-      if (!this.overlay?.parentNode) return;
-
-      // Mark as handled by SurfingKeys (prevents mode stack processing)
-      e.sk_suppressed = true;
-      e.sk_stopPropagation = true;
-
-      // Allow Tab for focus navigation within dialog
-      if (e.key === 'Tab') return;
-
-      // Vim-style navigation for select dropdowns
+    // Handle Enter and Escape keys
+    overlay.addEventListener('keydown', (e) => {
+      // Handle j/k for select navigation when select is focused
       if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
         e.stopPropagation();
-        const delta = e.key === 'j' ? 1 : -1;
-        const newIndex = e.target.selectedIndex + delta;
-        if (newIndex >= 0 && newIndex < e.target.options.length) {
-          e.target.selectedIndex = newIndex;
-          e.target.dispatchEvent(new Event('change', { bubbles: true }));
+        const select = e.target;
+        const currentIndex = select.selectedIndex;
+        if (e.key === 'j' && currentIndex < select.options.length - 1) {
+          select.selectedIndex = currentIndex + 1;
+        } else if (e.key === 'k' && currentIndex > 0) {
+          select.selectedIndex = currentIndex - 1;
         }
+        select.dispatchEvent(new Event('change', { bubbles: true }));
         return;
       }
-
+      
       e.stopPropagation();
-
-      // Dialog controls
       if (e.key === 'Escape') {
-        e.preventDefault();
-        this.lastQuery = this.queryInput.value;
-        this.close();
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
       } else if (e.key === 'Enter') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
-        if (!isTextArea || !e.shiftKey) {
+        if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          this.handleSubmit();
+          this.handleSubmit(overlay, queryInput, promptInput);
         }
       }
-    };
+    });
 
-    document.addEventListener('keydown', this.keyHandler, true);
-  }
-
-  /** Suppress focus events to prevent SurfingKeys focus protection */
-  setupFocusHandler() {
-    this.focusHandler = (e) => {
-      if (this.overlay?.contains(e.target)) {
-        e.sk_suppressed = true;
-        e.sk_stopPropagation = true;
-      }
-    };
-
-    document.addEventListener('focus', this.focusHandler, true);
-    document.addEventListener('focusin', this.focusHandler, true);
-  }
-
-  /**
-   * Establish initial focus with time-limited blur fighting.
-   * Simulates click events to trigger SK's insert mode.
-   */
-  setupInitialFocus(input) {
-    const simulateMouseEvents = () => {
-      const rect = input.getBoundingClientRect();
-      const eventOpts = {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-        clientX: rect.left + rect.width / 2,
-        clientY: rect.top + rect.height / 2
-      };
-      input.dispatchEvent(new MouseEvent('mousedown', eventOpts));
-      input.dispatchEvent(new MouseEvent('click', eventOpts));
-    };
-
-    // Time-limited blur fighting
-    const startTime = Date.now();
-    const FIGHT_DURATION_MS = 300;
-    let focusWon = false;
-
-    this.blurHandler = (e) => {
-      // Stop fighting after time window expires
-      if (focusWon || Date.now() - startTime > FIGHT_DURATION_MS) return;
-
-      // Stop fighting if focus moved to another dialog element
-      if (e.relatedTarget && this.overlay?.contains(e.relatedTarget)) {
-        focusWon = true;
-        return;
-      }
-
-      // Re-focus on next frame
-      if (this.overlay?.parentNode) {
-        requestAnimationFrame(() => {
-          if (this.overlay?.parentNode && !focusWon) {
-            simulateMouseEvents();
-            input.focus();
-            if (document.activeElement === input) {
-              focusWon = true;
-            }
-          }
-        });
-      }
-    };
-
-    input.addEventListener('blur', this.blurHandler);
-
-    // Initial focus attempt
-    simulateMouseEvents();
-    input.focus();
-    input.select();
-  }
-
-  /** Close dialog when clicking outside */
-  setupOverlayClickHandler() {
-    this.overlay.addEventListener('click', (e) => {
-      e.sk_suppressed = true;
-      if (e.target === this.overlay) {
-        this.lastQuery = this.queryInput.value;
-        this.close();
+    // Click outside closes dialog
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        this.lastQuery = queryInput.value;
+        document.body.removeChild(overlay);
       }
     });
+
   }
-
-  // ===========================================================================
-  // Form Handling
-  // ===========================================================================
-
-  handleSubmit() {
-    const query = this.queryInput.value.trim();
-    if (!query) {
-      this.queryInput.focus();
-      this.queryInput.style.borderColor = '#ff6b6b';
-      setTimeout(() => {
-        this.queryInput.style.borderColor = this.config.theme.colors.border;
-      }, 1000);
-      return;
-    }
-
-    const selectedUrls = this.services
-      .filter((_, i) => document.getElementById(`sk-ai-${i}`)?.checked)
-      .map(s => s.url);
-
-    if (selectedUrls.length === 0) {
-      alert('Please select at least one AI service');
-      return;
-    }
-
-    this.lastQuery = this.queryInput.value;
-
-    const promptTemplate = this.promptInput.value.trim();
-    const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
-
-    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    this.close();
-  }
-
-  updateQuery(text) {
-    const input = document.getElementById('sk-ai-query-input');
-    if (input && !this.lastQuery) {
-      input.value = text;
-      input.focus();
-      input.select();
-    }
-  }
-
-  // ===========================================================================
-  // DOM Creation
-  // ===========================================================================
 
   createOverlay() {
     const overlay = document.createElement('div');
@@ -646,7 +426,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons() {
+  createButtons(overlay, queryInput, promptInput) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -654,15 +434,15 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton();
-    const submitBtn = this.createSubmitButton();
+    const cancelBtn = this.createCancelButton(overlay, queryInput);
+    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
     return container;
   }
 
-  createCancelButton() {
+  createCancelButton(overlay, queryInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -683,13 +463,14 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.bgDark;
     };
     btn.onclick = () => {
-      this.lastQuery = this.queryInput.value;
-      this.close();
+      // Save query for next time
+      this.lastQuery = queryInput.value;
+      document.body.removeChild(overlay);
     };
     return btn;
   }
 
-  createSubmitButton() {
+  createSubmitButton(overlay, queryInput, promptInput) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -712,17 +493,17 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit();
+    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
     return btn;
   }
 
-  handleSubmit() {
-    const query = this.queryInput.value.trim();
+  handleSubmit(overlay, queryInput, promptInput) {
+    const query = queryInput.value.trim();
     if (!query) {
-      this.queryInput.focus();
-      this.queryInput.style.borderColor = '#ff6b6b';
+      queryInput.focus();
+      queryInput.style.borderColor = '#ff6b6b';
       setTimeout(() => {
-        this.queryInput.style.borderColor = this.config.theme.colors.border;
+        queryInput.style.borderColor = this.config.theme.colors.border;
       }, 1000);
       return;
     }
@@ -737,14 +518,14 @@ class AiSelector {
     }
 
     // Save query for next time
-    this.lastQuery = this.queryInput.value;
+    this.lastQuery = queryInput.value;
 
     // Combine query with prompt template if provided
-    const promptTemplate = this.promptInput.value.trim();
+    const promptTemplate = promptInput.value.trim();
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    this.close();
+    document.body.removeChild(overlay);
   }
 
   updateQuery(text) {
@@ -756,8 +537,6 @@ class AiSelector {
     }
   }
 }
-
-// DISABLED FOR TESTING - END */
 
 // =============================================================================
 // 3. UTILITIES
@@ -869,7 +648,7 @@ const util = {
 // =============================================================================
 
 // Create a single shared AiSelector instance
-// const aiSelector = new AiSelector(CONFIG);  // DISABLED FOR TESTING
+const aiSelector = new AiSelector(CONFIG);
 
 // --- Navigation ---
 api.map('K', '[['); // Previous page
@@ -966,7 +745,6 @@ api.mapkey('ye', 'Copy image to clipboard', function() {
 api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink("chrome://password-manager/passwords"));
 api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink("chrome://extensions/shortcuts"));
 
-/* AI MAPPINGS DISABLED FOR TESTING
 api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', () => {
   aiSelector.show('');
   navigator.clipboard.readText()
@@ -1014,7 +792,6 @@ api.mapkey('ak', 'Grok Search (Clipboard/Input)', () => {
   navigator.clipboard.readText()
     .then(text => aiSelector.updateQuery(text));
 });
-AI MAPPINGS DISABLED FOR TESTING */
 
 // =============================================================================
 // 5. SITE-SPECIFIC AUTOMATION
