@@ -87,7 +87,16 @@ class AiSelector {
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices, shadow);
     const selectAllButtons = this.createSelectAllButtons(shadow);
-    const buttonsContainer = this.createButtons(host, queryInput, promptInput, shadow);
+    
+    const cleanup = () => {
+      if (this.focusGuard) clearInterval(this.focusGuard);
+      this.mode.exit();
+      if (document.body.contains(host)) {
+        document.body.removeChild(host);
+      }
+    };
+
+    const buttonsContainer = this.createButtons(host, queryInput, promptInput, shadow, cleanup);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -118,20 +127,13 @@ class AiSelector {
     focusInput();
 
     // Aggressive focus recovery for sites that steal focus on load/interaction
-    const focusGuard = setInterval(() => {
-      if (shadow.activeElement !== queryInput && shadow.activeElement?.tagName !== 'TEXTAREA' && shadow.activeElement?.tagName !== 'SELECT' && shadow.activeElement?.tagName !== 'INPUT') {
+    this.focusGuard = setInterval(() => {
+      if (shadow.activeElement !== queryInput && 
+          !['TEXTAREA', 'SELECT', 'INPUT'].includes(shadow.activeElement?.tagName)) {
         api.Normal.passFocus(true);
         queryInput.focus();
       }
     }, 50);
-
-    const cleanup = () => {
-      clearInterval(focusGuard);
-      this.mode.exit();
-      if (document.body.contains(host)) {
-        document.body.removeChild(host);
-      }
-    };
 
     // Handle keys via the Mode system for better isolation
     this.mode.addEventListener('keydown', (e) => {
@@ -146,8 +148,7 @@ class AiSelector {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          this.handleSubmit(host, queryInput, promptInput, shadow);
-          cleanup();
+          this.handleSubmit(host, queryInput, promptInput, shadow, cleanup);
         }
       }
       
