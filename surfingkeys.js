@@ -231,6 +231,7 @@ class AiSelector {
     input.id = 'sk-ai-query-input';
     input.value = initialQuery;
     input.rows = 3;
+    input.enableAutoFocus = true; // Bypass SurfingKeys focus protection
     input.style.cssText = `
       width: 100%;
       padding: 12px;
