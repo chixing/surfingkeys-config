@@ -142,9 +142,18 @@ class AiSelector {
 
     // Suppress focus events to prevent SurfingKeys focus protection
     this.focusHandler = (e) => {
-      if (this.overlay && this.overlay.contains(e.target)) {
+      const isOurElement = this.overlay && this.overlay.contains(e.target);
+      console.log('[AiSelector] focusHandler (capture):', {
+        target: e.target,
+        tagName: e.target?.tagName,
+        isOurElement,
+        eventType: e.type,
+        sk_suppressed_before: e.sk_suppressed
+      });
+      if (isOurElement) {
         e.sk_suppressed = true;
         e.sk_stopPropagation = true;
+        console.log('[AiSelector] Marked focus event as suppressed');
       }
     };
 
@@ -153,11 +162,61 @@ class AiSelector {
     document.addEventListener('focus', this.focusHandler, true);
     document.addEventListener('focusin', this.focusHandler, true);
 
-    // Focus input after a microtask to ensure DOM is ready
+    // Debug: Log blur events to see what's stealing focus
+    queryInput.addEventListener('blur', (e) => {
+      console.log('[AiSelector] Input BLUR event:', {
+        relatedTarget: e.relatedTarget,
+        activeElement: document.activeElement,
+        sk_suppressed: e.sk_suppressed
+      });
+    });
+
+    // Debug: Log focus events
+    queryInput.addEventListener('focus', (e) => {
+      console.log('[AiSelector] Input FOCUS event:', {
+        sk_suppressed: e.sk_suppressed
+      });
+    });
+
+    // Try multiple focus strategies with logging
+    console.log('[AiSelector] Attempting focus strategies...');
+
+    // Strategy 1: Immediate focus
+    console.log('[AiSelector] Strategy 1: Immediate focus');
+    queryInput.focus();
+    console.log('[AiSelector] After immediate focus, activeElement:', document.activeElement);
+
+    // Strategy 2: queueMicrotask
     queueMicrotask(() => {
+      console.log('[AiSelector] Strategy 2: queueMicrotask focus');
       queryInput.focus();
       queryInput.select();
+      console.log('[AiSelector] After queueMicrotask focus, activeElement:', document.activeElement);
     });
+
+    // Strategy 3: setTimeout 0
+    setTimeout(() => {
+      console.log('[AiSelector] Strategy 3: setTimeout(0) focus');
+      queryInput.focus();
+      queryInput.select();
+      console.log('[AiSelector] After setTimeout(0) focus, activeElement:', document.activeElement);
+    }, 0);
+
+    // Strategy 4: setTimeout 50ms
+    setTimeout(() => {
+      console.log('[AiSelector] Strategy 4: setTimeout(50) focus');
+      queryInput.focus();
+      queryInput.select();
+      console.log('[AiSelector] After setTimeout(50) focus, activeElement:', document.activeElement);
+    }, 50);
+
+    // Strategy 5: setTimeout 100ms
+    setTimeout(() => {
+      console.log('[AiSelector] Strategy 5: setTimeout(100) focus');
+      queryInput.focus();
+      queryInput.select();
+      console.log('[AiSelector] After setTimeout(100) focus, activeElement:', document.activeElement);
+    }, 100);
 
     // Click outside closes dialog
     this.overlay.addEventListener('click', (e) => {
@@ -172,9 +231,15 @@ class AiSelector {
   // Mark element and all descendants as belonging to SurfingKeys
   markAsSurfingKeys(element) {
     element.fromSurfingKeys = true;
-    for (const child of element.querySelectorAll('*')) {
+    const children = element.querySelectorAll('*');
+    for (const child of children) {
       child.fromSurfingKeys = true;
     }
+    console.log('[AiSelector] Marked elements with fromSurfingKeys:', {
+      root: element,
+      childCount: children.length,
+      inputMarked: this.queryInput?.fromSurfingKeys
+    });
   }
 
   // Clean up event listeners and remove overlay
