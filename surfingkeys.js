@@ -467,7 +467,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(host, queryInput, promptInput, shadow = null) {
+  createButtons(host, queryInput, promptInput, shadow = null, cleanup = null) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -475,15 +475,15 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton(host, queryInput);
-    const submitBtn = this.createSubmitButton(host, queryInput, promptInput, shadow);
+    const cancelBtn = this.createCancelButton(host, queryInput, cleanup);
+    const submitBtn = this.createSubmitButton(host, queryInput, promptInput, shadow, cleanup);
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
     return container;
   }
 
-  createCancelButton(host, queryInput) {
+  createCancelButton(host, queryInput, cleanup = null) {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -506,12 +506,13 @@ class AiSelector {
     btn.onclick = () => {
       // Save query for next time
       this.lastQuery = queryInput.value;
-      document.body.removeChild(host);
+      if (cleanup) cleanup();
+      else document.body.removeChild(host);
     };
     return btn;
   }
 
-  createSubmitButton(host, queryInput, promptInput, shadow = null) {
+  createSubmitButton(host, queryInput, promptInput, shadow = null, cleanup = null) {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -534,13 +535,14 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(host, queryInput, promptInput, shadow);
+    btn.onclick = () => this.handleSubmit(host, queryInput, promptInput, shadow, cleanup);
     return btn;
   }
 
-  handleSubmit(host, queryInput, promptInput, shadow = null) {
+  handleSubmit(host, queryInput, promptInput, shadow = null, cleanup = null) {
     const query = queryInput.value.trim();
     if (!query) {
+      api.Normal.passFocus(true);
       queryInput.focus();
       queryInput.style.borderColor = '#ff6b6b';
       setTimeout(() => {
@@ -570,7 +572,9 @@ class AiSelector {
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    document.body.removeChild(host);
+    
+    if (cleanup) cleanup();
+    else document.body.removeChild(host);
   }
 
   updateQuery(text) {
@@ -579,6 +583,7 @@ class AiSelector {
     const input = root.getElementById('sk-ai-query-input');
     if (input && !this.lastQuery) {
       input.value = text;
+      api.Normal.passFocus(true);
       input.focus();
       input.select();
     }
