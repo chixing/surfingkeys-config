@@ -55,6 +55,9 @@ class AiSelector {
   constructor(config) {
     this.config = config;
     this.lastQuery = null;
+    this.overlay = null;
+    this.keyHandler = null;
+    this.focusHandler = null;
     this.services = [
       { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
       { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
@@ -67,16 +70,18 @@ class AiSelector {
   }
 
   show(initialQuery = '', selectedServices = null) {
-    const overlay = this.createOverlay();
+    this.overlay = this.createOverlay();
     const dialog = this.createDialog();
-    
+
     const title = this.createTitle();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
+    this.queryInput = queryInput;
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
+    this.promptInput = promptInput;
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const selectAllButtons = this.createSelectAllButtons();
-    const buttonsContainer = this.createButtons(overlay, queryInput, promptInput);
+    const buttonsContainer = this.createButtons();
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -89,15 +94,23 @@ class AiSelector {
     dialog.appendChild(servicesContainer);
     dialog.appendChild(buttonsContainer);
 
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
+    this.overlay.appendChild(dialog);
 
+    // Mark all elements as belonging to SurfingKeys to bypass focus protection
+    this.markAsSurfingKeys(this.overlay);
 
-    queryInput.focus();
-    queryInput.select();
+    document.body.appendChild(this.overlay);
 
-    // Handle Enter and Escape keys
-    overlay.addEventListener('keydown', (e) => {
+    // Use capture phase to intercept ALL keyboard events before SurfingKeys
+    // and mark them as suppressed so SurfingKeys ignores them
+    this.keyHandler = (e) => {
+      // Only handle events when our overlay is visible
+      if (!this.overlay || !this.overlay.parentNode) return;
+
+      // Mark event as handled by SurfingKeys (prevents mode stack processing)
+      e.sk_suppressed = true;
+      e.sk_stopPropagation = true;
+
       // Handle j/k for select navigation when select is focused
       if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
@@ -112,28 +125,75 @@ class AiSelector {
         select.dispatchEvent(new Event('change', { bubbles: true }));
         return;
       }
-      
+
       e.stopPropagation();
       if (e.key === 'Escape') {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+        e.preventDefault();
+        this.lastQuery = this.queryInput.value;
+        this.close();
       } else if (e.key === 'Enter') {
         const isTextArea = e.target.tagName === 'TEXTAREA';
         if (!isTextArea || (isTextArea && !e.shiftKey)) {
           e.preventDefault();
-          this.handleSubmit(overlay, queryInput, promptInput);
+          this.handleSubmit();
         }
       }
+    };
+
+    // Suppress focus events to prevent SurfingKeys focus protection
+    this.focusHandler = (e) => {
+      if (this.overlay && this.overlay.contains(e.target)) {
+        e.sk_suppressed = true;
+        e.sk_stopPropagation = true;
+      }
+    };
+
+    // Use capture phase (true) to intercept before SurfingKeys
+    document.addEventListener('keydown', this.keyHandler, true);
+    document.addEventListener('focus', this.focusHandler, true);
+    document.addEventListener('focusin', this.focusHandler, true);
+
+    // Focus input after a microtask to ensure DOM is ready
+    queueMicrotask(() => {
+      queryInput.focus();
+      queryInput.select();
     });
 
     // Click outside closes dialog
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) {
-        this.lastQuery = queryInput.value;
-        document.body.removeChild(overlay);
+    this.overlay.addEventListener('click', (e) => {
+      e.sk_suppressed = true;
+      if (e.target === this.overlay) {
+        this.lastQuery = this.queryInput.value;
+        this.close();
       }
     });
+  }
 
+  // Mark element and all descendants as belonging to SurfingKeys
+  markAsSurfingKeys(element) {
+    element.fromSurfingKeys = true;
+    for (const child of element.querySelectorAll('*')) {
+      child.fromSurfingKeys = true;
+    }
+  }
+
+  // Clean up event listeners and remove overlay
+  close() {
+    if (this.keyHandler) {
+      document.removeEventListener('keydown', this.keyHandler, true);
+      this.keyHandler = null;
+    }
+    if (this.focusHandler) {
+      document.removeEventListener('focus', this.focusHandler, true);
+      document.removeEventListener('focusin', this.focusHandler, true);
+      this.focusHandler = null;
+    }
+    if (this.overlay && this.overlay.parentNode) {
+      this.overlay.parentNode.removeChild(this.overlay);
+    }
+    this.overlay = null;
+    this.queryInput = null;
+    this.promptInput = null;
   }
 
   createOverlay() {
@@ -426,7 +486,7 @@ class AiSelector {
     return wrapper;
   }
 
-  createButtons(overlay, queryInput, promptInput) {
+  createButtons() {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -434,15 +494,15 @@ class AiSelector {
       justify-content: flex-end;
     `;
 
-    const cancelBtn = this.createCancelButton(overlay, queryInput);
-    const submitBtn = this.createSubmitButton(overlay, queryInput, promptInput);
+    const cancelBtn = this.createCancelButton();
+    const submitBtn = this.createSubmitButton();
 
     container.appendChild(cancelBtn);
     container.appendChild(submitBtn);
     return container;
   }
 
-  createCancelButton(overlay, queryInput) {
+  createCancelButton() {
     const btn = document.createElement('button');
     btn.textContent = 'Cancel';
     btn.style.cssText = `
@@ -463,14 +523,13 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.bgDark;
     };
     btn.onclick = () => {
-      // Save query for next time
-      this.lastQuery = queryInput.value;
-      document.body.removeChild(overlay);
+      this.lastQuery = this.queryInput.value;
+      this.close();
     };
     return btn;
   }
 
-  createSubmitButton(overlay, queryInput, promptInput) {
+  createSubmitButton() {
     const btn = document.createElement('button');
     btn.textContent = 'Open Selected AIs';
     btn.style.cssText = `
@@ -493,17 +552,17 @@ class AiSelector {
       btn.style.background = this.config.theme.colors.accentFg;
       btn.style.borderColor = this.config.theme.colors.accentFg;
     };
-    btn.onclick = () => this.handleSubmit(overlay, queryInput, promptInput);
+    btn.onclick = () => this.handleSubmit();
     return btn;
   }
 
-  handleSubmit(overlay, queryInput, promptInput) {
-    const query = queryInput.value.trim();
+  handleSubmit() {
+    const query = this.queryInput.value.trim();
     if (!query) {
-      queryInput.focus();
-      queryInput.style.borderColor = '#ff6b6b';
+      this.queryInput.focus();
+      this.queryInput.style.borderColor = '#ff6b6b';
       setTimeout(() => {
-        queryInput.style.borderColor = this.config.theme.colors.border;
+        this.queryInput.style.borderColor = this.config.theme.colors.border;
       }, 1000);
       return;
     }
@@ -518,14 +577,14 @@ class AiSelector {
     }
 
     // Save query for next time
-    this.lastQuery = queryInput.value;
+    this.lastQuery = this.queryInput.value;
 
     // Combine query with prompt template if provided
-    const promptTemplate = promptInput.value.trim();
+    const promptTemplate = this.promptInput.value.trim();
     const combinedQuery = promptTemplate ? `${query}\n${promptTemplate}` : query;
 
     selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
-    document.body.removeChild(overlay);
+    this.close();
   }
 
   updateQuery(text) {
