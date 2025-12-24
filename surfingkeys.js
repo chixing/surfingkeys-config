@@ -873,8 +873,8 @@ api.map('J', ']]'); // Next page
 
 // --- Tab Search (workaround for focus bug) ---
 api.mapkey('T', '#3Choose a tab', function() {
-    api.Normal.feedkeys('ot');
     api.Front.openOmnibar({type: "Tabs"});
+    api.Normal.feedkeys('\x1b');
 });
 
 // --- Convenience ---
