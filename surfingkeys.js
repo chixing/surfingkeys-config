@@ -871,11 +871,9 @@ const aiSelector = new AiSelector(CONFIG);
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
-// --- Tab Search (workaround for focus bug) ---
+// --- Tab Search ---
 api.mapkey('T', '#3Choose a tab', function() {
-    api.Normal.feedkeys('ot');
-    api.Normal.feedkeys('\x1b');
-    api.Normal.feedkeys('T');
+    api.Front.openOmnibar({type: "Tabs"});
 });
 
 // --- Convenience ---
