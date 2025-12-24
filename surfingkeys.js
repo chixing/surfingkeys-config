@@ -302,7 +302,7 @@ class AiSelector {
     return { label, input, select };
   }
 
-  createServicesCheckboxes(selectedServices = null) {
+  createServicesCheckboxes(selectedServices = null, shadow = null) {
     const label = document.createElement('label');
     label.textContent = 'Select AI Services:';
     label.style.cssText = `
@@ -334,7 +334,7 @@ class AiSelector {
     return { label, container };
   }
 
-  createSelectAllButtons() {
+  createSelectAllButtons(shadow = null) {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;
@@ -364,8 +364,9 @@ class AiSelector {
       selectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     selectAllBtn.onclick = () => {
+      const root = shadow || document;
       this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`);
+        const checkbox = root.getElementById(`sk-ai-${index}`);
         if (checkbox) checkbox.checked = true;
       });
     };
@@ -391,8 +392,9 @@ class AiSelector {
       unselectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     unselectAllBtn.onclick = () => {
+      const root = shadow || document;
       this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`);
+        const checkbox = root.getElementById(`sk-ai-${index}`);
         if (checkbox) checkbox.checked = false;
       });
     };
