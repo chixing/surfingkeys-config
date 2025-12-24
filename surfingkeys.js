@@ -209,9 +209,6 @@ class AiSelector {
   show(initialQuery = '', selectedServices = null) {
     this.createNodes(initialQuery, selectedServices);
     
-    // NATIVE FIX: passFocus
-    api.Normal.passFocus(true);
-    
     document.body.appendChild(this.container);
     
     // NATIVE FIX: passThrough mode
