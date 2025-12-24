@@ -871,10 +871,15 @@ const aiSelector = new AiSelector(CONFIG);
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
-// --- Tab Search (workaround: open omnibar first to get focus, then switch to Tabs) ---
+// --- Tab Search (workaround: open regular omnibar first to prime focus) ---
 api.mapkey('T', '#3Choose a tab', function() {
-    api.Front.openOmnibar({type: "Tabs"});
-    // Quickly open and the omnibar should have focus from the "Tabs" type
+    // Open regular omnibar first (this gets focus)
+    api.Front.openOmnibar();
+    // Then immediately close and open tabs
+    setTimeout(() => {
+        api.Front.hidePopup();
+        api.Front.openOmnibar({type: "Tabs"});
+    }, 10);
 });
 
 // --- Convenience ---
