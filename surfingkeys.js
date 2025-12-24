@@ -142,18 +142,9 @@ class AiSelector {
 
     // Suppress focus events to prevent SurfingKeys focus protection
     this.focusHandler = (e) => {
-      const isOurElement = this.overlay && this.overlay.contains(e.target);
-      console.log('[AiSelector] focusHandler (capture):', {
-        target: e.target,
-        tagName: e.target?.tagName,
-        isOurElement,
-        eventType: e.type,
-        sk_suppressed_before: e.sk_suppressed
-      });
-      if (isOurElement) {
+      if (this.overlay && this.overlay.contains(e.target)) {
         e.sk_suppressed = true;
         e.sk_stopPropagation = true;
-        console.log('[AiSelector] Marked focus event as suppressed');
       }
     };
 
@@ -162,61 +153,33 @@ class AiSelector {
     document.addEventListener('focus', this.focusHandler, true);
     document.addEventListener('focusin', this.focusHandler, true);
 
-    // Debug: Log blur events to see what's stealing focus
-    queryInput.addEventListener('blur', (e) => {
-      console.log('[AiSelector] Input BLUR event:', {
-        relatedTarget: e.relatedTarget,
-        activeElement: document.activeElement,
-        sk_suppressed: e.sk_suppressed
-      });
-    });
+    // Counter to prevent infinite focus loops
+    let focusAttempts = 0;
+    const maxFocusAttempts = 20;
 
-    // Debug: Log focus events
-    queryInput.addEventListener('focus', (e) => {
-      console.log('[AiSelector] Input FOCUS event:', {
-        sk_suppressed: e.sk_suppressed
-      });
-    });
+    // Fight back against SurfingKeys blur by re-focusing
+    const blurHandler = (e) => {
+      // Only re-focus if dialog is still open and we haven't exceeded attempts
+      if (this.overlay && this.overlay.parentNode && focusAttempts < maxFocusAttempts) {
+        focusAttempts++;
+        console.log(`[AiSelector] Blur detected, re-focusing (attempt ${focusAttempts})`);
+        // Use requestAnimationFrame to re-focus after the blur completes
+        requestAnimationFrame(() => {
+          if (this.overlay && this.overlay.parentNode) {
+            queryInput.focus();
+          }
+        });
+      }
+    };
 
-    // Try multiple focus strategies with logging
-    console.log('[AiSelector] Attempting focus strategies...');
+    queryInput.addEventListener('blur', blurHandler);
 
-    // Strategy 1: Immediate focus
-    console.log('[AiSelector] Strategy 1: Immediate focus');
+    // Store blur handler for cleanup
+    this.blurHandler = blurHandler;
+
+    // Initial focus
     queryInput.focus();
-    console.log('[AiSelector] After immediate focus, activeElement:', document.activeElement);
-
-    // Strategy 2: queueMicrotask
-    queueMicrotask(() => {
-      console.log('[AiSelector] Strategy 2: queueMicrotask focus');
-      queryInput.focus();
-      queryInput.select();
-      console.log('[AiSelector] After queueMicrotask focus, activeElement:', document.activeElement);
-    });
-
-    // Strategy 3: setTimeout 0
-    setTimeout(() => {
-      console.log('[AiSelector] Strategy 3: setTimeout(0) focus');
-      queryInput.focus();
-      queryInput.select();
-      console.log('[AiSelector] After setTimeout(0) focus, activeElement:', document.activeElement);
-    }, 0);
-
-    // Strategy 4: setTimeout 50ms
-    setTimeout(() => {
-      console.log('[AiSelector] Strategy 4: setTimeout(50) focus');
-      queryInput.focus();
-      queryInput.select();
-      console.log('[AiSelector] After setTimeout(50) focus, activeElement:', document.activeElement);
-    }, 50);
-
-    // Strategy 5: setTimeout 100ms
-    setTimeout(() => {
-      console.log('[AiSelector] Strategy 5: setTimeout(100) focus');
-      queryInput.focus();
-      queryInput.select();
-      console.log('[AiSelector] After setTimeout(100) focus, activeElement:', document.activeElement);
-    }, 100);
+    queryInput.select();
 
     // Click outside closes dialog
     this.overlay.addEventListener('click', (e) => {
@@ -231,15 +194,9 @@ class AiSelector {
   // Mark element and all descendants as belonging to SurfingKeys
   markAsSurfingKeys(element) {
     element.fromSurfingKeys = true;
-    const children = element.querySelectorAll('*');
-    for (const child of children) {
+    for (const child of element.querySelectorAll('*')) {
       child.fromSurfingKeys = true;
     }
-    console.log('[AiSelector] Marked elements with fromSurfingKeys:', {
-      root: element,
-      childCount: children.length,
-      inputMarked: this.queryInput?.fromSurfingKeys
-    });
   }
 
   // Clean up event listeners and remove overlay
@@ -252,6 +209,11 @@ class AiSelector {
       document.removeEventListener('focus', this.focusHandler, true);
       document.removeEventListener('focusin', this.focusHandler, true);
       this.focusHandler = null;
+    }
+    // Remove blur handler to stop re-focus loop
+    if (this.blurHandler && this.queryInput) {
+      this.queryInput.removeEventListener('blur', this.blurHandler);
+      this.blurHandler = null;
     }
     if (this.overlay && this.overlay.parentNode) {
       this.overlay.parentNode.removeChild(this.overlay);
