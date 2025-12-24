@@ -871,13 +871,9 @@ const aiSelector = new AiSelector(CONFIG);
 api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
-// --- Tab Search (workaround: open URLs omnibar first to prime focus) ---
+// --- Tab Search (same as ot - open omnibar with tab search) ---
 api.mapkey('T', '#3Choose a tab', function() {
-    // Open URLs omnibar first (like 'o' does - this gets focus), then switch to Tabs
-    api.Front.openOmnibar({type: "URLs"});
-    setTimeout(() => {
-        api.Front.openOmnibar({type: "Tabs"});
-    }, 50);
+    api.Front.openOmnibar({type: "URLs", extra: "t "});
 });
 
 // --- Convenience ---
