@@ -482,20 +482,6 @@ Format: Prose/Story form only. No bullet points.
 Language: Use precise technical vocabulary (latency, idempotency, sharding, backpressure, etc.) while ensuring every term is defined upon first use.`, 
         label: 'Senior Staff Engineer Narrative' 
       },
-      {
-        value: `Role: Act as a Senior Staff Systems Architect. Your objective is to conduct a "Deep-Dive Post-Mortem and Architectural Review" of the provided technical article for an engineering peer.
-
-Task: Deconstruct the article into a narrative of Architectural Evolution. Rather than a summary, tell the story of the system’s transition from a legacy state to its current iteration.
-
-1. The Narrative Arc: Begin with the Technical Debt and Entropy of the original system—describe the specific bottlenecks in throughput or data consistency that necessitated the change. When moving into the implementation phase, prioritize the Trade-off Analysis: why were specific patterns chosen over industry standard alternatives (e.g., why batch processing over streaming, or why this specific consistency model)? Explicitly describe the Friction Points encountered during the migration or scaling phases and how they were mitigated through engineering rigor. Conclude with the Operational Impact, focusing on metrics like p99 latency, system reliability, and maintenance overhead.
-
-2. The Integrated Technical Lexicon: You must identify and define every technical concept, acronym, or architectural pattern mentioned. These definitions must be woven into the narrative flow with high precision. Do not simplify; explain terms in the context of their Internal Mechanics (e.g., don't just define a "Vector Database," explain its indexing strategy like HNSW or its distance metrics).
-
-3. The Macro-Engineering Perspective: Situate this architecture within the current Infrastructure Landscape. Discuss how this design adheres to or challenges established patterns like the Twelve-Factor App, CAP Theorem constraints, or Microservices Orchestration. Highlight any "Future-Proofing" decisions and identify potential Long-term Technical Debt that this new architecture might eventually incur.
-
-Constraints: Prose/Story form only. No bulleted lists or standard summaries. Maintain an advanced, "engineer-not-layman" tone throughout. KEEP IT CONCISE`,
-        label: 'Architectural Review Narrative'
-      }
     ];
 
     const defaultTemplate = templates.find(t => t.default) || templates[0];
