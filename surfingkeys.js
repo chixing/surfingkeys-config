@@ -64,12 +64,18 @@ class AiSelector {
       { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
       { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
     ];
+    
+    // Create a dedicated SurfingKeys Mode for the AI Selector
+    // This is the "secret sauce" that prevents the page and SurfingKeys 
+    // from stealing focus or intercepting keys while the dialogue is open.
+    this.mode = new api.Mode("AiSelector");
   }
 
   show(initialQuery = '', selectedServices = null) {
     // Create a host element for Shadow DOM isolation
     const host = document.createElement('div');
     host.id = 'sk-ai-selector-host';
+    host.tabIndex = -1; // Make host focusable but not in tab order
     const shadow = host.attachShadow({ mode: 'open' });
 
     const overlay = this.createOverlay();
@@ -81,7 +87,7 @@ class AiSelector {
     const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices, shadow);
     const selectAllButtons = this.createSelectAllButtons(shadow);
-    const buttonsContainer = this.createButtons(host, queryInput, promptInput);
+    const buttonsContainer = this.createButtons(host, queryInput, promptInput, shadow);
 
     dialog.appendChild(title);
     dialog.appendChild(queryLabel);
@@ -98,24 +104,54 @@ class AiSelector {
     shadow.appendChild(overlay);
     document.body.appendChild(host);
 
-    // Synchronous focus - SurfingKeys style
-    queryInput.focus();
-    queryInput.select();
+    // Enter the custom mode - this suppresses SurfingKeys' Normal mode
+    this.mode.enter();
 
-    // Prevent focus loss - some sites (like ChatGPT) steal focus back
-    const handleFocusLoss = () => {
-      if (document.activeElement !== host) {
+    // Synchronous focus with SurfingKeys focus-pass
+    const focusInput = () => {
+      api.Normal.passFocus(true);
+      queryInput.focus();
+      queryInput.select();
+    };
+
+    // Initial focus
+    focusInput();
+
+    // Aggressive focus recovery for sites that steal focus on load/interaction
+    const focusGuard = setInterval(() => {
+      if (shadow.activeElement !== queryInput && shadow.activeElement?.tagName !== 'TEXTAREA' && shadow.activeElement?.tagName !== 'SELECT' && shadow.activeElement?.tagName !== 'INPUT') {
+        api.Normal.passFocus(true);
         queryInput.focus();
       }
-    };
-    window.addEventListener('focus', handleFocusLoss, true);
+    }, 50);
 
-    // Handle Enter and Escape keys
-    overlay.addEventListener('keydown', (e) => {
-      // Stop propagation to prevent the page from seeing these keys
+    const cleanup = () => {
+      clearInterval(focusGuard);
+      this.mode.exit();
+      if (document.body.contains(host)) {
+        document.body.removeChild(host);
+      }
+    };
+
+    // Handle keys via the Mode system for better isolation
+    this.mode.addEventListener('keydown', (e) => {
+      e.sk_stopPropagation = true; // SurfingKeys specific propagation flag
       e.stopImmediatePropagation();
 
-      // Handle j/k for select navigation when select is focused
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        this.lastQuery = queryInput.value;
+        cleanup();
+      } else if (e.key === 'Enter') {
+        const isTextArea = e.target.tagName === 'TEXTAREA';
+        if (!isTextArea || (isTextArea && !e.shiftKey)) {
+          e.preventDefault();
+          this.handleSubmit(host, queryInput, promptInput, shadow);
+          cleanup();
+        }
+      }
+      
+      // Handle j/k for select navigation
       if (e.target.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
         const select = e.target;
@@ -126,21 +162,6 @@ class AiSelector {
           select.selectedIndex = currentIndex - 1;
         }
         select.dispatchEvent(new Event('change', { bubbles: true }));
-        return;
-      }
-      
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        this.lastQuery = queryInput.value;
-        window.removeEventListener('focus', handleFocusLoss, true);
-        document.body.removeChild(host);
-      } else if (e.key === 'Enter') {
-        const isTextArea = e.target.tagName === 'TEXTAREA';
-        if (!isTextArea || (isTextArea && !e.shiftKey)) {
-          e.preventDefault();
-          window.removeEventListener('focus', handleFocusLoss, true);
-          this.handleSubmit(host, queryInput, promptInput, shadow);
-        }
       }
     });
 
@@ -148,8 +169,7 @@ class AiSelector {
     overlay.addEventListener('click', (e) => {
       if (e.target === overlay) {
         this.lastQuery = queryInput.value;
-        window.removeEventListener('focus', handleFocusLoss, true);
-        document.body.removeChild(host);
+        cleanup();
       }
     });
   }
