@@ -1107,9 +1107,11 @@ const siteAutomations = [
     host: "perplexity.ai",
     run: async () => {
       const hash = window.location.hash;
+      console.log('[SK Debug] Perplexity automation started, hash:', hash);
       
       // Handle research mode setup with hash parameters
       if (hash.includes('sk_mode=research')) {
+        console.log('[SK Debug] Research mode detected');
         await util.delay(CONFIG.delayMs);
         
         // Set research mode (assuming user is authenticated)
@@ -1121,21 +1123,29 @@ const siteAutomations = [
         
         // Handle social toggle if specified
         if (hash.includes('sk_social=on')) {
+          console.log('[SK Debug] Social toggle requested');
           // Open Sources menu first
           const sourcesBtn = document.querySelector('button[aria-label*="Sources"], button[aria-haspopup="menu"]');
+          console.log('[SK Debug] Sources button found:', !!sourcesBtn, sourcesBtn?.textContent);
           if (sourcesBtn && sourcesBtn.textContent.includes('Sources')) {
+            console.log('[SK Debug] Clicking Sources button');
             sourcesBtn.click();
             await util.delay(CONFIG.delayMs);
             
             // Look for Social toggle in the menu
             const socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
+            console.log('[SK Debug] First menu item found:', !!socialMenuItem);
             if (socialMenuItem) {
               // Find all menu items and look for Social
               const menuItems = document.querySelectorAll('*[role="menuitemcheckbox"]');
+              console.log('[SK Debug] All menu items:', menuItems.length, Array.from(menuItems).map(i => i.textContent.trim()));
               for (const item of menuItems) {
                 if (item.textContent.includes('Social')) {
+                  console.log('[SK Debug] Found Social item:', item.textContent);
                   const socialSwitch = item.querySelector('*[role="switch"]');
-                  if (socialSwitch && !socialSwitch.getAttribute('aria-checked')) {
+                  console.log('[SK Debug] Social switch found:', !!socialSwitch, 'checked:', socialSwitch?.getAttribute('aria-checked'));
+                  if (socialSwitch && socialSwitch.getAttribute('aria-checked') !== 'true') {
+                    console.log('[SK Debug] Clicking social switch');
                     socialSwitch.click();
                     await util.delay(CONFIG.delayMs);
                     break;
@@ -1147,7 +1157,8 @@ const siteAutomations = [
             // Close menu by clicking elsewhere
             const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
             if (inputBox) {
-              inputBox.click();
+              console.log('[SK Debug] Closing menu by clicking input');
+            inputBox.click();
               await util.delay(CONFIG.delayMs);
             }
           }
@@ -1156,16 +1167,20 @@ const siteAutomations = [
         // Inject prompt using hash-based pattern
         const promptKey = "#sk_prompt=";
         if (window.location.hash.startsWith(promptKey)) {
+          console.log('[SK Debug] Starting prompt injection');
           let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
           // Remove sk parameters from the prompt text
           promptText = promptText.replace(/&sk_[^&]*/g, '');
+          console.log('[SK Debug] Cleaned prompt text:', promptText);
           
           await util.delay(CONFIG.delayMs);
           const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
+          console.log('[SK Debug] Input box found:', !!inputBox);
           if (inputBox) {
             inputBox.focus();
             inputBox.value = promptText;
             inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+            console.log('[SK Debug] Text injected, looking for Submit button');
             await util.delay(CONFIG.delayMs);
             
             // Click Submit button
