@@ -1261,13 +1261,23 @@ const siteAutomations = [
 ];
 
 
-// Execute matching automation
-const currentHost = window.location.hostname;
-siteAutomations.forEach(site => {
-  if (currentHost.includes(site.host)) {
-    site.run();
-  }
-});
+// Execute matching automation when DOM is ready
+function runSiteAutomations() {
+  const currentHost = window.location.hostname;
+  siteAutomations.forEach(site => {
+    if (currentHost.includes(site.host)) {
+      site.run();
+    }
+  });
+}
+
+// Run automations after DOM is loaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', runSiteAutomations);
+} else {
+  // DOM is already ready, run immediately but with a small delay for SPA rendering
+  setTimeout(runSiteAutomations, 1000);
+}
 
 // =============================================================================
 // 6. SEARCH ENGINES
