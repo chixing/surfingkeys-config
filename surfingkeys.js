@@ -105,7 +105,7 @@ class AiSelector {
       { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },
       { name: AI_SERVICES.GEMINI, url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
       { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
-      { name: AI_SERVICES.PERPLEXITY_RESEARCH, url: 'https://perplexity.ai?mode=research&social=off&q=', checked: true },
+      { name: AI_SERVICES.PERPLEXITY_RESEARCH, url: 'https://perplexity.ai#sk_prompt=&sk_mode=research&sk_social=on', checked: true },
       { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
     ];
   }
@@ -1106,39 +1106,48 @@ const siteAutomations = [
   {
     host: "perplexity.ai",
     run: async () => {
-      const params = new URLSearchParams(window.location.search);
-      const mode = params.get('mode');
-      const social = params.get('social');
-      const q = params.get('q');
+      const hash = window.location.hash;
       
-      if (q) {
+      // Handle research mode setup with hash parameters
+      if (hash.includes('sk_mode=research')) {
         await util.delay(CONFIG.delayMs);
         
-        // Set research mode if specified
-        if (mode === 'research') {
-          const researchBtn = document.querySelector('button[role="radio"][value="research"]');
-          if (researchBtn && researchBtn.getAttribute('aria-checked') !== 'true') {
-            researchBtn.click();
-            await util.delay(CONFIG.delayMs);
-          }
+        // Set research mode
+        const researchBtn = document.querySelector('button[role="radio"][value="research"]');
+        if (researchBtn && researchBtn.getAttribute('aria-checked') !== 'true') {
+          researchBtn.click();
+          await util.delay(CONFIG.delayMs);
         }
         
         // Handle social toggle if specified
-        if (social === 'off') {
-          // Look for social media toggle in research mode
+        if (hash.includes('sk_social=on')) {
+          // Look for social media toggle in research mode and enable it
           const socialToggle = document.querySelector('button[aria-label*="social" i], button[data-testid*="social"], .social-toggle button, button[class*="social-toggle"]');
-          if (socialToggle && socialToggle.getAttribute('aria-checked') === 'true') {
+          if (socialToggle && socialToggle.getAttribute('aria-checked') !== 'true') {
             socialToggle.click();
             await util.delay(CONFIG.delayMs);
           }
         }
         
-        // Inject the query into the input field
+        // Inject prompt using existing pattern
         util.injectPrompt({
-          selector: 'div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]',
-          useValue: true,
-          dispatchEvents: true
+          selector: 'div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]'
         });
+      }
+      
+      // Handle regular query parameters for normal perplexity search
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('q');
+      if (q) {
+        await util.delay(CONFIG.delayMs);
+        const inputBox = document.querySelector('div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]');
+        if (inputBox) {
+          inputBox.focus();
+          inputBox.textContent = q;
+          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+          await util.delay(CONFIG.delayMs);
+          util.pressKey(inputBox);
+        }
       }
     }
   }
