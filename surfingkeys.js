@@ -1129,10 +1129,23 @@ const siteAutomations = [
           }
         }
         
-        // Inject prompt using existing pattern
-        util.injectPrompt({
-          selector: 'div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]'
-        });
+        // Inject prompt using existing pattern, but clean sk parameters first
+        const promptKey = "#sk_prompt=";
+        if (window.location.hash.startsWith(promptKey)) {
+          let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
+          // Remove sk parameters from the prompt text
+          promptText = promptText.replace(/&sk_[^&]*/g, '');
+          
+          await util.delay(CONFIG.delayMs);
+          const inputBox = document.querySelector('div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]');
+          if (inputBox) {
+            inputBox.focus();
+            inputBox.textContent = promptText;
+            inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+            await util.delay(CONFIG.delayMs);
+            util.pressKey(inputBox);
+          }
+        }
       }
       
       // Handle regular query parameters for normal perplexity search
