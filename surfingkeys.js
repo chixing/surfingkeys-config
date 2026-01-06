@@ -10,7 +10,7 @@ const CONFIG = {
   hintAlign: "left",
   omnibarMaxResults: 20,
   historyMUOrder: false, // false = recency, true = frequency
-  delayMs: 1000,
+  delayMs: 1500, // Increased for Perplexity menu animations
   theme: {
     font: "'Monaco', 'Consolas', 'Courier New', monospace",
     fontSize: "16px",
