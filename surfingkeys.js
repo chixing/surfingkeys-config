@@ -1112,8 +1112,8 @@ const siteAutomations = [
       if (hash.includes('sk_mode=research')) {
         await util.delay(CONFIG.delayMs);
         
-        // Set research mode
-        const researchBtn = document.querySelector('button[role="radio"][value="research"]');
+        // Set research mode (assuming user is authenticated)
+        const researchBtn = document.querySelector('input[type="radio"][value="research"], *[role="radio"][value="research"]');
         if (researchBtn && researchBtn.getAttribute('aria-checked') !== 'true') {
           researchBtn.click();
           await util.delay(CONFIG.delayMs);
@@ -1121,15 +1121,39 @@ const siteAutomations = [
         
         // Handle social toggle if specified
         if (hash.includes('sk_social=on')) {
-          // Look for social media toggle in research mode and enable it
-          const socialToggle = document.querySelector('button[aria-label*="social" i], button[data-testid*="social"], .social-toggle button, button[class*="social-toggle"]');
-          if (socialToggle && socialToggle.getAttribute('aria-checked') !== 'true') {
-            socialToggle.click();
+          // Open Sources menu first
+          const sourcesBtn = document.querySelector('button[aria-label*="Sources"], button[aria-haspopup="menu"]');
+          if (sourcesBtn && sourcesBtn.textContent.includes('Sources')) {
+            sourcesBtn.click();
             await util.delay(CONFIG.delayMs);
+            
+            // Look for Social toggle in the menu
+            const socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
+            if (socialMenuItem) {
+              // Find all menu items and look for Social
+              const menuItems = document.querySelectorAll('*[role="menuitemcheckbox"]');
+              for (const item of menuItems) {
+                if (item.textContent.includes('Social')) {
+                  const socialSwitch = item.querySelector('*[role="switch"]');
+                  if (socialSwitch && !socialSwitch.getAttribute('aria-checked')) {
+                    socialSwitch.click();
+                    await util.delay(CONFIG.delayMs);
+                    break;
+                  }
+                }
+              }
+            }
+            
+            // Close menu by clicking elsewhere
+            const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
+            if (inputBox) {
+              inputBox.click();
+              await util.delay(CONFIG.delayMs);
+            }
           }
         }
         
-        // Inject prompt using existing pattern, but clean sk parameters first
+        // Inject prompt using hash-based pattern
         const promptKey = "#sk_prompt=";
         if (window.location.hash.startsWith(promptKey)) {
           let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
@@ -1137,13 +1161,22 @@ const siteAutomations = [
           promptText = promptText.replace(/&sk_[^&]*/g, '');
           
           await util.delay(CONFIG.delayMs);
-          const inputBox = document.querySelector('div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]');
+          const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
           if (inputBox) {
             inputBox.focus();
-            inputBox.textContent = promptText;
+            inputBox.value = promptText;
             inputBox.dispatchEvent(new Event('input', { bubbles: true }));
             await util.delay(CONFIG.delayMs);
-            util.pressKey(inputBox);
+            
+            // Click Submit button
+            const submitBtn = document.querySelector('button');
+            const buttons = document.querySelectorAll('button');
+            for (const btn of buttons) {
+              if (btn.textContent.trim() === 'Submit') {
+                btn.click();
+                break;
+              }
+            }
           }
         }
       }
@@ -1153,13 +1186,21 @@ const siteAutomations = [
       const q = params.get('q');
       if (q) {
         await util.delay(CONFIG.delayMs);
-        const inputBox = document.querySelector('div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]');
+        const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
         if (inputBox) {
           inputBox.focus();
-          inputBox.textContent = q;
+          inputBox.value = q;
           inputBox.dispatchEvent(new Event('input', { bubbles: true }));
           await util.delay(CONFIG.delayMs);
-          util.pressKey(inputBox);
+          
+          // Click Submit button for regular search too
+          const buttons = document.querySelectorAll('button');
+          for (const btn of buttons) {
+            if (btn.textContent.trim() === 'Submit') {
+              btn.click();
+              break;
+            }
+          }
         }
       }
     }
