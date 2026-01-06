@@ -1136,7 +1136,7 @@ const siteAutomations = [
           // Find and click Sources button
           const buttons = document.querySelectorAll('button');
           const sourcesBtn = Array.from(buttons).find(btn => 
-            btn.textContent?.includes('Sources')
+            btn.getAttribute('aria-label')?.includes('Sources')
           );
           
           console.log('[SK Debug] Sources button found:', !!sourcesBtn);
