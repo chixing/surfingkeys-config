@@ -1211,35 +1211,7 @@ const siteAutomations = [
         }
       }
 
-      // STEP 2: Click Research mode AFTER text is entered
-      if (hash.includes('sk_mode=research')) {
-        console.log('[SK Debug] Research mode detected');
-
-        // Find and click Research radio button using multiple strategies
-        const radios = document.querySelectorAll('[role="radio"]');
-        console.log('[SK Debug] Total radio buttons found:', radios.length);
-
-        let researchRadio = Array.from(radios).find(radio =>
-          radio.getAttribute('aria-label')?.toLowerCase().includes('research') ||
-          radio.getAttribute('value')?.toLowerCase() === 'research' ||
-          radio.textContent?.toLowerCase().includes('research') ||
-          radio.closest('label')?.textContent?.toLowerCase().includes('research')
-        );
-
-        console.log('[SK Debug] Research button found:', !!researchRadio);
-        if (researchRadio) {
-          const isChecked = researchRadio.getAttribute('aria-checked') === 'true';
-          console.log('[SK Debug] Research button checked state:', isChecked);
-          if (!isChecked) {
-            console.log('[SK Debug] Clicking research button');
-            researchRadio.click();
-            await util.delay(CONFIG.delayMs);
-            console.log('[SK Debug] Research button clicked, new state:', researchRadio.getAttribute('aria-checked'));
-          }
-        }
-      }
-
-      // STEP 3: Handle social toggle AFTER research mode is set
+      // STEP 2: Handle social toggle FIRST (before Research mode to avoid reset)
       if (hash.includes('sk_social=on')) {
         console.log('[SK Debug] Social toggle requested');
         await util.delay(CONFIG.delayMs * 2); // Additional wait for research mode to settle
@@ -1359,9 +1331,36 @@ const siteAutomations = [
         }
       }
 
+      // STEP 3: Click Research mode RIGHT BEFORE submit (to avoid reset from other interactions)
+      if (hash.includes('sk_mode=research')) {
+        console.log('[SK Debug] Setting Research mode (final step before submit)');
 
-      // STEP 4: Submit the query
-      await util.delay(CONFIG.delayMs);
+        // Find and click Research radio button
+        const radios = document.querySelectorAll('[role="radio"]');
+        console.log('[SK Debug] Total radio buttons found:', radios.length);
+
+        let researchRadio = Array.from(radios).find(radio =>
+          radio.getAttribute('aria-label')?.toLowerCase().includes('research') ||
+          radio.getAttribute('value')?.toLowerCase() === 'research' ||
+          radio.textContent?.toLowerCase().includes('research') ||
+          radio.closest('label')?.textContent?.toLowerCase().includes('research')
+        );
+
+        console.log('[SK Debug] Research button found:', !!researchRadio);
+        if (researchRadio) {
+          const isChecked = researchRadio.getAttribute('aria-checked') === 'true';
+          console.log('[SK Debug] Research button checked state:', isChecked);
+          if (!isChecked) {
+            console.log('[SK Debug] Clicking research button');
+            researchRadio.click();
+            await util.delay(500); // Short delay before submit
+            console.log('[SK Debug] Research button clicked, new state:', researchRadio.getAttribute('aria-checked'));
+          }
+        }
+      }
+
+      // STEP 4: Submit the query IMMEDIATELY after Research mode
+      await util.delay(300); // Minimal delay
 
       // Enhanced submit button detection with broader criteria
       const allButtons = document.querySelectorAll('button');
