@@ -1172,38 +1172,36 @@ const siteAutomations = [
 
           console.log('[SK Debug] Paragraph found, current text:', paragraph.textContent?.substring(0, 50));
 
-          // SET text using multiple methods to work with React
+          // SET text using execCommand for React compatibility
           try {
             inputBox.focus();
-            inputBox.click();
             await util.delay(100);
 
-            // Dispatch focus event first to activate React listeners
-            inputBox.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
-            paragraph.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+            // Select all existing content first
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(inputBox);
+            selection.removeAllRanges();
+            selection.addRange(range);
+            console.log('[SK Debug] Selected all content in textbox');
+
             await util.delay(50);
 
-            // Try multiple text-setting methods
-            paragraph.innerText = queryText;
-            paragraph.textContent = queryText;
+            // Use execCommand to insert text - this triggers React's event handlers
+            const inserted = document.execCommand('insertText', false, queryText);
+            console.log('[SK Debug] execCommand insertText result:', inserted);
 
-            // Create and dispatch input event with data property
-            const inputEvent = new InputEvent('input', {
-              bubbles: true,
-              cancelable: true,
-              data: queryText,
-              inputType: 'insertText'
-            });
-            paragraph.dispatchEvent(inputEvent);
-            inputBox.dispatchEvent(inputEvent);
+            if (!inserted) {
+              // Fallback: try deleteContents + insertText
+              console.log('[SK Debug] Trying fallback with delete + type');
+              document.execCommand('delete', false);
+              await util.delay(50);
+              document.execCommand('insertText', false, queryText);
+            }
 
             await util.delay(200);
 
-            console.log('[SK Debug] Query set, new content:', paragraph.textContent?.substring(0, 50));
-
-            // Dispatch change event
-            inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-
+            console.log('[SK Debug] Query set, new content:', inputBox.textContent?.substring(0, 50));
             console.log('[SK Debug] Text entry complete');
           } catch (error) {
             console.log('[SK Debug] Error during text injection:', error);
@@ -1260,8 +1258,22 @@ const siteAutomations = [
         console.log('[SK Debug] Sources button found:', !!sourcesBtn);
         if (sourcesBtn) {
           console.log('[SK Debug] Sources button aria-label:', sourcesBtn.getAttribute('aria-label'));
-          console.log('[SK Debug] Clicking Sources button');
-          sourcesBtn.click();
+          console.log('[SK Debug] Clicking Sources button with mouse events');
+
+          // Use proper mouse events for React compatibility
+          const rect = sourcesBtn.getBoundingClientRect();
+          const mouseOpts = {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2
+          };
+
+          sourcesBtn.focus();
+          sourcesBtn.dispatchEvent(new MouseEvent('mousedown', mouseOpts));
+          sourcesBtn.dispatchEvent(new MouseEvent('mouseup', mouseOpts));
+          sourcesBtn.dispatchEvent(new MouseEvent('click', mouseOpts));
           console.log('[SK Debug] Sources button clicked, waiting for menu...');
 
           // Wait for menu container to appear first
