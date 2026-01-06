@@ -1291,22 +1291,37 @@ const siteAutomations = [
           
           console.log('[SK Debug] Paragraph found, current text:', paragraph.textContent?.substring(0, 50));
           
-          // SET text directly on the paragraph element
+          // SET text using multiple methods to work with React
           try {
             inputBox.focus();
             inputBox.click();
             await util.delay(100);
             
-            // Set text content directly - this is the most reliable method
+            // Dispatch focus event first to activate React listeners
+            inputBox.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+            paragraph.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
+            await util.delay(50);
+            
+            // Try multiple text-setting methods
+            paragraph.innerText = queryText;
             paragraph.textContent = queryText;
+            
+            // Create and dispatch input event with data property
+            const inputEvent = new InputEvent('input', { 
+              bubbles: true, 
+              cancelable: true,
+              data: queryText,
+              inputType: 'insertText'
+            });
+            paragraph.dispatchEvent(inputEvent);
+            inputBox.dispatchEvent(inputEvent);
             
             await util.delay(200);
             
-            console.log('[SK Debug] Query set via textContent on paragraph, new content:', paragraph.textContent?.substring(0, 50));
+            console.log('[SK Debug] Query set via innerText+textContent on paragraph, new content:', paragraph.textContent?.substring(0, 50));
             console.log('[SK Debug] Textbox wrapper content:', inputBox.textContent?.substring(0, 50));
             
-            // Dispatch only essential events
-            inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+            // Dispatch change event
             inputBox.dispatchEvent(new Event('change', { bubbles: true }));
             
             console.log('[SK Debug] Events dispatched');
