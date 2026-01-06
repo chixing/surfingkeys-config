@@ -1257,23 +1257,34 @@ const siteAutomations = [
 
         console.log('[SK Debug] Sources button found:', !!sourcesBtn);
         if (sourcesBtn) {
-          console.log('[SK Debug] Sources button aria-label:', sourcesBtn.getAttribute('aria-label'));
-          console.log('[SK Debug] Clicking Sources button with mouse events');
+          console.log('[SK Debug] Sources button details:', {
+            'aria-label': sourcesBtn.getAttribute('aria-label'),
+            'aria-expanded': sourcesBtn.getAttribute('aria-expanded'),
+            'aria-haspopup': sourcesBtn.getAttribute('aria-haspopup'),
+            'disabled': sourcesBtn.disabled,
+            'class': sourcesBtn.className
+          });
 
-          // Use proper mouse events for React compatibility
+          // Use PointerEvent for modern React compatibility
           const rect = sourcesBtn.getBoundingClientRect();
-          const mouseOpts = {
+          const pointerOpts = {
             bubbles: true,
             cancelable: true,
             view: window,
             clientX: rect.left + rect.width / 2,
-            clientY: rect.top + rect.height / 2
+            clientY: rect.top + rect.height / 2,
+            pointerType: 'mouse',
+            isPrimary: true
           };
 
+          console.log('[SK Debug] Dispatching pointer events to Sources button');
           sourcesBtn.focus();
-          sourcesBtn.dispatchEvent(new MouseEvent('mousedown', mouseOpts));
-          sourcesBtn.dispatchEvent(new MouseEvent('mouseup', mouseOpts));
-          sourcesBtn.dispatchEvent(new MouseEvent('click', mouseOpts));
+          sourcesBtn.dispatchEvent(new PointerEvent('pointerdown', pointerOpts));
+          sourcesBtn.dispatchEvent(new PointerEvent('pointerup', pointerOpts));
+          sourcesBtn.click(); // Also try native click
+
+          await util.delay(300);
+          console.log('[SK Debug] Sources button after click, aria-expanded:', sourcesBtn.getAttribute('aria-expanded'));
           console.log('[SK Debug] Sources button clicked, waiting for menu...');
 
           // Wait for menu container to appear first
