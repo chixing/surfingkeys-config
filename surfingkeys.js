@@ -1109,139 +1109,119 @@ const siteAutomations = [
       const hash = window.location.hash;
       console.log('[SK Debug] Perplexity automation started, hash:', hash);
 
+      // Wait for page to fully load
+      await util.delay(CONFIG.delayMs * 2);
+
       // Handle research mode setup with hash parameters
       if (hash.includes('sk_mode=research')) {
         console.log('[SK Debug] Research mode detected');
-        await util.delay(CONFIG.delayMs);
-
-        // Set research mode (assuming user is authenticated)
-        const researchBtn = document.querySelector('input[type="radio"][value="research"], *[role="radio"][value="research"]');
-        console.log('[SK Debug] Research button found:', !!researchBtn, 'checked:', researchBtn?.getAttribute('aria-checked'));
-        if (researchBtn && researchBtn.getAttribute('aria-checked') !== 'true') {
-          console.log('[SK Debug] Clicking research button');
-          researchBtn.click();
-          await util.delay(CONFIG.delayMs);
-        } else if (researchBtn) {
-          console.log('[SK Debug] Research button already selected');
+        
+        // Find and click Research radio button
+        const radioGroup = document.querySelector('[role="radiogroup"]');
+        if (radioGroup) {
+          const radios = radioGroup.querySelectorAll('[role="radio"]');
+          const researchRadio = Array.from(radios).find(radio => 
+            radio.textContent?.includes('Research')
+          );
+          console.log('[SK Debug] Research button found:', !!researchRadio);
+          if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
+            console.log('[SK Debug] Clicking research button');
+            researchRadio.click();
+            await util.delay(CONFIG.delayMs);
+          }
         }
 
         // Handle social toggle if specified
         if (hash.includes('sk_social=on')) {
           console.log('[SK Debug] Social toggle requested');
-          // Open Sources menu first
-          const sourcesBtn = document.querySelector('button[aria-label*="Sources"], button[aria-haspopup="menu"]');
-          console.log('[SK Debug] Sources button found:', !!sourcesBtn, sourcesBtn?.textContent);
-          // Check multiple ways to identify Sources button
+          await util.delay(CONFIG.delayMs);
+          
+          // Find and click Sources button
           const allButtons = document.querySelectorAll('button');
-          let actualSourcesBtn = null;
+          let sourcesBtn = null;
           for (const btn of allButtons) {
-            if (btn.textContent.includes('Sources') || btn.getAttribute('aria-label')?.includes('Sources')) {
-              actualSourcesBtn = btn;
+            if (btn.textContent?.includes('Sources')) {
+              sourcesBtn = btn;
               break;
             }
           }
-          console.log('[SK Debug] Actual Sources button found:', !!actualSourcesBtn, actualSourcesBtn?.textContent);
-          if (actualSourcesBtn) {
+          
+          console.log('[SK Debug] Sources button found:', !!sourcesBtn);
+          if (sourcesBtn) {
             console.log('[SK Debug] Clicking Sources button');
-            actualSourcesBtn.click();
-            await util.delay(CONFIG.delayMs * 2); // Longer delay for menu to appear
+            sourcesBtn.click();
+            await util.delay(CONFIG.delayMs * 2);
             
-            // Look for Social toggle in the menu
-            let socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
-            console.log('[SK Debug] First menu item found:', !!socialMenuItem);
+            // Find and enable Social toggle
+            const menuItems = document.querySelectorAll('[role="menuitemcheckbox"]');
+            console.log('[SK Debug] Menu items found:', menuItems.length);
             
-            // If menu not immediately visible, wait a bit more
-            if (!socialMenuItem) {
-              console.log('[SK Debug] Menu not found, waiting longer...');
-              await util.delay(CONFIG.delayMs);
-              socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
-              console.log('[SK Debug] Menu item found after wait:', !!socialMenuItem);
-            }
-            if (socialMenuItem) {
-              // Find all menu items and look for Social
-              const menuItems = document.querySelectorAll('*[role="menuitemcheckbox"]');
-              console.log('[SK Debug] All menu items:', menuItems.length, Array.from(menuItems).map(i => i.textContent.trim()));
-              for (const item of menuItems) {
-                if (item.textContent.includes('Social')) {
-                  console.log('[SK Debug] Found Social item:', item.textContent);
-                  const socialSwitch = item.querySelector('*[role="switch"]');
-                  console.log('[SK Debug] Social switch found:', !!socialSwitch, 'checked:', socialSwitch?.getAttribute('aria-checked'));
-                  if (socialSwitch && socialSwitch.getAttribute('aria-checked') !== 'true') {
-                    console.log('[SK Debug] Clicking social switch');
-                    socialSwitch.click();
-                    await util.delay(CONFIG.delayMs);
-                    break;
-                  } else if (socialSwitch) {
-                    console.log('[SK Debug] Social switch already enabled');
-                    break;
-                  }
+            for (const item of menuItems) {
+              if (item.textContent?.includes('Social')) {
+                console.log('[SK Debug] Found Social item');
+                const socialSwitch = item.querySelector('[role="switch"]');
+                if (socialSwitch && socialSwitch.getAttribute('aria-checked') !== 'true') {
+                  console.log('[SK Debug] Clicking social switch');
+                  socialSwitch.click();
+                  await util.delay(CONFIG.delayMs);
+                  break;
                 }
               }
-            } else {
-              console.log('[SK Debug] Menu not found, trying different selectors');
-              const menu = document.querySelector('[role="menu"], .menu, [data-testid*="menu"]');
-              console.log('[SK Debug] Alternative menu found:', !!menu, menu?.children?.length);
-            const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
-            if (inputBox) {
-              console.log('[SK Debug] Closing menu by clicking input');
-              inputBox.click();
-              await util.delay(CONFIG.delayMs);
             }
           }
         }
       }
 
-      // Inject prompt using hash-based pattern
-      const promptKey = "#sk_prompt=";
-      if (window.location.hash.startsWith(promptKey)) {
-        console.log('[SK Debug] Starting prompt injection');
-        let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
-        console.log('[SK Debug] Raw prompt text:', promptText);
-        // Remove sk parameters - handle case where content is attached to parameter value
-        promptText = promptText.replace(/^&sk_mode=\w+&sk_social=on/, '');
-        console.log('[SK Debug] Cleaned prompt text:', promptText);
+      // Extract and inject query from hash
+      const hashWithoutPrompt = window.location.hash.substring(1);
+      const queryMatch = hashWithoutPrompt.match(/sk_social=on(.+?)(?:&|$)/);
+      let actualQuery = '';
+      
+      if (queryMatch && queryMatch[1]) {
+        actualQuery = decodeURIComponent(queryMatch[1]);
+      } else {
+        // Fallback: get everything after the last parameter
+        const afterParams = hashWithoutPrompt.split('sk_social=on')[1];
+        if (afterParams) {
+          actualQuery = decodeURIComponent(afterParams);
+        }
+      }
+      
+      console.log('[SK Debug] Extracted query:', actualQuery);
+      
+      if (actualQuery.trim()) {
         await util.delay(CONFIG.delayMs);
-        const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
-        console.log('[SK Debug] Input box found:', !!inputBox, inputBox?.tagName, inputBox?.placeholder);
+        
+        // Find input box and fill with query
+        const inputBox = document.querySelector('textarea[placeholder*="Ask"], input[placeholder*="Ask"]');
+        console.log('[SK Debug] Input box found:', !!inputBox);
+        
         if (inputBox) {
           inputBox.focus();
-          // Handle different input types
-          if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
-            inputBox.value = promptText;
-          } else {
-            inputBox.textContent = promptText;
-          }
+          inputBox.value = actualQuery.trim();
           inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-          console.log('[SK Debug] Text injected, looking for Submit button');
+          inputBox.dispatchEvent(new Event('change', { bubbles: true }));
+          console.log('[SK Debug] Query injected');
+          
           await util.delay(CONFIG.delayMs);
-
-          // Click Submit button
-          const buttons = document.querySelectorAll('button');
-          console.log('[SK Debug] Looking for Submit button among', buttons.length, 'buttons');
-          let submitFound = false;
           
-          // Try different submit button patterns
-          const submitPatterns = ['Submit', 'Search', 'Ask', '▶', '→'];
-          for (const pattern of submitPatterns) {
-            for (const btn of buttons) {
-              const text = btn.textContent.trim();
-              const ariaLabel = btn.getAttribute('aria-label') || '';
-              if (text === pattern || ariaLabel.includes(pattern) || 
-                  (pattern === '▶' && (text.includes('▶') || btn.innerHTML.includes('play'))) ||
-                  (pattern === '→' && (text.includes('→') || btn.innerHTML.includes('arrow')))) {
-                console.log('[SK Debug] Found submit button with pattern:', pattern, 'text:', text, 'aria-label:', ariaLabel);
-                btn.click();
-                submitFound = true;
-                break;
-              }
-            }
-            if (submitFound) break;
-          }
+          // Find and click Submit button
+          const submitBtn = Array.from(document.querySelectorAll('button')).find(btn => 
+            btn.textContent?.trim() === 'Submit'
+          );
           
-          if (!submitFound) {
-            console.log('[SK Debug] Submit button not found! Button texts:', Array.from(buttons).slice(0, 10).map(b => `"${b.textContent.trim()}"`));
-            console.log('[SK Debug] Trying Enter key as fallback');
-            inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
+          console.log('[SK Debug] Submit button found:', !!submitBtn);
+          if (submitBtn) {
+            console.log('[SK Debug] Clicking submit button');
+            submitBtn.click();
+          } else {
+            // Fallback: try Enter key
+            console.log('[SK Debug] No submit button, trying Enter key');
+            inputBox.dispatchEvent(new KeyboardEvent('keydown', {
+              key: 'Enter',
+              keyCode: 13,
+              bubbles: true
+            }));
           }
         }
       }
@@ -1283,7 +1263,6 @@ const siteAutomations = [
           }
         }
       }
-    }
     }
   }
 ];
