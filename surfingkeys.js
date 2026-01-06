@@ -1108,30 +1108,44 @@ const siteAutomations = [
     run: async () => {
       const hash = window.location.hash;
       console.log('[SK Debug] Perplexity automation started, hash:', hash);
-      
+
       // Handle research mode setup with hash parameters
       if (hash.includes('sk_mode=research')) {
         console.log('[SK Debug] Research mode detected');
         await util.delay(CONFIG.delayMs);
-        
+
         // Set research mode (assuming user is authenticated)
         const researchBtn = document.querySelector('input[type="radio"][value="research"], *[role="radio"][value="research"]');
+        console.log('[SK Debug] Research button found:', !!researchBtn, 'checked:', researchBtn?.getAttribute('aria-checked'));
         if (researchBtn && researchBtn.getAttribute('aria-checked') !== 'true') {
+          console.log('[SK Debug] Clicking research button');
           researchBtn.click();
           await util.delay(CONFIG.delayMs);
+        } else if (researchBtn) {
+          console.log('[SK Debug] Research button already selected');
         }
-        
+
         // Handle social toggle if specified
         if (hash.includes('sk_social=on')) {
           console.log('[SK Debug] Social toggle requested');
           // Open Sources menu first
           const sourcesBtn = document.querySelector('button[aria-label*="Sources"], button[aria-haspopup="menu"]');
           console.log('[SK Debug] Sources button found:', !!sourcesBtn, sourcesBtn?.textContent);
-          if (sourcesBtn && sourcesBtn.textContent.includes('Sources')) {
+          // Check multiple ways to identify Sources button
+          const allButtons = document.querySelectorAll('button');
+          let actualSourcesBtn = null;
+          for (const btn of allButtons) {
+            if (btn.textContent.includes('Sources') || btn.getAttribute('aria-label')?.includes('Sources')) {
+              actualSourcesBtn = btn;
+              break;
+            }
+          }
+          console.log('[SK Debug] Actual Sources button found:', !!actualSourcesBtn, actualSourcesBtn?.textContent);
+          if (actualSourcesBtn) {
             console.log('[SK Debug] Clicking Sources button');
-            sourcesBtn.click();
+            actualSourcesBtn.click();
             await util.delay(CONFIG.delayMs);
-            
+
             // Look for Social toggle in the menu
             const socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
             console.log('[SK Debug] First menu item found:', !!socialMenuItem);
@@ -1153,68 +1167,95 @@ const siteAutomations = [
                 }
               }
             }
-            
+
             // Close menu by clicking elsewhere
-            const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
+            const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
             if (inputBox) {
               console.log('[SK Debug] Closing menu by clicking input');
-            inputBox.click();
+              inputBox.click();
               await util.delay(CONFIG.delayMs);
             }
           }
         }
-        
-        // Inject prompt using hash-based pattern
-        const promptKey = "#sk_prompt=";
-        if (window.location.hash.startsWith(promptKey)) {
-          console.log('[SK Debug] Starting prompt injection');
-          let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
-          // Remove sk parameters from the prompt text
-          promptText = promptText.replace(/&sk_[^&]*/g, '');
-          console.log('[SK Debug] Cleaned prompt text:', promptText);
-          
-          await util.delay(CONFIG.delayMs);
-          const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
-          console.log('[SK Debug] Input box found:', !!inputBox);
-          if (inputBox) {
-            inputBox.focus();
+      }
+
+      // Inject prompt using hash-based pattern
+      const promptKey = "#sk_prompt=";
+      if (window.location.hash.startsWith(promptKey)) {
+        console.log('[SK Debug] Starting prompt injection');
+        let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
+        console.log('[SK Debug] Raw prompt text:', promptText);
+        // Remove sk parameters from the prompt text (only remove sk_ params, keep the actual content)
+        promptText = promptText.replace(/^&sk_[^&]*(&sk_[^&]*)*/g, '');
+        console.log('[SK Debug] Cleaned prompt text:', promptText);
+
+        await util.delay(CONFIG.delayMs);
+        const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
+        console.log('[SK Debug] Input box found:', !!inputBox, inputBox?.tagName, inputBox?.placeholder);
+        if (inputBox) {
+          inputBox.focus();
+          // Handle different input types
+          if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
             inputBox.value = promptText;
-            inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-            console.log('[SK Debug] Text injected, looking for Submit button');
-            await util.delay(CONFIG.delayMs);
-            
-            // Click Submit button
-            const submitBtn = document.querySelector('button');
-            const buttons = document.querySelectorAll('button');
-            for (const btn of buttons) {
-              if (btn.textContent.trim() === 'Submit') {
-                btn.click();
-                break;
-              }
+          } else {
+            inputBox.textContent = promptText;
+          }
+          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+          console.log('[SK Debug] Text injected, looking for Submit button');
+          await util.delay(CONFIG.delayMs);
+
+          // Click Submit button
+          const buttons = document.querySelectorAll('button');
+          console.log('[SK Debug] Looking for Submit button among', buttons.length, 'buttons');
+          let submitFound = false;
+          for (const btn of buttons) {
+            if (btn.textContent.trim() === 'Submit') {
+              console.log('[SK Debug] Found and clicking Submit button');
+              btn.click();
+              submitFound = true;
+              break;
             }
+          }
+          if (!submitFound) {
+            console.log('[SK Debug] Submit button not found! Button texts:', Array.from(buttons).slice(0, 10).map(b => `"${b.textContent.trim()}"`));
           }
         }
       }
-      
+
       // Handle regular query parameters for normal perplexity search
       const params = new URLSearchParams(window.location.search);
       const q = params.get('q');
+      console.log('[SK Debug] Regular search mode, query:', q);
       if (q) {
         await util.delay(CONFIG.delayMs);
-        const inputBox = document.querySelector('textarea[placeholder*="Ask anything"]');
+        const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
+        console.log('[SK Debug] Regular mode input box found:', !!inputBox, inputBox?.tagName);
         if (inputBox) {
           inputBox.focus();
-          inputBox.value = q;
+          // Handle different input types
+          if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
+            inputBox.value = q;
+          } else {
+            inputBox.textContent = q;
+          }
           inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+          console.log('[SK Debug] Regular mode text injected');
           await util.delay(CONFIG.delayMs);
-          
+
           // Click Submit button for regular search too
           const buttons = document.querySelectorAll('button');
+          console.log('[SK Debug] Regular mode looking for Submit among', buttons.length, 'buttons');
+          let submitFound = false;
           for (const btn of buttons) {
             if (btn.textContent.trim() === 'Submit') {
+              console.log('[SK Debug] Regular mode clicking Submit');
               btn.click();
+              submitFound = true;
               break;
             }
+          }
+          if (!submitFound) {
+            console.log('[SK Debug] Regular mode Submit not found');
           }
         }
       }
