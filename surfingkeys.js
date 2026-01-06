@@ -132,7 +132,7 @@ class AiSelector {
 
     // Assemble dialog
     [title, queryLabel, queryInput, promptLabel, promptSelect, promptInput,
-     servicesLabel, selectAllButtons, servicesContainer, buttonsContainer]
+      servicesLabel, selectAllButtons, servicesContainer, buttonsContainer]
       .forEach(el => dialog.appendChild(el));
     this.overlay.appendChild(dialog);
 
@@ -464,7 +464,7 @@ class AiSelector {
       { value: 'provide a short TL;DR summary', label: 'TL;DR', default: true },
       { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
       { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' },
-      { 
+      {
         value: `Role: Act as a Senior Staff Engineer and System Architect. Your goal is to explain the provided article to another engineer who is new to this specific domain but possesses a high level of general technical literacy.
 
 Task: Analyze the article and provide a narrative-driven explanation. Start with a concise TL;DR summary at the very top. Do not use bulleted lists or standard summaries for the main body. Instead, tell the "story" of the technology.
@@ -481,8 +481,8 @@ Audience: An engineer looking to deeply understand the "how" and "why."
 
 Format: Prose/Story form only. No bullet points.
 
-Language: Use precise technical vocabulary (latency, idempotency, sharding, backpressure, etc.) while ensuring every term is defined upon first use.`, 
-        label: 'Senior Staff Engineer Narrative' 
+Language: Use precise technical vocabulary (latency, idempotency, sharding, backpressure, etc.) while ensuring every term is defined upon first use.`,
+        label: 'Senior Staff Engineer Narrative'
       },
     ];
 
@@ -822,7 +822,7 @@ const util = {
     let u = url;
     if (sanitize) {
       t = String(t).replace(/[&<>"'`=/]/g, s => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", 
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;",
         "'": "&#39;", "/": "&#x2F;", "`": "&#x60;", "=": "&#x3D;"
       })[s]);
       u = new URL(u).toString();
@@ -832,7 +832,7 @@ const util = {
       { url: u }
     );
   },
-  
+
   /**
    * Generic handler for pasting prompts into AI chat interfaces
    * @param {Object} options
@@ -844,9 +844,9 @@ const util = {
   injectPrompt: async ({ selector, submitSelector, useValue = false, dispatchEvents = false }) => {
     const promptKey = "#sk_prompt=";
     if (!window.location.hash.startsWith(promptKey)) return;
-    
+
     const promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
-    
+
     await util.delay(CONFIG.delayMs);
     const inputBox = document.querySelector(selector);
     if (!inputBox) return;
@@ -894,8 +894,8 @@ api.map('K', '[['); // Previous page
 api.map('J', ']]'); // Next page
 
 // --- Tab Search ---
-api.mapkey('T', '#3Choose a tab', function() {
-    api.Front.openOmnibar({type: "Tabs"});
+api.mapkey('T', '#3Choose a tab', function () {
+  api.Front.openOmnibar({ type: "Tabs" });
 });
 
 // --- Convenience ---
@@ -913,71 +913,71 @@ api.cmap('<Ctrl->>', '<Ctrl-,>'); // Ctrl+Shift+. (Ctrl+>) to go to previous pag
 
 // --- Custom Actions ---
 // Copy image shortcut - press 'ye' to show hints for images, then select one to copy to clipboard
-api.mapkey('ye', 'Copy image to clipboard', function() {
-    api.Hints.create('img', function(element) {
-        let imageUrl = element.src || element.getAttribute('data-src') || element.getAttribute('data-lazy-src');
-        if (!imageUrl && element.srcset) {
-            const srcset = element.srcset.split(',');
-            imageUrl = srcset[0].trim().split(' ')[0];
-        }
-        
-        if (!imageUrl) {
-            api.Front.showBanner('Could not find image source', 'error');
-            return;
-        }
+api.mapkey('ye', 'Copy image to clipboard', function () {
+  api.Hints.create('img', function (element) {
+    let imageUrl = element.src || element.getAttribute('data-src') || element.getAttribute('data-lazy-src');
+    if (!imageUrl && element.srcset) {
+      const srcset = element.srcset.split(',');
+      imageUrl = srcset[0].trim().split(' ')[0];
+    }
 
-        // Helper to copy a PNG blob to clipboard
-        const copyPngToClipboard = async (blob) => {
-            try {
-                if (!blob) throw new Error('Empty blob');
-                const data = [new ClipboardItem({ 'image/png': blob })];
-                await navigator.clipboard.write(data);
-                api.Front.showBanner('Image copied to clipboard!', 'success');
-            } catch (err) {
-                api.Clipboard.write(imageUrl);
-                api.Front.showBanner('Copied URL (Clipboard write failed)', 'warning');
-            }
-        };
+    if (!imageUrl) {
+      api.Front.showBanner('Could not find image source', 'error');
+      return;
+    }
 
-        // Use canvas to convert any image format to PNG
-        const convertAndCopy = (url) => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous'; 
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                canvas.toBlob(copyPngToClipboard, 'image/png');
-            };
-            img.onerror = function() {
-                // If canvas fails (usually CORS), try fetching the blob first
-                fetch(url).then(r => r.blob()).then(blob => {
-                    const blobUrl = URL.createObjectURL(blob);
-                    const img2 = new Image();
-                    img2.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img2.width;
-                        canvas.height = img2.height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img2, 0, 0);
-                        canvas.toBlob(b => {
-                            URL.revokeObjectURL(blobUrl);
-                            copyPngToClipboard(b);
-                        }, 'image/png');
-                    };
-                    img2.src = blobUrl;
-                }).catch(() => {
-                    api.Clipboard.write(imageUrl);
-                    api.Front.showBanner('Copied URL (Image load failed)', 'warning');
-                });
-            };
-            img.src = url;
-        };
+    // Helper to copy a PNG blob to clipboard
+    const copyPngToClipboard = async (blob) => {
+      try {
+        if (!blob) throw new Error('Empty blob');
+        const data = [new ClipboardItem({ 'image/png': blob })];
+        await navigator.clipboard.write(data);
+        api.Front.showBanner('Image copied to clipboard!', 'success');
+      } catch (err) {
+        api.Clipboard.write(imageUrl);
+        api.Front.showBanner('Copied URL (Clipboard write failed)', 'warning');
+      }
+    };
 
-        convertAndCopy(imageUrl);
-    });
+    // Use canvas to convert any image format to PNG
+    const convertAndCopy = (url) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(copyPngToClipboard, 'image/png');
+      };
+      img.onerror = function () {
+        // If canvas fails (usually CORS), try fetching the blob first
+        fetch(url).then(r => r.blob()).then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const img2 = new Image();
+          img2.onload = function () {
+            const canvas = document.createElement('canvas');
+            canvas.width = img2.width;
+            canvas.height = img2.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img2, 0, 0);
+            canvas.toBlob(b => {
+              URL.revokeObjectURL(blobUrl);
+              copyPngToClipboard(b);
+            }, 'image/png');
+          };
+          img2.src = blobUrl;
+        }).catch(() => {
+          api.Clipboard.write(imageUrl);
+          api.Front.showBanner('Copied URL (Image load failed)', 'warning');
+        });
+      };
+      img.src = url;
+    };
+
+    convertAndCopy(imageUrl);
+  });
 });
 
 // Chrome Internal Pages
@@ -1064,7 +1064,7 @@ const siteAutomations = [
     host: "claude.ai",
     run: () => util.injectPrompt({
       selector: 'div[contenteditable="true"]',
-      submitSelector: () => 
+      submitSelector: () =>
         document.querySelector('button[type="submit"]') ||
         document.querySelector('button.send-button') ||
         document.querySelector('button[aria-label*="send" i]') ||
@@ -1077,7 +1077,7 @@ const siteAutomations = [
       selector: 'textarea[placeholder], div[contenteditable="true"]',
       useValue: true,
       dispatchEvents: true,
-      submitSelector: () => 
+      submitSelector: () =>
         document.querySelector('button[type="submit"]') ||
         document.querySelector('button.send-button') ||
         document.querySelector('button[aria-label*="send" i]') ||
@@ -1111,7 +1111,7 @@ const siteAutomations = [
 
       // Enhanced waiting with DOM ready detection
       await util.delay(CONFIG.delayMs * 2);
-      
+
       // Wait for essential UI elements to be ready
       let maxWait = 5000; // 5 second max wait
       let waitTime = 0;
@@ -1126,130 +1126,11 @@ const siteAutomations = [
         waitTime += 200;
       }
 
-      // Handle research mode setup with hash parameters
-      if (hash.includes('sk_mode=research')) {
-        console.log('[SK Debug] Research mode detected');
-        
-        // Find and click Research radio button using multiple strategies
-        const radios = document.querySelectorAll('[role="radio"]');
-        console.log('[SK Debug] Total radio buttons found:', radios.length);
-        
-        // Log all radio button details
-        radios.forEach((radio, idx) => {
-          console.log(`[SK Debug] Radio ${idx}:`, {
-            'aria-label': radio.getAttribute('aria-label'),
-            'aria-checked': radio.getAttribute('aria-checked'),
-            'value': radio.getAttribute('value'),
-            'textContent': radio.textContent?.trim().substring(0, 50)
-          });
-        });
-        
-        let researchRadio = Array.from(radios).find(radio => 
-          radio.getAttribute('aria-label')?.toLowerCase().includes('research') ||
-          radio.getAttribute('value')?.toLowerCase() === 'research' ||
-          radio.textContent?.toLowerCase().includes('research') ||
-          radio.closest('label')?.textContent?.toLowerCase().includes('research')
-        );
-        
-        console.log('[SK Debug] Research button found:', !!researchRadio);
-        if (researchRadio) {
-          const isChecked = researchRadio.getAttribute('aria-checked') === 'true';
-          console.log('[SK Debug] Research button checked state:', isChecked);
-          if (!isChecked) {
-            console.log('[SK Debug] Clicking research button');
-            researchRadio.click();
-            await util.delay(CONFIG.delayMs);
-            console.log('[SK Debug] Research button clicked, new state:', researchRadio.getAttribute('aria-checked'));
-          }
-        }
-
-        // Handle social toggle if specified with enhanced timing
-        if (hash.includes('sk_social=on')) {
-          console.log('[SK Debug] Social toggle requested');
-          await util.delay(CONFIG.delayMs * 2); // Additional wait for research mode to settle
-          
-          // Find and click Sources button with multiple selection strategies
-          const buttons = document.querySelectorAll('button');
-          console.log('[SK Debug] Total buttons found:', buttons.length);
-          
-          let sourcesBtn = Array.from(buttons).find(btn => {
-            const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-            const text = btn.textContent?.toLowerCase() || '';
-            const title = btn.getAttribute('title')?.toLowerCase() || '';
-            return ariaLabel.includes('source') || text.includes('source') || title.includes('source');
-          });
-          
-          console.log('[SK Debug] Sources button found:', !!sourcesBtn);
-          if (sourcesBtn) {
-            console.log('[SK Debug] Sources button aria-label:', sourcesBtn.getAttribute('aria-label'));
-            console.log('[SK Debug] Clicking Sources button');
-            sourcesBtn.click();
-            
-            // Enhanced menu waiting with retry logic
-            let menuWaitTime = 0;
-            const maxMenuWait = 5000;
-            let menuItems = [];
-            
-            while (menuWaitTime < maxMenuWait) {
-              await util.delay(300);
-              menuItems = document.querySelectorAll('[role="menuitemcheckbox"], [role="menuitem"]');
-              console.log('[SK Debug] Menu items found:', menuItems.length);
-              if (menuItems.length > 0) break;
-              menuWaitTime += 300;
-            }
-            
-            // Log all menu items
-            menuItems.forEach((item, idx) => {
-              console.log(`[SK Debug] Menu item ${idx}:`, {
-                text: item.textContent?.trim().substring(0, 30),
-                role: item.getAttribute('role'),
-                hasSwitch: !!item.querySelector('[role="switch"]')
-              });
-            });
-            
-            // Look for Social toggle in the menu
-            let foundSocial = false;
-            for (const item of menuItems) {
-              const itemText = (item.textContent || '').toLowerCase();
-              if (itemText.includes('social')) {
-                console.log('[SK Debug] Found Social item:', item.textContent?.trim());
-                foundSocial = true;
-                
-                const socialSwitch = item.querySelector('[role="switch"]');
-                if (socialSwitch) {
-                  const isChecked = socialSwitch.getAttribute('aria-checked') === 'true';
-                  console.log('[SK Debug] Social switch state:', isChecked);
-                  if (!isChecked) {
-                    console.log('[SK Debug] Clicking social switch');
-                    socialSwitch.click();
-                    await util.delay(CONFIG.delayMs);
-                    console.log('[SK Debug] Social switch new state:', socialSwitch.getAttribute('aria-checked'));
-                  }
-                } else {
-                  // Try clicking the item itself if no switch found
-                  console.log('[SK Debug] No switch found, clicking item directly');
-                  item.click();
-                  await util.delay(CONFIG.delayMs);
-                }
-                break;
-              }
-            }
-            
-            if (!foundSocial) {
-              console.log('[SK Debug] WARNING: Social item not found in menu');
-            }
-            
-            // Close menu by clicking elsewhere or pressing Escape
-            document.body.click();
-            await util.delay(CONFIG.delayMs);
-          }
-        }
-      }
-
-      // Enhanced query extraction with better pattern matching
+      // STEP 1: Enter text FIRST (before clicking any buttons)
+      // Extract query from hash
       const hashWithoutPrompt = window.location.hash.substring(1);
       let actualQuery = '';
-      
+
       // Try multiple extraction patterns
       if (hash.includes('sk_social=on')) {
         const afterSocial = hashWithoutPrompt.split('sk_social=on')[1];
@@ -1262,124 +1143,240 @@ const siteAutomations = [
           actualQuery = decodeURIComponent(promptMatch[1]);
         }
       }
-      
+
       console.log('[SK Debug] Extracted query:', actualQuery);
-      
+
       if (actualQuery.trim()) {
         await util.delay(CONFIG.delayMs);
-        
+
         // Enhanced input handling with multiple strategies
         const inputBox = document.querySelector('[role="textbox"]');
         console.log('[SK Debug] Input box found:', !!inputBox, inputBox?.tagName);
-        
+
         if (inputBox) {
           // Focus and prepare the input
           inputBox.focus();
           inputBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
           await util.delay(100);
-          
+
           const queryText = actualQuery.trim();
           console.log('[SK Debug] Setting query text (length:', queryText.length, '):', queryText.substring(0, 50));
-          console.log('[SK Debug] Current input content before clear:', inputBox.textContent?.substring(0, 50));
-          
+          console.log('[SK Debug] Current input content before set:', inputBox.textContent?.substring(0, 50));
+
           // Find the paragraph child element inside the textbox
           const paragraph = inputBox.querySelector('p');
           if (!paragraph) {
             console.log('[SK Debug] ERROR: No paragraph found inside textbox');
             return;
           }
-          
+
           console.log('[SK Debug] Paragraph found, current text:', paragraph.textContent?.substring(0, 50));
-          
+
           // SET text using multiple methods to work with React
           try {
             inputBox.focus();
             inputBox.click();
             await util.delay(100);
-            
+
             // Dispatch focus event first to activate React listeners
             inputBox.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
             paragraph.dispatchEvent(new FocusEvent('focus', { bubbles: true }));
             await util.delay(50);
-            
+
             // Try multiple text-setting methods
             paragraph.innerText = queryText;
             paragraph.textContent = queryText;
-            
+
             // Create and dispatch input event with data property
-            const inputEvent = new InputEvent('input', { 
-              bubbles: true, 
+            const inputEvent = new InputEvent('input', {
+              bubbles: true,
               cancelable: true,
               data: queryText,
               inputType: 'insertText'
             });
             paragraph.dispatchEvent(inputEvent);
             inputBox.dispatchEvent(inputEvent);
-            
+
             await util.delay(200);
-            
-            console.log('[SK Debug] Query set via innerText+textContent on paragraph, new content:', paragraph.textContent?.substring(0, 50));
-            console.log('[SK Debug] Textbox wrapper content:', inputBox.textContent?.substring(0, 50));
-            
+
+            console.log('[SK Debug] Query set, new content:', paragraph.textContent?.substring(0, 50));
+
             // Dispatch change event
             inputBox.dispatchEvent(new Event('change', { bubbles: true }));
-            
-            console.log('[SK Debug] Events dispatched');
+
+            console.log('[SK Debug] Text entry complete');
           } catch (error) {
             console.log('[SK Debug] Error during text injection:', error);
           }
-          
+
           await util.delay(CONFIG.delayMs);
-          
-          // Enhanced submit button detection with broader criteria
-          const allButtons = document.querySelectorAll('button');
-          console.log('[SK Debug] Total buttons after input:', allButtons.length);
-          
-          let submitBtn = Array.from(allButtons).find(btn => {
-            const btnText = btn.textContent?.trim().toLowerCase() || '';
-            const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-            const dataTestId = btn.getAttribute('data-testid')?.toLowerCase() || '';
-            const type = btn.getAttribute('type')?.toLowerCase() || '';
-            
-            // Check for submit indicators
-            const isSubmit = btnText === 'submit' || 
-                           ariaLabel.includes('submit') ||
-                           dataTestId.includes('submit') ||
-                           type === 'submit' ||
-                           btnText.includes('search') ||
-                           ariaLabel.includes('search');
-                           
-            // Also check if button is not disabled
-            const isEnabled = !btn.disabled && btn.getAttribute('aria-disabled') !== 'true';
-            
-            return isSubmit && isEnabled;
-          });
-          
-          console.log('[SK Debug] Submit button found:', !!submitBtn);
-          if (submitBtn) {
-            console.log('[SK Debug] Submit button details:', {
-              text: submitBtn.textContent?.trim().substring(0, 30),
-              'aria-label': submitBtn.getAttribute('aria-label'),
-              disabled: submitBtn.disabled,
-              type: submitBtn.getAttribute('type')
-            });
-            console.log('[SK Debug] Clicking submit button');
-            submitBtn.click();
-            console.log('[SK Debug] Submit clicked');
-          } else {
-            // Enhanced fallback with multiple key events
-            console.log('[SK Debug] No enabled submit button found, trying Enter key');
-            inputBox.focus();
-            const enterEvents = [
-              new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
-              new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
-              new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true })
-            ];
-            enterEvents.forEach(event => {
-              console.log('[SK Debug] Dispatching Enter event:', event.type);
-              inputBox.dispatchEvent(event);
-            });
+        }
+      }
+
+      // STEP 2: Click Research mode AFTER text is entered
+      if (hash.includes('sk_mode=research')) {
+        console.log('[SK Debug] Research mode detected');
+
+        // Find and click Research radio button using multiple strategies
+        const radios = document.querySelectorAll('[role="radio"]');
+        console.log('[SK Debug] Total radio buttons found:', radios.length);
+
+        let researchRadio = Array.from(radios).find(radio =>
+          radio.getAttribute('aria-label')?.toLowerCase().includes('research') ||
+          radio.getAttribute('value')?.toLowerCase() === 'research' ||
+          radio.textContent?.toLowerCase().includes('research') ||
+          radio.closest('label')?.textContent?.toLowerCase().includes('research')
+        );
+
+        console.log('[SK Debug] Research button found:', !!researchRadio);
+        if (researchRadio) {
+          const isChecked = researchRadio.getAttribute('aria-checked') === 'true';
+          console.log('[SK Debug] Research button checked state:', isChecked);
+          if (!isChecked) {
+            console.log('[SK Debug] Clicking research button');
+            researchRadio.click();
+            await util.delay(CONFIG.delayMs);
+            console.log('[SK Debug] Research button clicked, new state:', researchRadio.getAttribute('aria-checked'));
           }
+        }
+      }
+
+      // STEP 3: Handle social toggle AFTER research mode is set
+      if (hash.includes('sk_social=on')) {
+        console.log('[SK Debug] Social toggle requested');
+        await util.delay(CONFIG.delayMs * 2); // Additional wait for research mode to settle
+
+        // Find and click Sources button with multiple selection strategies
+        const buttons = document.querySelectorAll('button');
+        console.log('[SK Debug] Total buttons found:', buttons.length);
+
+        let sourcesBtn = Array.from(buttons).find(btn => {
+          const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+          const text = btn.textContent?.toLowerCase() || '';
+          const title = btn.getAttribute('title')?.toLowerCase() || '';
+          return ariaLabel.includes('source') || text.includes('source') || title.includes('source');
+        });
+
+        console.log('[SK Debug] Sources button found:', !!sourcesBtn);
+        if (sourcesBtn) {
+          console.log('[SK Debug] Sources button aria-label:', sourcesBtn.getAttribute('aria-label'));
+          console.log('[SK Debug] Clicking Sources button');
+          sourcesBtn.click();
+
+          // Enhanced menu waiting with retry logic
+          let menuWaitTime = 0;
+          const maxMenuWait = 5000;
+          let menuItems = [];
+
+          while (menuWaitTime < maxMenuWait) {
+            await util.delay(300);
+            menuItems = document.querySelectorAll('[role="menuitemcheckbox"], [role="menuitem"]');
+            console.log('[SK Debug] Menu items found:', menuItems.length);
+            if (menuItems.length > 0) break;
+            menuWaitTime += 300;
+          }
+
+          // Log all menu items
+          menuItems.forEach((item, idx) => {
+            console.log(`[SK Debug] Menu item ${idx}:`, {
+              text: item.textContent?.trim().substring(0, 30),
+              role: item.getAttribute('role'),
+              hasSwitch: !!item.querySelector('[role="switch"]')
+            });
+          });
+
+          // Look for Social toggle in the menu
+          let foundSocial = false;
+          for (const item of menuItems) {
+            const itemText = (item.textContent || '').toLowerCase();
+            if (itemText.includes('social')) {
+              console.log('[SK Debug] Found Social item:', item.textContent?.trim());
+              foundSocial = true;
+
+              const socialSwitch = item.querySelector('[role="switch"]');
+              if (socialSwitch) {
+                const isChecked = socialSwitch.getAttribute('aria-checked') === 'true';
+                console.log('[SK Debug] Social switch state:', isChecked);
+                if (!isChecked) {
+                  console.log('[SK Debug] Clicking social switch');
+                  socialSwitch.click();
+                  await util.delay(CONFIG.delayMs);
+                  console.log('[SK Debug] Social switch new state:', socialSwitch.getAttribute('aria-checked'));
+                }
+              } else {
+                // Try clicking the item itself if no switch found
+                console.log('[SK Debug] No switch found, clicking item directly');
+                item.click();
+                await util.delay(CONFIG.delayMs);
+              }
+              break;
+            }
+          }
+
+          if (!foundSocial) {
+            console.log('[SK Debug] WARNING: Social item not found in menu');
+          }
+
+          // Close menu by clicking elsewhere or pressing Escape
+          document.body.click();
+          await util.delay(CONFIG.delayMs);
+        }
+      }
+
+
+      // STEP 4: Submit the query
+      await util.delay(CONFIG.delayMs);
+
+      // Enhanced submit button detection with broader criteria
+      const allButtons = document.querySelectorAll('button');
+      console.log('[SK Debug] Total buttons after setup:', allButtons.length);
+
+      let submitBtn = Array.from(allButtons).find(btn => {
+        const btnText = btn.textContent?.trim().toLowerCase() || '';
+        const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+        const dataTestId = btn.getAttribute('data-testid')?.toLowerCase() || '';
+        const type = btn.getAttribute('type')?.toLowerCase() || '';
+
+        // Check for submit indicators
+        const isSubmit = btnText === 'submit' ||
+          ariaLabel.includes('submit') ||
+          dataTestId.includes('submit') ||
+          type === 'submit' ||
+          btnText.includes('search') ||
+          ariaLabel.includes('search');
+
+        // Also check if button is not disabled
+        const isEnabled = !btn.disabled && btn.getAttribute('aria-disabled') !== 'true';
+
+        return isSubmit && isEnabled;
+      });
+
+      console.log('[SK Debug] Submit button found:', !!submitBtn);
+      if (submitBtn) {
+        console.log('[SK Debug] Submit button details:', {
+          text: submitBtn.textContent?.trim().substring(0, 30),
+          'aria-label': submitBtn.getAttribute('aria-label'),
+          disabled: submitBtn.disabled,
+          type: submitBtn.getAttribute('type')
+        });
+        console.log('[SK Debug] Clicking submit button');
+        submitBtn.click();
+        console.log('[SK Debug] Submit clicked');
+      } else {
+        // Enhanced fallback with multiple key events
+        console.log('[SK Debug] No enabled submit button found, trying Enter key');
+        const inputBox = document.querySelector('[role="textbox"]');
+        if (inputBox) {
+          inputBox.focus();
+          const enterEvents = [
+            new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
+            new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
+            new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true })
+          ];
+          enterEvents.forEach(event => {
+            console.log('[SK Debug] Dispatching Enter event:', event.type);
+            inputBox.dispatchEvent(event);
+          });
         }
       }
 
@@ -1430,7 +1427,7 @@ const siteAutomations = [
 function runSiteAutomations() {
   const currentHost = window.location.hostname;
   console.log('[SK Debug] runSiteAutomations called, host:', currentHost, 'readyState:', document.readyState);
-  
+
   siteAutomations.forEach(site => {
     console.log('[SK Debug] Checking site:', site.host, 'matches:', currentHost.includes(site.host));
     if (currentHost.includes(site.host)) {
@@ -1472,7 +1469,7 @@ const searchEngines = {
     callback: (response) => {
       const res = JSON.parse(response.text).response;
       return res.flatMap(r => r.suggestions.map(s => s.query))
-                .filter((v, i, a) => a.indexOf(v) === i); // unique
+        .filter((v, i, a) => a.indexOf(v) === i); // unique
     }
   },
   github: {
@@ -1486,11 +1483,11 @@ const searchEngines = {
   },
   libhunt: { alias: "l", search: "https://www.libhunt.com/search?query=" },
   // chatgpt: { alias: "z", search: "https://chatgpt.com/?q=" },
-  yandex:  { alias: "n", search: "https://yandex.com/search/?text=" },
+  yandex: { alias: "n", search: "https://yandex.com/search/?text=" },
   skidrow: { alias: "k", search: "https://www.skidrowreloaded.com/?s=" },
-  anna:    { alias: "c", search: "https://www.annas-archive.org/search?q=" },
-  libgen:  { alias: "v", search: "https://libgen.is/search.php?req=" },
-  urban:   { alias: "u", search: "https://www.urbandictionary.com/define.php?term=" },
+  anna: { alias: "c", search: "https://www.annas-archive.org/search?q=" },
+  libgen: { alias: "v", search: "https://libgen.is/search.php?req=" },
+  urban: { alias: "u", search: "https://www.urbandictionary.com/define.php?term=" },
   archive: { alias: "r", search: "https://archive.is/" },
 };
 
