@@ -1394,7 +1394,31 @@ const siteAutomations = [
           disabled: submitBtn.disabled,
           type: submitBtn.getAttribute('type')
         });
-        console.log('[SK Debug] Clicking submit button');
+
+        // Re-verify Research mode is still selected
+        const currentRadios = document.querySelectorAll('[role="radio"]');
+        const researchStillChecked = Array.from(currentRadios).find(r =>
+          r.textContent?.toLowerCase().includes('research') &&
+          r.getAttribute('aria-checked') === 'true'
+        );
+        console.log('[SK Debug] Research still checked before submit:', !!researchStillChecked);
+
+        // Use PointerEvents for submit (same as Sources button)
+        const rect = submitBtn.getBoundingClientRect();
+        const pointerOpts = {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          clientX: rect.left + rect.width / 2,
+          clientY: rect.top + rect.height / 2,
+          pointerType: 'mouse',
+          isPrimary: true
+        };
+
+        console.log('[SK Debug] Clicking submit button with PointerEvents');
+        submitBtn.focus();
+        submitBtn.dispatchEvent(new PointerEvent('pointerdown', pointerOpts));
+        submitBtn.dispatchEvent(new PointerEvent('pointerup', pointerOpts));
         submitBtn.click();
         console.log('[SK Debug] Submit clicked');
       } else {
