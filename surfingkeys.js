@@ -1132,17 +1132,35 @@ const siteAutomations = [
         
         // Find and click Research radio button using multiple strategies
         const radios = document.querySelectorAll('[role="radio"]');
+        console.log('[SK Debug] Total radio buttons found:', radios.length);
+        
+        // Log all radio button details
+        radios.forEach((radio, idx) => {
+          console.log(`[SK Debug] Radio ${idx}:`, {
+            'aria-label': radio.getAttribute('aria-label'),
+            'aria-checked': radio.getAttribute('aria-checked'),
+            'value': radio.getAttribute('value'),
+            'textContent': radio.textContent?.trim().substring(0, 50)
+          });
+        });
+        
         let researchRadio = Array.from(radios).find(radio => 
-          radio.getAttribute('aria-label')?.includes('Research') ||
-          radio.textContent?.includes('Research') ||
-          radio.closest('label')?.textContent?.includes('Research')
+          radio.getAttribute('aria-label')?.toLowerCase().includes('research') ||
+          radio.getAttribute('value')?.toLowerCase() === 'research' ||
+          radio.textContent?.toLowerCase().includes('research') ||
+          radio.closest('label')?.textContent?.toLowerCase().includes('research')
         );
         
         console.log('[SK Debug] Research button found:', !!researchRadio);
-        if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
-          console.log('[SK Debug] Clicking research button');
-          researchRadio.click();
-          await util.delay(CONFIG.delayMs);
+        if (researchRadio) {
+          const isChecked = researchRadio.getAttribute('aria-checked') === 'true';
+          console.log('[SK Debug] Research button checked state:', isChecked);
+          if (!isChecked) {
+            console.log('[SK Debug] Clicking research button');
+            researchRadio.click();
+            await util.delay(CONFIG.delayMs);
+            console.log('[SK Debug] Research button clicked, new state:', researchRadio.getAttribute('aria-checked'));
+          }
         }
 
         // Handle social toggle if specified with enhanced timing
@@ -1152,14 +1170,18 @@ const siteAutomations = [
           
           // Find and click Sources button with multiple selection strategies
           const buttons = document.querySelectorAll('button');
-          let sourcesBtn = Array.from(buttons).find(btn => 
-            btn.getAttribute('aria-label')?.includes('Sources') ||
-            btn.textContent?.includes('Sources') ||
-            btn.getAttribute('title')?.includes('Sources')
-          );
+          console.log('[SK Debug] Total buttons found:', buttons.length);
+          
+          let sourcesBtn = Array.from(buttons).find(btn => {
+            const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
+            const text = btn.textContent?.toLowerCase() || '';
+            const title = btn.getAttribute('title')?.toLowerCase() || '';
+            return ariaLabel.includes('source') || text.includes('source') || title.includes('source');
+          });
           
           console.log('[SK Debug] Sources button found:', !!sourcesBtn);
           if (sourcesBtn) {
+            console.log('[SK Debug] Sources button aria-label:', sourcesBtn.getAttribute('aria-label'));
             console.log('[SK Debug] Clicking Sources button');
             sourcesBtn.click();
             
@@ -1170,17 +1192,29 @@ const siteAutomations = [
             
             while (menuWaitTime < maxMenuWait) {
               await util.delay(200);
-              menuItems = document.querySelectorAll('[role="menuitemcheckbox"]');
+              menuItems = document.querySelectorAll('[role="menuitemcheckbox"], [role="menuitem"]');
               console.log('[SK Debug] Menu items found:', menuItems.length);
               if (menuItems.length > 0) break;
               menuWaitTime += 200;
             }
             
+            // Log all menu items
+            menuItems.forEach((item, idx) => {
+              console.log(`[SK Debug] Menu item ${idx}:`, {
+                text: item.textContent?.trim().substring(0, 30),
+                role: item.getAttribute('role'),
+                hasSwitch: !!item.querySelector('[role="switch"]')
+              });
+            });
+            
             // Look for Social toggle in the menu
+            let foundSocial = false;
             for (const item of menuItems) {
-              const itemText = item.textContent || '';
-              if (itemText.includes('Social') || itemText.includes('social')) {
-                console.log('[SK Debug] Found Social item:', itemText);
+              const itemText = (item.textContent || '').toLowerCase();
+              if (itemText.includes('social')) {
+                console.log('[SK Debug] Found Social item:', item.textContent?.trim());
+                foundSocial = true;
+                
                 const socialSwitch = item.querySelector('[role="switch"]');
                 if (socialSwitch) {
                   const isChecked = socialSwitch.getAttribute('aria-checked') === 'true';
@@ -1189,6 +1223,7 @@ const siteAutomations = [
                     console.log('[SK Debug] Clicking social switch');
                     socialSwitch.click();
                     await util.delay(CONFIG.delayMs);
+                    console.log('[SK Debug] Social switch new state:', socialSwitch.getAttribute('aria-checked'));
                   }
                 } else {
                   // Try clicking the item itself if no switch found
@@ -1198,6 +1233,10 @@ const siteAutomations = [
                 }
                 break;
               }
+            }
+            
+            if (!foundSocial) {
+              console.log('[SK Debug] WARNING: Social item not found in menu');
             }
             
             // Close menu by clicking elsewhere or pressing Escape
@@ -1240,75 +1279,89 @@ const siteAutomations = [
           await util.delay(100);
           
           const queryText = actualQuery.trim();
-          console.log('[SK Debug] Setting query text:', queryText);
+          console.log('[SK Debug] Setting query text (length:', queryText.length, '):', queryText.substring(0, 50));
+          console.log('[SK Debug] Current input content before clear:', inputBox.textContent?.substring(0, 50));
           
-          // Multi-strategy content setting with proper clearing
+          // CLEAR input completely using all methods
           try {
-            // Clear first using multiple methods
+            // Method 1: Clear via properties
             if ('value' in inputBox) inputBox.value = '';
             inputBox.textContent = '';
             inputBox.innerHTML = '';
             
-            // Select all existing content and replace
-            if (document.execCommand) {
-              inputBox.focus();
-              document.execCommand('selectAll', false, null);
-              document.execCommand('insertText', false, queryText);
-            } else {
-              // Modern approach for browsers that don't support execCommand
-              if ('value' in inputBox) {
-                inputBox.value = queryText;
-              } else {
-                inputBox.textContent = queryText;
-                inputBox.innerHTML = queryText.replace(/\n/g, '<br>');
-              }
-            }
+            // Method 2: Select all and delete
+            inputBox.focus();
+            document.execCommand('selectAll', false, null);
+            document.execCommand('delete', false, null);
             
-            // Enhanced event dispatching
-            const events = [
-              new Event('input', { bubbles: true }),
-              new Event('change', { bubbles: true }),
-              new KeyboardEvent('keyup', { bubbles: true, key: 'Enter' }),
-              new InputEvent('input', { bubbles: true, inputType: 'insertText', data: queryText }),
-            ];
+            console.log('[SK Debug] Input cleared, content:', inputBox.textContent);
+            await util.delay(100);
             
-            events.forEach(event => inputBox.dispatchEvent(event));
+            // SET content using single reliable method
+            inputBox.focus();
+            document.execCommand('insertText', false, queryText);
             
-            // Force UI update
-            if (inputBox.setAttribute) {
-              inputBox.setAttribute('data-value', queryText);
-            }
+            console.log('[SK Debug] Query injected, new content:', inputBox.textContent?.substring(0, 50));
             
-            console.log('[SK Debug] Query injected with enhanced method');
+            // Dispatch only essential events
+            inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+            inputBox.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            console.log('[SK Debug] Events dispatched');
           } catch (error) {
             console.log('[SK Debug] Error during text injection:', error);
           }
           
           await util.delay(CONFIG.delayMs);
           
-          // Enhanced submit button detection
-          let submitBtn = Array.from(document.querySelectorAll('button')).find(btn => {
+          // Enhanced submit button detection with broader criteria
+          const allButtons = document.querySelectorAll('button');
+          console.log('[SK Debug] Total buttons after input:', allButtons.length);
+          
+          let submitBtn = Array.from(allButtons).find(btn => {
             const btnText = btn.textContent?.trim().toLowerCase() || '';
             const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-            return btnText === 'submit' || 
-                   ariaLabel.includes('submit') ||
-                   btnText.includes('search') ||
-                   ariaLabel.includes('search');
+            const dataTestId = btn.getAttribute('data-testid')?.toLowerCase() || '';
+            const type = btn.getAttribute('type')?.toLowerCase() || '';
+            
+            // Check for submit indicators
+            const isSubmit = btnText === 'submit' || 
+                           ariaLabel.includes('submit') ||
+                           dataTestId.includes('submit') ||
+                           type === 'submit' ||
+                           btnText.includes('search') ||
+                           ariaLabel.includes('search');
+                           
+            // Also check if button is not disabled
+            const isEnabled = !btn.disabled && btn.getAttribute('aria-disabled') !== 'true';
+            
+            return isSubmit && isEnabled;
           });
           
           console.log('[SK Debug] Submit button found:', !!submitBtn);
           if (submitBtn) {
+            console.log('[SK Debug] Submit button details:', {
+              text: submitBtn.textContent?.trim().substring(0, 30),
+              'aria-label': submitBtn.getAttribute('aria-label'),
+              disabled: submitBtn.disabled,
+              type: submitBtn.getAttribute('type')
+            });
             console.log('[SK Debug] Clicking submit button');
             submitBtn.click();
+            console.log('[SK Debug] Submit clicked');
           } else {
             // Enhanced fallback with multiple key events
-            console.log('[SK Debug] No submit button, trying Enter key');
+            console.log('[SK Debug] No enabled submit button found, trying Enter key');
+            inputBox.focus();
             const enterEvents = [
-              new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true }),
-              new KeyboardEvent('keypress', { key: 'Enter', keyCode: 13, bubbles: true }),
-              new KeyboardEvent('keyup', { key: 'Enter', keyCode: 13, bubbles: true })
+              new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
+              new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
+              new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true })
             ];
-            enterEvents.forEach(event => inputBox.dispatchEvent(event));
+            enterEvents.forEach(event => {
+              console.log('[SK Debug] Dispatching Enter event:', event.type);
+              inputBox.dispatchEvent(event);
+            });
           }
         }
       }
