@@ -1147,8 +1147,16 @@ const siteAutomations = [
             await util.delay(CONFIG.delayMs * 2); // Longer delay for menu to appear
             
             // Look for Social toggle in the menu
-            const socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
+            let socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
             console.log('[SK Debug] First menu item found:', !!socialMenuItem);
+            
+            // If menu not immediately visible, wait a bit more
+            if (!socialMenuItem) {
+              console.log('[SK Debug] Menu not found, waiting longer...');
+              await util.delay(CONFIG.delayMs);
+              socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
+              console.log('[SK Debug] Menu item found after wait:', !!socialMenuItem);
+            }
             if (socialMenuItem) {
               // Find all menu items and look for Social
               const menuItems = document.querySelectorAll('*[role="menuitemcheckbox"]');
@@ -1162,6 +1170,9 @@ const siteAutomations = [
                     console.log('[SK Debug] Clicking social switch');
                     socialSwitch.click();
                     await util.delay(CONFIG.delayMs);
+                    break;
+                  } else if (socialSwitch) {
+                    console.log('[SK Debug] Social switch already enabled');
                     break;
                   }
                 }
@@ -1186,8 +1197,9 @@ const siteAutomations = [
         console.log('[SK Debug] Starting prompt injection');
         let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
         console.log('[SK Debug] Raw prompt text:', promptText);
-          // Remove sk parameters from the prompt text (only remove leading sk_ params, keep the actual content)
-          promptText = promptText.replace(/^(&sk_[^&]*)+/, '');
+        // Remove sk parameters - handle case where content is attached to parameter value
+        promptText = promptText.replace(/^&sk_mode=\w+&sk_social=on/, '');
+        console.log('[SK Debug] Cleaned prompt text:', promptText);
         await util.delay(CONFIG.delayMs);
         const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
         console.log('[SK Debug] Input box found:', !!inputBox, inputBox?.tagName, inputBox?.placeholder);
