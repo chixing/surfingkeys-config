@@ -1144,8 +1144,8 @@ const siteAutomations = [
           if (actualSourcesBtn) {
             console.log('[SK Debug] Clicking Sources button');
             actualSourcesBtn.click();
-            await util.delay(CONFIG.delayMs);
-
+            await util.delay(CONFIG.delayMs * 2); // Longer delay for menu to appear
+            
             // Look for Social toggle in the menu
             const socialMenuItem = document.querySelector('*[role="menuitemcheckbox"]');
             console.log('[SK Debug] First menu item found:', !!socialMenuItem);
@@ -1166,9 +1166,10 @@ const siteAutomations = [
                   }
                 }
               }
-            }
-
-            // Close menu by clicking elsewhere
+            } else {
+              console.log('[SK Debug] Menu not found, trying different selectors');
+              const menu = document.querySelector('[role="menu"], .menu, [data-testid*="menu"]');
+              console.log('[SK Debug] Alternative menu found:', !!menu, menu?.children?.length);
             const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
             if (inputBox) {
               console.log('[SK Debug] Closing menu by clicking input');
@@ -1185,10 +1186,8 @@ const siteAutomations = [
         console.log('[SK Debug] Starting prompt injection');
         let promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
         console.log('[SK Debug] Raw prompt text:', promptText);
-        // Remove sk parameters from the prompt text (only remove sk_ params, keep the actual content)
-        promptText = promptText.replace(/^&sk_[^&]*(&sk_[^&]*)*/g, '');
-        console.log('[SK Debug] Cleaned prompt text:', promptText);
-
+          // Remove sk parameters from the prompt text (only remove leading sk_ params, keep the actual content)
+          promptText = promptText.replace(/^(&sk_[^&]*)+/, '');
         await util.delay(CONFIG.delayMs);
         const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
         console.log('[SK Debug] Input box found:', !!inputBox, inputBox?.tagName, inputBox?.placeholder);
@@ -1208,16 +1207,29 @@ const siteAutomations = [
           const buttons = document.querySelectorAll('button');
           console.log('[SK Debug] Looking for Submit button among', buttons.length, 'buttons');
           let submitFound = false;
-          for (const btn of buttons) {
-            if (btn.textContent.trim() === 'Submit') {
-              console.log('[SK Debug] Found and clicking Submit button');
-              btn.click();
-              submitFound = true;
-              break;
+          
+          // Try different submit button patterns
+          const submitPatterns = ['Submit', 'Search', 'Ask', '▶', '→'];
+          for (const pattern of submitPatterns) {
+            for (const btn of buttons) {
+              const text = btn.textContent.trim();
+              const ariaLabel = btn.getAttribute('aria-label') || '';
+              if (text === pattern || ariaLabel.includes(pattern) || 
+                  (pattern === '▶' && (text.includes('▶') || btn.innerHTML.includes('play'))) ||
+                  (pattern === '→' && (text.includes('→') || btn.innerHTML.includes('arrow')))) {
+                console.log('[SK Debug] Found submit button with pattern:', pattern, 'text:', text, 'aria-label:', ariaLabel);
+                btn.click();
+                submitFound = true;
+                break;
+              }
             }
+            if (submitFound) break;
           }
+          
           if (!submitFound) {
             console.log('[SK Debug] Submit button not found! Button texts:', Array.from(buttons).slice(0, 10).map(b => `"${b.textContent.trim()}"`));
+            console.log('[SK Debug] Trying Enter key as fallback');
+            inputBox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
           }
         }
       }
@@ -1259,6 +1271,7 @@ const siteAutomations = [
           }
         }
       }
+    }
     }
   }
 ];
