@@ -1262,64 +1262,77 @@ const siteAutomations = [
           console.log('[SK Debug] Sources button aria-label:', sourcesBtn.getAttribute('aria-label'));
           console.log('[SK Debug] Clicking Sources button');
           sourcesBtn.click();
+          console.log('[SK Debug] Sources button clicked, waiting for menu...');
 
-          // Enhanced menu waiting with retry logic
+          // Wait for menu container to appear first
+          let menu = null;
           let menuWaitTime = 0;
           const maxMenuWait = 5000;
-          let menuItems = [];
 
-          while (menuWaitTime < maxMenuWait) {
+          while (!menu && menuWaitTime < maxMenuWait) {
             await util.delay(300);
-            menuItems = document.querySelectorAll('[role="menuitemcheckbox"], [role="menuitem"]');
-            console.log('[SK Debug] Menu items found:', menuItems.length);
-            if (menuItems.length > 0) break;
+            menu = document.querySelector('[role="menu"]');
+            console.log('[SK Debug] Looking for menu, found:', !!menu, 'wait:', menuWaitTime);
             menuWaitTime += 300;
           }
 
-          // Log all menu items
-          menuItems.forEach((item, idx) => {
-            console.log(`[SK Debug] Menu item ${idx}:`, {
-              text: item.textContent?.trim().substring(0, 30),
-              role: item.getAttribute('role'),
-              hasSwitch: !!item.querySelector('[role="switch"]')
+          if (!menu) {
+            console.log('[SK Debug] ERROR: Menu never appeared after clicking Sources');
+          } else {
+            // Get menu items from within the menu container
+            const menuItems = menu.querySelectorAll('[role="menuitemcheckbox"]');
+            console.log('[SK Debug] Menu items in container:', menuItems.length);
+
+            // Log all menu items
+            menuItems.forEach((item, idx) => {
+              console.log(`[SK Debug] Menu item ${idx}:`, {
+                text: item.textContent?.trim().substring(0, 30),
+                role: item.getAttribute('role'),
+                hasSwitch: !!item.querySelector('[role="switch"]')
+              });
             });
-          });
 
-          // Look for Social toggle in the menu
-          let foundSocial = false;
-          for (const item of menuItems) {
-            const itemText = (item.textContent || '').toLowerCase();
-            if (itemText.includes('social')) {
-              console.log('[SK Debug] Found Social item:', item.textContent?.trim());
-              foundSocial = true;
+            // Look for Social toggle in the menu
+            let foundSocial = false;
+            for (const item of menuItems) {
+              const itemText = (item.textContent || '').toLowerCase();
+              if (itemText.includes('social')) {
+                console.log('[SK Debug] Found Social item:', item.textContent?.trim());
+                foundSocial = true;
 
-              const socialSwitch = item.querySelector('[role="switch"]');
-              if (socialSwitch) {
-                const isChecked = socialSwitch.getAttribute('aria-checked') === 'true';
-                console.log('[SK Debug] Social switch state:', isChecked);
-                if (!isChecked) {
-                  console.log('[SK Debug] Clicking social switch');
-                  socialSwitch.click();
+                const socialSwitch = item.querySelector('[role="switch"]');
+                if (socialSwitch) {
+                  const isChecked = socialSwitch.getAttribute('aria-checked') === 'true';
+                  console.log('[SK Debug] Social switch state:', isChecked);
+                  if (!isChecked) {
+                    console.log('[SK Debug] Clicking social switch');
+                    socialSwitch.click();
+                    await util.delay(CONFIG.delayMs);
+                    console.log('[SK Debug] Social switch new state:', socialSwitch.getAttribute('aria-checked'));
+                  }
+                } else {
+                  // Try clicking the item itself if no switch found
+                  console.log('[SK Debug] No switch found, clicking item directly');
+                  item.click();
                   await util.delay(CONFIG.delayMs);
-                  console.log('[SK Debug] Social switch new state:', socialSwitch.getAttribute('aria-checked'));
                 }
-              } else {
-                // Try clicking the item itself if no switch found
-                console.log('[SK Debug] No switch found, clicking item directly');
-                item.click();
-                await util.delay(CONFIG.delayMs);
+                break;
               }
-              break;
             }
-          }
 
-          if (!foundSocial) {
-            console.log('[SK Debug] WARNING: Social item not found in menu');
-          }
+            if (!foundSocial) {
+              console.log('[SK Debug] WARNING: Social item not found in menu');
+            }
 
-          // Close menu by clicking elsewhere or pressing Escape
-          document.body.click();
-          await util.delay(CONFIG.delayMs);
+            // Close menu by pressing Escape (more reliable than body click)
+            document.dispatchEvent(new KeyboardEvent('keydown', {
+              key: 'Escape',
+              code: 'Escape',
+              bubbles: true,
+              cancelable: true
+            }));
+            await util.delay(CONFIG.delayMs);
+          }
         }
       }
 
