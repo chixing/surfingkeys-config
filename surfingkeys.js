@@ -1116,10 +1116,10 @@ const siteAutomations = [
       if (hash.includes('sk_mode=research')) {
         console.log('[SK Debug] Research mode detected');
         
-        // Find and click Research radio button
-        const radios = document.querySelectorAll('radio');
+        // Find and click Research radio button using ARIA label
+        const radios = document.querySelectorAll('[role="radio"]');
         const researchRadio = Array.from(radios).find(radio => 
-          radio.textContent?.includes('Research')
+          radio.getAttribute('aria-label')?.includes('Research')
         );
         console.log('[SK Debug] Research button found:', !!researchRadio);
         if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
@@ -1145,14 +1145,14 @@ const siteAutomations = [
             sourcesBtn.click();
             await util.delay(CONFIG.delayMs * 2);
             
-            // Find and enable Social toggle
-            const menuItems = document.querySelectorAll('menuitemcheckbox');
+            // Find and enable Social toggle using ARIA role selector
+            const menuItems = document.querySelectorAll('[role="menuitemcheckbox"]');
             console.log('[SK Debug] Menu items found:', menuItems.length);
             
             for (const item of menuItems) {
               if (item.textContent?.includes('Social')) {
                 console.log('[SK Debug] Found Social item');
-                const socialSwitch = item.querySelector('switch');
+                const socialSwitch = item.querySelector('[role="switch"]');
                 if (socialSwitch && socialSwitch.getAttribute('aria-checked') !== 'true') {
                   console.log('[SK Debug] Clicking social switch');
                   socialSwitch.click();
@@ -1185,8 +1185,8 @@ const siteAutomations = [
       if (actualQuery.trim()) {
         await util.delay(CONFIG.delayMs);
         
-        // Find input box and fill with query
-        const inputBox = document.querySelector('textbox');
+        // Find input box and fill with query using ARIA role selector
+        const inputBox = document.querySelector('[role="textbox"]');
         console.log('[SK Debug] Input box found:', !!inputBox);
         
         if (inputBox) {
@@ -1225,7 +1225,7 @@ const siteAutomations = [
       console.log('[SK Debug] Regular search mode, query:', q);
       if (q) {
         await util.delay(CONFIG.delayMs);
-        const inputBox = document.querySelector('textbox');
+        const inputBox = document.querySelector('[role="textbox"]');
         console.log('[SK Debug] Regular mode input box found:', !!inputBox, inputBox?.tagName);
         if (inputBox) {
           inputBox.focus();
