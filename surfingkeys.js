@@ -1187,15 +1187,15 @@ const siteAutomations = [
             
             // Enhanced menu waiting with retry logic
             let menuWaitTime = 0;
-            const maxMenuWait = 3000;
+            const maxMenuWait = 5000;
             let menuItems = [];
             
             while (menuWaitTime < maxMenuWait) {
-              await util.delay(200);
+              await util.delay(300);
               menuItems = document.querySelectorAll('[role="menuitemcheckbox"], [role="menuitem"]');
               console.log('[SK Debug] Menu items found:', menuItems.length);
               if (menuItems.length > 0) break;
-              menuWaitTime += 200;
+              menuWaitTime += 300;
             }
             
             // Log all menu items
@@ -1282,26 +1282,28 @@ const siteAutomations = [
           console.log('[SK Debug] Setting query text (length:', queryText.length, '):', queryText.substring(0, 50));
           console.log('[SK Debug] Current input content before clear:', inputBox.textContent?.substring(0, 50));
           
-          // CLEAR input completely using all methods
+          // Find the paragraph child element inside the textbox
+          const paragraph = inputBox.querySelector('p');
+          if (!paragraph) {
+            console.log('[SK Debug] ERROR: No paragraph found inside textbox');
+            return;
+          }
+          
+          console.log('[SK Debug] Paragraph found, current text:', paragraph.textContent?.substring(0, 50));
+          
+          // SET text directly on the paragraph element
           try {
-            // Method 1: Clear via properties
-            if ('value' in inputBox) inputBox.value = '';
-            inputBox.textContent = '';
-            inputBox.innerHTML = '';
-            
-            // Method 2: Select all and delete
             inputBox.focus();
-            document.execCommand('selectAll', false, null);
-            document.execCommand('delete', false, null);
-            
-            console.log('[SK Debug] Input cleared, content:', inputBox.textContent);
+            inputBox.click();
             await util.delay(100);
             
-            // SET content using single reliable method
-            inputBox.focus();
-            document.execCommand('insertText', false, queryText);
+            // Set text content directly - this is the most reliable method
+            paragraph.textContent = queryText;
             
-            console.log('[SK Debug] Query injected, new content:', inputBox.textContent?.substring(0, 50));
+            await util.delay(200);
+            
+            console.log('[SK Debug] Query set via textContent on paragraph, new content:', paragraph.textContent?.substring(0, 50));
+            console.log('[SK Debug] Textbox wrapper content:', inputBox.textContent?.substring(0, 50));
             
             // Dispatch only essential events
             inputBox.dispatchEvent(new Event('input', { bubbles: true }));
