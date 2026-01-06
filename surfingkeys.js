@@ -1117,18 +1117,15 @@ const siteAutomations = [
         console.log('[SK Debug] Research mode detected');
         
         // Find and click Research radio button
-        const radioGroup = document.querySelector('[role="radiogroup"]');
-        if (radioGroup) {
-          const radios = radioGroup.querySelectorAll('[role="radio"]');
-          const researchRadio = Array.from(radios).find(radio => 
-            radio.textContent?.includes('Research')
-          );
-          console.log('[SK Debug] Research button found:', !!researchRadio);
-          if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
-            console.log('[SK Debug] Clicking research button');
-            researchRadio.click();
-            await util.delay(CONFIG.delayMs);
-          }
+        const radios = document.querySelectorAll('radio');
+        const researchRadio = Array.from(radios).find(radio => 
+          radio.textContent?.includes('Research')
+        );
+        console.log('[SK Debug] Research button found:', !!researchRadio);
+        if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
+          console.log('[SK Debug] Clicking research button');
+          researchRadio.click();
+          await util.delay(CONFIG.delayMs);
         }
 
         // Handle social toggle if specified
@@ -1137,14 +1134,10 @@ const siteAutomations = [
           await util.delay(CONFIG.delayMs);
           
           // Find and click Sources button
-          const allButtons = document.querySelectorAll('button');
-          let sourcesBtn = null;
-          for (const btn of allButtons) {
-            if (btn.textContent?.includes('Sources')) {
-              sourcesBtn = btn;
-              break;
-            }
-          }
+          const buttons = document.querySelectorAll('button');
+          const sourcesBtn = Array.from(buttons).find(btn => 
+            btn.textContent?.includes('Sources')
+          );
           
           console.log('[SK Debug] Sources button found:', !!sourcesBtn);
           if (sourcesBtn) {
@@ -1153,13 +1146,13 @@ const siteAutomations = [
             await util.delay(CONFIG.delayMs * 2);
             
             // Find and enable Social toggle
-            const menuItems = document.querySelectorAll('[role="menuitemcheckbox"]');
+            const menuItems = document.querySelectorAll('menuitemcheckbox');
             console.log('[SK Debug] Menu items found:', menuItems.length);
             
             for (const item of menuItems) {
               if (item.textContent?.includes('Social')) {
                 console.log('[SK Debug] Found Social item');
-                const socialSwitch = item.querySelector('[role="switch"]');
+                const socialSwitch = item.querySelector('switch');
                 if (socialSwitch && socialSwitch.getAttribute('aria-checked') !== 'true') {
                   console.log('[SK Debug] Clicking social switch');
                   socialSwitch.click();
@@ -1193,7 +1186,7 @@ const siteAutomations = [
         await util.delay(CONFIG.delayMs);
         
         // Find input box and fill with query
-        const inputBox = document.querySelector('textarea[placeholder*="Ask"], input[placeholder*="Ask"]');
+        const inputBox = document.querySelector('textbox');
         console.log('[SK Debug] Input box found:', !!inputBox);
         
         if (inputBox) {
@@ -1232,7 +1225,7 @@ const siteAutomations = [
       console.log('[SK Debug] Regular search mode, query:', q);
       if (q) {
         await util.delay(CONFIG.delayMs);
-        const inputBox = document.querySelector('textarea[placeholder*="Ask anything"], div[contenteditable="true"], input[placeholder*="Ask"]');
+        const inputBox = document.querySelector('textbox');
         console.log('[SK Debug] Regular mode input box found:', !!inputBox, inputBox?.tagName);
         if (inputBox) {
           inputBox.focus();
