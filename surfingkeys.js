@@ -81,6 +81,7 @@ const AI_SERVICES = {
   CLAUDE: 'Claude',
   GEMINI: 'Gemini',
   PERPLEXITY: 'Perplexity',
+  PERPLEXITY_RESEARCH: 'Perplexity Research',
   GROK: 'Grok'
 };
 
@@ -104,6 +105,7 @@ class AiSelector {
       { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },
       { name: AI_SERVICES.GEMINI, url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
       { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
+      { name: AI_SERVICES.PERPLEXITY_RESEARCH, url: 'https://perplexity.ai?mode=research&social=off&q=', checked: true },
       { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
     ];
   }
@@ -1024,6 +1026,12 @@ api.mapkey('ap', 'Perplexity Search (Clipboard/Input)', () => {
     .then(text => aiSelector.updateQuery(text));
 });
 
+api.mapkey('aP', 'Perplexity Research Mode (Clipboard/Input)', () => {
+  aiSelector.show('', [AI_SERVICES.PERPLEXITY_RESEARCH]);
+  navigator.clipboard.readText()
+    .then(text => aiSelector.updateQuery(text));
+});
+
 api.mapkey('ak', 'Grok Search (Clipboard/Input)', () => {
   aiSelector.show('', [AI_SERVICES.GROK]);
   navigator.clipboard.readText()
@@ -1092,6 +1100,45 @@ const siteAutomations = [
           await util.delay(CONFIG.delayMs);
           util.pressKey(box);
         }
+      }
+    }
+  },
+  {
+    host: "perplexity.ai",
+    run: async () => {
+      const params = new URLSearchParams(window.location.search);
+      const mode = params.get('mode');
+      const social = params.get('social');
+      const q = params.get('q');
+      
+      if (q) {
+        await util.delay(CONFIG.delayMs);
+        
+        // Set research mode if specified
+        if (mode === 'research') {
+          const researchBtn = document.querySelector('button[role="radio"][value="research"]');
+          if (researchBtn && researchBtn.getAttribute('aria-checked') !== 'true') {
+            researchBtn.click();
+            await util.delay(CONFIG.delayMs);
+          }
+        }
+        
+        // Handle social toggle if specified
+        if (social === 'off') {
+          // Look for social media toggle in research mode
+          const socialToggle = document.querySelector('button[aria-label*="social" i], button[data-testid*="social"], .social-toggle button, button[class*="social-toggle"]');
+          if (socialToggle && socialToggle.getAttribute('aria-checked') === 'true') {
+            socialToggle.click();
+            await util.delay(CONFIG.delayMs);
+          }
+        }
+        
+        // Inject the query into the input field
+        util.injectPrompt({
+          selector: 'div[contenteditable="true"][role="textbox"], #ask-input, textarea[placeholder*="Ask"], input[placeholder*="Ask"]',
+          useValue: true,
+          dispatchEvents: true
+        });
       }
     }
   }
