@@ -1211,34 +1211,6 @@ const siteAutomations = [
         textbox.focus();
         textbox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
       }
-
-      // Handle regular ?q= parameter (non-SK mode)
-      const q = new URLSearchParams(window.location.search).get('q');
-      if (q && !query) {
-        await util.delay(CONFIG.delayMs);
-        const inputBox = document.querySelector('[role="textbox"]');
-        if (inputBox) {
-          inputBox.focus();
-          inputBox.textContent = q;
-          inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-          await util.delay(CONFIG.delayMs);
-          const buttons = document.querySelectorAll('button');
-          console.log('[SK Debug] Regular mode looking for Submit among', buttons.length, 'buttons');
-          let submitFound = false;
-          for (const btn of buttons) {
-            const btnText = btn.textContent?.trim().toLowerCase() || '';
-            if (btnText === 'submit' || btnText.includes('search')) {
-              console.log('[SK Debug] Regular mode clicking Submit');
-              btn.click();
-              submitFound = true;
-              break;
-            }
-          }
-          if (!submitFound) {
-            console.log('[SK Debug] Regular mode Submit not found');
-          }
-        }
-      }
     }
   }
 ];
@@ -1247,28 +1219,18 @@ const siteAutomations = [
 // Execute matching automation when DOM is ready
 function runSiteAutomations() {
   const currentHost = window.location.hostname;
-  console.log('[SK Debug] runSiteAutomations called, host:', currentHost, 'readyState:', document.readyState);
-
   siteAutomations.forEach(site => {
-    console.log('[SK Debug] Checking site:', site.host, 'matches:', currentHost.includes(site.host));
     if (currentHost.includes(site.host)) {
-      console.log('[SK Debug] Running automation for:', site.host);
-      try {
-        site.run();
-      } catch (error) {
-        console.log('[SK Debug] Automation error:', error);
-      }
+      site.run();
     }
   });
 }
 
 // Run automations after DOM is loaded
 if (document.readyState === 'loading') {
-  console.log('[SK Debug] DOM still loading, adding DOMContentLoaded listener');
   document.addEventListener('DOMContentLoaded', runSiteAutomations);
 } else {
-  console.log('[SK Debug] DOM already ready, running with timeout');
-  // DOM is already ready, run immediately but with a small delay for SPA rendering
+  // DOM is already ready, run with small delay for SPA rendering
   setTimeout(runSiteAutomations, 1000);
 }
 
