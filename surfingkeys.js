@@ -1107,301 +1107,121 @@ const siteAutomations = [
     host: "perplexity.ai",
     run: async () => {
       const hash = window.location.hash;
-      console.log('[SK Debug] Perplexity automation started, hash:', hash);
+      if (!hash.includes('sk_')) return; // Only run for SK-triggered navigations
 
-      // Enhanced waiting with DOM ready detection
+      // Wait for UI to be ready
       await util.delay(CONFIG.delayMs * 2);
-
-      // Wait for essential UI elements to be ready
-      let maxWait = 5000; // 5 second max wait
       let waitTime = 0;
-      while (waitTime < maxWait) {
-        const textbox = document.querySelector('[role="textbox"]');
-        const radios = document.querySelectorAll('[role="radio"]');
-        if (textbox && radios.length > 0) {
-          console.log('[SK Debug] Essential elements ready');
-          break;
-        }
+      while (waitTime < 5000) {
+        if (document.querySelector('[role="textbox"]') && document.querySelectorAll('[role="radio"]').length > 0) break;
         await util.delay(200);
         waitTime += 200;
       }
 
-      // STEP 1: Enter text FIRST (before clicking any buttons)
-      // Extract query from hash
-      const hashWithoutPrompt = window.location.hash.substring(1);
-      let actualQuery = '';
-
-      // Try multiple extraction patterns
+      // Extract query from hash (after sk_social=on or from sk_prompt=)
+      const hashContent = hash.substring(1);
+      let query = '';
       if (hash.includes('sk_social=on')) {
-        const afterSocial = hashWithoutPrompt.split('sk_social=on')[1];
-        if (afterSocial) {
-          actualQuery = decodeURIComponent(afterSocial).replace(/^[&\?]/, '').trim();
-        }
+        const afterSocial = hashContent.split('sk_social=on')[1];
+        if (afterSocial) query = decodeURIComponent(afterSocial).replace(/^[&?]/, '').trim();
       } else if (hash.includes('sk_prompt=')) {
-        const promptMatch = hashWithoutPrompt.match(/sk_prompt=([^&]*)/);
-        if (promptMatch && promptMatch[1]) {
-          actualQuery = decodeURIComponent(promptMatch[1]);
-        }
+        const match = hashContent.match(/sk_prompt=([^&]*)/);
+        if (match?.[1]) query = decodeURIComponent(match[1]);
       }
 
-      console.log('[SK Debug] Extracted query:', actualQuery);
-
-      if (actualQuery.trim()) {
-        await util.delay(CONFIG.delayMs);
-
-        // Enhanced input handling with multiple strategies
+      // STEP 1: Enter query text
+      if (query) {
         const inputBox = document.querySelector('[role="textbox"]');
-        console.log('[SK Debug] Input box found:', !!inputBox, inputBox?.tagName);
-
         if (inputBox) {
-          // Focus and prepare the input
           inputBox.focus();
-          inputBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
           await util.delay(100);
 
-          const queryText = actualQuery.trim();
-          console.log('[SK Debug] Setting query text (length:', queryText.length, '):', queryText.substring(0, 50));
-          console.log('[SK Debug] Current input content before set:', inputBox.textContent?.substring(0, 50));
+          // Select all and insert text (React-compatible)
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(inputBox);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          await util.delay(50);
 
-          // Find the paragraph child element inside the textbox
-          const paragraph = inputBox.querySelector('p');
-          if (!paragraph) {
-            console.log('[SK Debug] ERROR: No paragraph found inside textbox');
-            return;
-          }
-
-          console.log('[SK Debug] Paragraph found, current text:', paragraph.textContent?.substring(0, 50));
-
-          // SET text using execCommand for React compatibility
-          try {
-            inputBox.focus();
-            await util.delay(100);
-
-            // Select all existing content first
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(inputBox);
-            selection.removeAllRanges();
-            selection.addRange(range);
-            console.log('[SK Debug] Selected all content in textbox');
-
-            await util.delay(50);
-
-            // Use execCommand to insert text - this triggers React's event handlers
-            const inserted = document.execCommand('insertText', false, queryText);
-            console.log('[SK Debug] execCommand insertText result:', inserted);
-
-            if (!inserted) {
-              // Fallback: try deleteContents + insertText
-              console.log('[SK Debug] Trying fallback with delete + type');
-              document.execCommand('delete', false);
-              await util.delay(50);
-              document.execCommand('insertText', false, queryText);
-            }
-
-            await util.delay(200);
-
-            console.log('[SK Debug] Query set, new content:', inputBox.textContent?.substring(0, 50));
-            console.log('[SK Debug] Text entry complete');
-          } catch (error) {
-            console.log('[SK Debug] Error during text injection:', error);
-          }
-
+          document.execCommand('insertText', false, query);
           await util.delay(CONFIG.delayMs);
         }
       }
 
-      // STEP 2: Handle social toggle FIRST (before Research mode to avoid reset)
+      // STEP 2: Enable Social toggle (if requested)
       if (hash.includes('sk_social=on')) {
-        console.log('[SK Debug] Social toggle requested');
-        await util.delay(CONFIG.delayMs * 2); // Additional wait for research mode to settle
+        await util.delay(CONFIG.delayMs);
 
-        // Find and click Sources button with multiple selection strategies
-        const buttons = document.querySelectorAll('button');
-        console.log('[SK Debug] Total buttons found:', buttons.length);
+        // Find and click Sources button
+        const sourcesBtn = Array.from(document.querySelectorAll('button')).find(btn =>
+          btn.getAttribute('aria-label')?.toLowerCase().includes('source')
+        );
 
-        let sourcesBtn = Array.from(buttons).find(btn => {
-          const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-          const text = btn.textContent?.toLowerCase() || '';
-          const title = btn.getAttribute('title')?.toLowerCase() || '';
-          return ariaLabel.includes('source') || text.includes('source') || title.includes('source');
-        });
-
-        console.log('[SK Debug] Sources button found:', !!sourcesBtn);
         if (sourcesBtn) {
-          console.log('[SK Debug] Sources button details:', {
-            'aria-label': sourcesBtn.getAttribute('aria-label'),
-            'aria-expanded': sourcesBtn.getAttribute('aria-expanded'),
-            'aria-haspopup': sourcesBtn.getAttribute('aria-haspopup'),
-            'disabled': sourcesBtn.disabled,
-            'class': sourcesBtn.className
-          });
-
-          // Use PointerEvent for modern React compatibility
+          // Click with PointerEvents for React
           const rect = sourcesBtn.getBoundingClientRect();
-          const pointerOpts = {
-            bubbles: true,
-            cancelable: true,
-            view: window,
-            clientX: rect.left + rect.width / 2,
-            clientY: rect.top + rect.height / 2,
-            pointerType: 'mouse',
-            isPrimary: true
-          };
-
-          console.log('[SK Debug] Dispatching pointer events to Sources button');
+          const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
           sourcesBtn.focus();
-          sourcesBtn.dispatchEvent(new PointerEvent('pointerdown', pointerOpts));
-          sourcesBtn.dispatchEvent(new PointerEvent('pointerup', pointerOpts));
-          sourcesBtn.click(); // Also try native click
+          sourcesBtn.dispatchEvent(new PointerEvent('pointerdown', opts));
+          sourcesBtn.dispatchEvent(new PointerEvent('pointerup', opts));
+          sourcesBtn.click();
 
-          await util.delay(300);
-          console.log('[SK Debug] Sources button after click, aria-expanded:', sourcesBtn.getAttribute('aria-expanded'));
-          console.log('[SK Debug] Sources button clicked, waiting for menu...');
-
-          // Wait for menu container to appear first
-          let menu = null;
-          let menuWaitTime = 0;
-          const maxMenuWait = 5000;
-
-          while (!menu && menuWaitTime < maxMenuWait) {
-            await util.delay(300);
+          // Wait for menu
+          let menu = null, menuWait = 0;
+          while (!menu && menuWait < 3000) {
+            await util.delay(200);
             menu = document.querySelector('[role="menu"]');
-            console.log('[SK Debug] Looking for menu, found:', !!menu, 'wait:', menuWaitTime);
-            menuWaitTime += 300;
+            menuWait += 200;
           }
 
-          if (!menu) {
-            console.log('[SK Debug] ERROR: Menu never appeared after clicking Sources');
-          } else {
-            // Get menu items from within the menu container
-            const menuItems = menu.querySelectorAll('[role="menuitemcheckbox"]');
-            console.log('[SK Debug] Menu items in container:', menuItems.length);
-
-            // Log all menu items
-            menuItems.forEach((item, idx) => {
-              console.log(`[SK Debug] Menu item ${idx}:`, {
-                text: item.textContent?.trim().substring(0, 30),
-                role: item.getAttribute('role'),
-                hasSwitch: !!item.querySelector('[role="switch"]')
-              });
-            });
-
-            // Look for Social toggle in the menu
-            let foundSocial = false;
-            for (const item of menuItems) {
-              const itemText = (item.textContent || '').toLowerCase();
-              if (itemText.includes('social')) {
-                console.log('[SK Debug] Found Social item:', item.textContent?.trim());
-                foundSocial = true;
-
-                const socialSwitch = item.querySelector('[role="switch"]');
-                if (socialSwitch) {
-                  const isChecked = socialSwitch.getAttribute('aria-checked') === 'true';
-                  console.log('[SK Debug] Social switch state:', isChecked);
-                  if (!isChecked) {
-                    console.log('[SK Debug] Clicking social switch');
-                    socialSwitch.click();
-                    await util.delay(CONFIG.delayMs);
-                    console.log('[SK Debug] Social switch new state:', socialSwitch.getAttribute('aria-checked'));
-                  }
-                } else {
-                  // Try clicking the item itself if no switch found
-                  console.log('[SK Debug] No switch found, clicking item directly');
-                  item.click();
-                  await util.delay(CONFIG.delayMs);
+          if (menu) {
+            // Find and click Social toggle
+            for (const item of menu.querySelectorAll('[role="menuitemcheckbox"]')) {
+              if (item.textContent?.toLowerCase().includes('social')) {
+                const toggle = item.querySelector('[role="switch"]');
+                if (toggle && toggle.getAttribute('aria-checked') !== 'true') {
+                  toggle.click();
+                  await util.delay(500);
                 }
                 break;
               }
             }
-
-            if (!foundSocial) {
-              console.log('[SK Debug] WARNING: Social item not found in menu');
-            }
-
-            // Close menu by pressing Escape (more reliable than body click)
-            document.dispatchEvent(new KeyboardEvent('keydown', {
-              key: 'Escape',
-              code: 'Escape',
-              bubbles: true,
-              cancelable: true
-            }));
-            await util.delay(CONFIG.delayMs);
+            // Close menu
+            document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            await util.delay(500);
           }
         }
       }
 
-      // STEP 3: Click Research mode RIGHT BEFORE submit (to avoid reset from other interactions)
+      // STEP 3: Set Research mode (right before submit to avoid reset)
       if (hash.includes('sk_mode=research')) {
-        console.log('[SK Debug] Setting Research mode (final step before submit)');
-
-        // Find and click Research radio button
-        const radios = document.querySelectorAll('[role="radio"]');
-        console.log('[SK Debug] Total radio buttons found:', radios.length);
-
-        let researchRadio = Array.from(radios).find(radio =>
-          radio.getAttribute('aria-label')?.toLowerCase().includes('research') ||
-          radio.getAttribute('value')?.toLowerCase() === 'research' ||
-          radio.textContent?.toLowerCase().includes('research') ||
-          radio.closest('label')?.textContent?.toLowerCase().includes('research')
+        const researchRadio = Array.from(document.querySelectorAll('[role="radio"]')).find(r =>
+          r.textContent?.toLowerCase().includes('research')
         );
-
-        console.log('[SK Debug] Research button found:', !!researchRadio);
-        if (researchRadio) {
-          const isChecked = researchRadio.getAttribute('aria-checked') === 'true';
-          console.log('[SK Debug] Research button checked state:', isChecked);
-          if (!isChecked) {
-            console.log('[SK Debug] Clicking research button');
-            researchRadio.click();
-            await util.delay(500); // Short delay before submit
-            console.log('[SK Debug] Research button clicked, new state:', researchRadio.getAttribute('aria-checked'));
-          }
+        if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
+          researchRadio.click();
+          await util.delay(300);
         }
       }
 
-      // STEP 4: Submit using Enter key IMMEDIATELY (no DOM queries that could trigger re-render)
-      console.log('[SK Debug] Submitting with Enter key immediately');
-
-      const inputBox = document.querySelector('[role="textbox"]');
-      if (inputBox) {
-        inputBox.focus();
-
-        // Dispatch Enter key events to submit
-        const enterEvent = new KeyboardEvent('keydown', {
-          key: 'Enter',
-          code: 'Enter',
-          keyCode: 13,
-          which: 13,
-          bubbles: true,
-          cancelable: true
-        });
-        inputBox.dispatchEvent(enterEvent);
-        console.log('[SK Debug] Enter key dispatched');
-      } else {
-        console.log('[SK Debug] ERROR: Could not find input box for Enter key submission');
+      // STEP 4: Submit with Enter key
+      const textbox = document.querySelector('[role="textbox"]');
+      if (textbox) {
+        textbox.focus();
+        textbox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
       }
 
-      // Handle regular query parameters for normal perplexity search
-      const params = new URLSearchParams(window.location.search);
-      const q = params.get('q');
-      console.log('[SK Debug] Regular search mode, query:', q);
-      if (q && !actualQuery) { // Only if we didn't handle hash-based query already
+      // Handle regular ?q= parameter (non-SK mode)
+      const q = new URLSearchParams(window.location.search).get('q');
+      if (q && !query) {
         await util.delay(CONFIG.delayMs);
         const inputBox = document.querySelector('[role="textbox"]');
-        console.log('[SK Debug] Regular mode input box found:', !!inputBox, inputBox?.tagName);
         if (inputBox) {
           inputBox.focus();
-          // Enhanced input handling for regular mode too
-          if (inputBox.tagName === 'TEXTAREA' || inputBox.tagName === 'INPUT') {
-            inputBox.value = q;
-          } else {
-            inputBox.textContent = q;
-          }
+          inputBox.textContent = q;
           inputBox.dispatchEvent(new Event('input', { bubbles: true }));
-          console.log('[SK Debug] Regular mode text injected');
           await util.delay(CONFIG.delayMs);
-
-          // Enhanced submit detection for regular mode
           const buttons = document.querySelectorAll('button');
           console.log('[SK Debug] Regular mode looking for Submit among', buttons.length, 'buttons');
           let submitFound = false;
