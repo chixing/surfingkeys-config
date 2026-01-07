@@ -1201,11 +1201,11 @@ const siteAutomations = [
           if (researchRadio?.getAttribute('aria-checked') === 'true') break;
 
           if (researchRadio) {
-            // Radix UI: focus and press Space to activate
+            // Radix UI: focus and press Enter to activate
             researchRadio.focus();
             await util.delay(50);
-            researchRadio.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', keyCode: 32, bubbles: true }));
-            researchRadio.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', code: 'Space', keyCode: 32, bubbles: true }));
+            researchRadio.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
+            researchRadio.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
           }
           await util.delay(200);
           attempts++;
