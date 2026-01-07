@@ -1200,12 +1200,13 @@ const siteAutomations = [
           const researchRadio = document.querySelector('[role="radio"][value="research"]');
           if (researchRadio?.getAttribute('aria-checked') === 'true') break;
 
-          if (researchRadio) {
-            // Radix UI: focus and press Enter to activate
-            researchRadio.focus();
+          // Find the currently checked radio and use arrow keys to navigate
+          const checkedRadio = document.querySelector('[role="radio"][aria-checked="true"]');
+          if (checkedRadio) {
+            checkedRadio.focus();
             await util.delay(50);
-            researchRadio.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
-            researchRadio.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
+            // Press Right Arrow to move to next option
+            checkedRadio.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, bubbles: true }));
           }
           await util.delay(200);
           attempts++;
