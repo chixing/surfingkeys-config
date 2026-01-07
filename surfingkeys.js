@@ -1110,12 +1110,11 @@ const siteAutomations = [
       if (!hash.includes('sk_')) return; // Only run for SK-triggered navigations
 
       // Wait for UI to be ready
-      await util.delay(CONFIG.delayMs * 2);
       let waitTime = 0;
       while (waitTime < 5000) {
         if (document.querySelector('[role="textbox"]') && document.querySelectorAll('[role="radio"]').length > 0) break;
-        await util.delay(200);
-        waitTime += 200;
+        await util.delay(100);
+        waitTime += 100;
       }
 
       // Extract query from hash (after sk_social=on or from sk_prompt=)
@@ -1200,8 +1199,13 @@ const siteAutomations = [
           r.textContent?.toLowerCase().includes('research')
         );
         if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
+          // Use PointerEvents for React compatibility
+          const rect = researchRadio.getBoundingClientRect();
+          const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
+          researchRadio.dispatchEvent(new PointerEvent('pointerdown', opts));
+          researchRadio.dispatchEvent(new PointerEvent('pointerup', opts));
           researchRadio.click();
-          await util.delay(300);
+          await util.delay(100);
         }
       }
 
