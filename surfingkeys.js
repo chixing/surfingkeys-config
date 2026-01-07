@@ -1359,84 +1359,26 @@ const siteAutomations = [
         }
       }
 
-      // STEP 4: Submit the query IMMEDIATELY after Research mode
-      await util.delay(300); // Minimal delay
+      // STEP 4: Submit using Enter key IMMEDIATELY (no DOM queries that could trigger re-render)
+      console.log('[SK Debug] Submitting with Enter key immediately');
 
-      // Enhanced submit button detection with broader criteria
-      const allButtons = document.querySelectorAll('button');
-      console.log('[SK Debug] Total buttons after setup:', allButtons.length);
+      const inputBox = document.querySelector('[role="textbox"]');
+      if (inputBox) {
+        inputBox.focus();
 
-      let submitBtn = Array.from(allButtons).find(btn => {
-        const btnText = btn.textContent?.trim().toLowerCase() || '';
-        const ariaLabel = btn.getAttribute('aria-label')?.toLowerCase() || '';
-        const dataTestId = btn.getAttribute('data-testid')?.toLowerCase() || '';
-        const type = btn.getAttribute('type')?.toLowerCase() || '';
-
-        // Check for submit indicators
-        const isSubmit = btnText === 'submit' ||
-          ariaLabel.includes('submit') ||
-          dataTestId.includes('submit') ||
-          type === 'submit' ||
-          btnText.includes('search') ||
-          ariaLabel.includes('search');
-
-        // Also check if button is not disabled
-        const isEnabled = !btn.disabled && btn.getAttribute('aria-disabled') !== 'true';
-
-        return isSubmit && isEnabled;
-      });
-
-      console.log('[SK Debug] Submit button found:', !!submitBtn);
-      if (submitBtn) {
-        console.log('[SK Debug] Submit button details:', {
-          text: submitBtn.textContent?.trim().substring(0, 30),
-          'aria-label': submitBtn.getAttribute('aria-label'),
-          disabled: submitBtn.disabled,
-          type: submitBtn.getAttribute('type')
-        });
-
-        // Re-verify Research mode is still selected
-        const currentRadios = document.querySelectorAll('[role="radio"]');
-        const researchStillChecked = Array.from(currentRadios).find(r =>
-          r.textContent?.toLowerCase().includes('research') &&
-          r.getAttribute('aria-checked') === 'true'
-        );
-        console.log('[SK Debug] Research still checked before submit:', !!researchStillChecked);
-
-        // Use PointerEvents for submit (same as Sources button)
-        const rect = submitBtn.getBoundingClientRect();
-        const pointerOpts = {
+        // Dispatch Enter key events to submit
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
           bubbles: true,
-          cancelable: true,
-          view: window,
-          clientX: rect.left + rect.width / 2,
-          clientY: rect.top + rect.height / 2,
-          pointerType: 'mouse',
-          isPrimary: true
-        };
-
-        console.log('[SK Debug] Clicking submit button with PointerEvents');
-        submitBtn.focus();
-        submitBtn.dispatchEvent(new PointerEvent('pointerdown', pointerOpts));
-        submitBtn.dispatchEvent(new PointerEvent('pointerup', pointerOpts));
-        submitBtn.click();
-        console.log('[SK Debug] Submit clicked');
+          cancelable: true
+        });
+        inputBox.dispatchEvent(enterEvent);
+        console.log('[SK Debug] Enter key dispatched');
       } else {
-        // Enhanced fallback with multiple key events
-        console.log('[SK Debug] No enabled submit button found, trying Enter key');
-        const inputBox = document.querySelector('[role="textbox"]');
-        if (inputBox) {
-          inputBox.focus();
-          const enterEvents = [
-            new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
-            new KeyboardEvent('keypress', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true }),
-            new KeyboardEvent('keyup', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true })
-          ];
-          enterEvents.forEach(event => {
-            console.log('[SK Debug] Dispatching Enter event:', event.type);
-            inputBox.dispatchEvent(event);
-          });
-        }
+        console.log('[SK Debug] ERROR: Could not find input box for Enter key submission');
       }
 
       // Handle regular query parameters for normal perplexity search
