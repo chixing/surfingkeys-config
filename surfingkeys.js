@@ -1195,17 +1195,22 @@ const siteAutomations = [
 
       // STEP 3: Set Research mode (right before submit to avoid reset)
       if (hash.includes('sk_mode=research')) {
-        const researchRadio = Array.from(document.querySelectorAll('[role="radio"]')).find(r =>
-          r.textContent?.toLowerCase().includes('research')
-        );
-        if (researchRadio && researchRadio.getAttribute('aria-checked') !== 'true') {
-          // Use PointerEvents for React compatibility
-          const rect = researchRadio.getBoundingClientRect();
-          const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
-          researchRadio.dispatchEvent(new PointerEvent('pointerdown', opts));
-          researchRadio.dispatchEvent(new PointerEvent('pointerup', opts));
-          researchRadio.click();
-          await util.delay(100);
+        let attempts = 0;
+        while (attempts < 5) {
+          const researchRadio = Array.from(document.querySelectorAll('[role="radio"]')).find(r =>
+            r.textContent?.toLowerCase().includes('research')
+          );
+          if (researchRadio?.getAttribute('aria-checked') === 'true') break; // Already selected
+
+          if (researchRadio) {
+            const rect = researchRadio.getBoundingClientRect();
+            const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
+            researchRadio.dispatchEvent(new PointerEvent('pointerdown', opts));
+            researchRadio.dispatchEvent(new PointerEvent('pointerup', opts));
+            researchRadio.click();
+          }
+          await util.delay(200);
+          attempts++;
         }
       }
 
