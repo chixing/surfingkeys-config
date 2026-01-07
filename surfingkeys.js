@@ -1107,17 +1107,15 @@ const siteAutomations = [
     host: "perplexity.ai",
     run: async () => {
       const hash = window.location.hash;
-      if (!hash.includes('sk_')) return; // Only run for SK-triggered navigations
+      if (!hash.includes('sk_')) return;
 
-      // Wait for UI to be ready
-      let waitTime = 0;
-      while (waitTime < 5000) {
-        if (document.querySelector('[role="textbox"]') && document.querySelectorAll('[role="radio"]').length > 0) break;
+      // Wait for UI
+      for (let i = 0; i < 50; i++) {
+        if (document.querySelector('[role="textbox"]') && document.querySelector('[role="radio"]')) break;
         await util.delay(100);
-        waitTime += 100;
       }
 
-      // Extract query from hash (after sk_social=on or from sk_prompt=)
+      // Parse query from hash
       const hashContent = hash.substring(1);
       let query = '';
       if (hash.includes('sk_social=on')) {
@@ -1128,92 +1126,76 @@ const siteAutomations = [
         if (match?.[1]) query = decodeURIComponent(match[1]);
       }
 
-      // STEP 1: Enter query text
+      // Helper: click with PointerEvents for React
+      const pointerClick = (el) => {
+        const rect = el.getBoundingClientRect();
+        const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
+        el.focus();
+        el.dispatchEvent(new PointerEvent('pointerdown', opts));
+        el.dispatchEvent(new PointerEvent('pointerup', opts));
+        el.click();
+      };
+
+      // 1. Enter query text
       if (query) {
         const inputBox = document.querySelector('[role="textbox"]');
         if (inputBox) {
           inputBox.focus();
-          await util.delay(100);
-
-          // Select all and insert text (React-compatible)
-          const selection = window.getSelection();
+          const sel = window.getSelection();
           const range = document.createRange();
           range.selectNodeContents(inputBox);
-          selection.removeAllRanges();
-          selection.addRange(range);
-          await util.delay(50);
-
+          sel.removeAllRanges();
+          sel.addRange(range);
           document.execCommand('insertText', false, query);
-          await util.delay(CONFIG.delayMs);
+          await util.delay(300);
         }
       }
 
-      // STEP 2: Enable Social toggle (if requested)
+      // 2. Enable Social toggle
       if (hash.includes('sk_social=on')) {
-        await util.delay(CONFIG.delayMs);
-
-        // Find and click Sources button
         const sourcesBtn = Array.from(document.querySelectorAll('button')).find(btn =>
           btn.getAttribute('aria-label')?.toLowerCase().includes('source')
         );
-
         if (sourcesBtn) {
-          // Click with PointerEvents for React
-          const rect = sourcesBtn.getBoundingClientRect();
-          const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
-          sourcesBtn.focus();
-          sourcesBtn.dispatchEvent(new PointerEvent('pointerdown', opts));
-          sourcesBtn.dispatchEvent(new PointerEvent('pointerup', opts));
-          sourcesBtn.click();
+          pointerClick(sourcesBtn);
 
           // Wait for menu
-          let menu = null, menuWait = 0;
-          while (!menu && menuWait < 3000) {
-            await util.delay(200);
+          let menu = null;
+          for (let i = 0; i < 15; i++) {
             menu = document.querySelector('[role="menu"]');
-            menuWait += 200;
+            if (menu) break;
+            await util.delay(200);
           }
 
           if (menu) {
-            // Find and click Social toggle
-            for (const item of menu.querySelectorAll('[role="menuitemcheckbox"]')) {
-              if (item.textContent?.toLowerCase().includes('social')) {
-                const toggle = item.querySelector('[role="switch"]');
-                if (toggle && toggle.getAttribute('aria-checked') !== 'true') {
-                  toggle.click();
-                  await util.delay(500);
-                }
-                break;
-              }
+            const socialItem = Array.from(menu.querySelectorAll('[role="menuitemcheckbox"]')).find(item =>
+              item.textContent?.toLowerCase().includes('social')
+            );
+            const toggle = socialItem?.querySelector('[role="switch"]');
+            if (toggle && toggle.getAttribute('aria-checked') !== 'true') {
+              toggle.click();
+              await util.delay(300);
             }
-            // Close menu
             document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-            await util.delay(500);
+            await util.delay(300);
           }
         }
       }
 
-      // STEP 3: Set Research mode (right before submit to avoid reset)
+      // 3. Set Research mode (arrow key navigation for Radix UI)
       if (hash.includes('sk_mode=research')) {
-        let attempts = 0;
-        while (attempts < 5) {
-          const researchRadio = document.querySelector('[role="radio"][value="research"]');
-          if (researchRadio?.getAttribute('aria-checked') === 'true') break;
-
-          // Find the currently checked radio and use arrow keys to navigate
+        for (let i = 0; i < 5; i++) {
+          if (document.querySelector('[role="radio"][value="research"][aria-checked="true"]')) break;
           const checkedRadio = document.querySelector('[role="radio"][aria-checked="true"]');
           if (checkedRadio) {
             checkedRadio.focus();
-            await util.delay(50);
-            // Press Right Arrow to move to next option
             checkedRadio.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', code: 'ArrowRight', keyCode: 39, bubbles: true }));
           }
-          await util.delay(200);
-          attempts++;
+          await util.delay(150);
         }
       }
 
-      // STEP 4: Submit with Enter key
+      // 4. Submit
       const textbox = document.querySelector('[role="textbox"]');
       if (textbox) {
         textbox.focus();
