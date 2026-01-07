@@ -1197,17 +1197,15 @@ const siteAutomations = [
       if (hash.includes('sk_mode=research')) {
         let attempts = 0;
         while (attempts < 5) {
-          const researchRadio = Array.from(document.querySelectorAll('[role="radio"]')).find(r =>
-            r.textContent?.toLowerCase().includes('research')
-          );
+          const researchRadio = document.querySelector('[role="radio"][value="research"]');
           if (researchRadio?.getAttribute('aria-checked') === 'true') break;
 
           if (researchRadio) {
-            const rect = researchRadio.getBoundingClientRect();
-            const eventOpts = { bubbles: true, cancelable: true, view: window, button: 0, buttons: 1, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2 };
-            researchRadio.dispatchEvent(new MouseEvent('mousedown', eventOpts));
-            researchRadio.dispatchEvent(new MouseEvent('mouseup', eventOpts));
-            researchRadio.dispatchEvent(new MouseEvent('click', eventOpts));
+            // Radix UI: focus and press Space to activate
+            researchRadio.focus();
+            await util.delay(50);
+            researchRadio.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', code: 'Space', keyCode: 32, bubbles: true }));
+            researchRadio.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', code: 'Space', keyCode: 32, bubbles: true }));
           }
           await util.delay(200);
           attempts++;
