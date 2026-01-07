@@ -1200,14 +1200,14 @@ const siteAutomations = [
           const researchRadio = Array.from(document.querySelectorAll('[role="radio"]')).find(r =>
             r.textContent?.toLowerCase().includes('research')
           );
-          if (researchRadio?.getAttribute('aria-checked') === 'true') break; // Already selected
+          if (researchRadio?.getAttribute('aria-checked') === 'true') break;
 
           if (researchRadio) {
             const rect = researchRadio.getBoundingClientRect();
-            const opts = { bubbles: true, cancelable: true, view: window, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2, pointerType: 'mouse', isPrimary: true };
-            researchRadio.dispatchEvent(new PointerEvent('pointerdown', opts));
-            researchRadio.dispatchEvent(new PointerEvent('pointerup', opts));
-            researchRadio.click();
+            const eventOpts = { bubbles: true, cancelable: true, view: window, button: 0, buttons: 1, clientX: rect.left + rect.width/2, clientY: rect.top + rect.height/2 };
+            researchRadio.dispatchEvent(new MouseEvent('mousedown', eventOpts));
+            researchRadio.dispatchEvent(new MouseEvent('mouseup', eventOpts));
+            researchRadio.dispatchEvent(new MouseEvent('click', eventOpts));
           }
           await util.delay(200);
           attempts++;
