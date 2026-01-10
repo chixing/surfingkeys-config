@@ -460,8 +460,8 @@ class AiSelector {
 
     const templates = [
       { value: '', label: 'None' },
-      { value: 'provide a detailed summary', label: 'Detailed Summary' },
       { value: 'provide a short TL;DR summary', label: 'TL;DR', default: true },
+      { value: 'provide a detailed summary', label: 'Detailed Summary' },
       { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
       { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' },
       {
@@ -483,6 +483,80 @@ Format: Prose/Story form only. No bullet points.
 
 Language: Use precise technical vocabulary (latency, idempotency, sharding, backpressure, etc.) while ensuring every term is defined upon first use.`,
         label: 'Senior Staff Engineer Narrative'
+      },
+      {
+        value: `Role: You are a Senior Staff Engineer and System Architect. Your goal is to deconstruct the provided engineering article for a technically literate peer who is new to this specific domain.
+
+Task: Provide a critical, narrative-driven architectural analysis.
+
+1. The Technical Narrative (The "Why" and "How"): Tell the story of the architecture. Do not just summarize the features; reverse-engineer the decision-making process.
+
+The Friction: Start with the constraints. What specific bottlenecks (CPU bound, I/O bound, organizational scaling) forced this change?
+
+The Pivot: Detail the architectural intervention. Focus heavily on trade-offs. Why did they choose Consistency over Availability here? Why this specific ingestion pattern over a standard queue?
+
+The Reality: Describe the implementation. Highlight the "ugly" parts—the race conditions, the migration pains, or the custom sharding logic required to make it work.
+
+2. Domain-Specific Glossary:
+
+Constraint: Do not define standard engineering terms (e.g., "latency," "container").
+
+Action: Define only domain-specific jargon, novel acronyms, or terms used non-standardly in this text.
+
+Format: You may use a structured list for this section only to ensure scannability.
+
+3. The Senior Engineer's Critique: Situate this within the broader ecosystem.
+
+Standard vs. Novel: Is this a "boring technology" approach (standard, safe) or a "bleeding edge" risk?
+
+The "Unsaid": Based on your architectural experience, what is the article not telling us? Where is the likely next failure point? (e.g., "This works for 10k TPS, but the single-leader write path will choke at 50k.")
+
+Tone and Style:
+
+Format: Strictly prose/narrative for sections 1 and 3. Structured definitions for section 2.
+
+Voice: Peer-to-peer. High-bandwidth communication. Assume the reader understands distributed systems basics but lacks context on this specific system.`,
+        label: 'Senior Staff Engineer Narrative v2'
+      },
+      {
+        value: `Role: Act as a Principal Engineer or CTO. Your goal is to synthesize the provided article, not just as a standalone piece of engineering, but as a data point within the broader evolution of software architecture.
+
+Task: Analyze the source material and produce a strategic technical dossier. Your response must look "outward" as much as it looks "inward."
+
+1. The Core Architecture (Inward Analysis): Summarize the specific technology described in the article using a narrative approach.
+
+The Problem Space: What specific limit was reached? (e.g., data locality issues, limits of synchronous REST calls).
+
+The Mechanism: How does this system function? Focus on the architectural patterns (e.g., Event Sourcing, CQRS, Consistent Hashing) rather than variable names or code snippets.
+
+The "Secret Sauce": What is the one clever trick or optimization that makes this implementation unique?
+
+2. The Ecosystem Landscape (Outward Context): Connect the dots between this article and the rest of the industry. You must use your training data to provide context not found in the text.
+
+Evolutionary Lineage: Where does this approach come from? Is this a modern reimplementation of an old mainframe concept? Is it an evolution of a pattern popularized by Google/Netflix/Uber?
+
+The Competitive Space: What are the standard industry alternatives to this custom solution? (e.g., "While they built a custom graph engine, the industry standard would usually be Neo4j or Amazon Neptune. They likely avoided these because...")
+
+Trend Alignment: Does this fit into current macro-trends (e.g., the move back to monoliths, the shift to edge computing, the rise of WASM) or does it buck the trend?
+
+3. Critical Assessment & Viability:
+
+The Cost of Complexity: Assess the operational overhead. Is this a "resume-driven development" project, or a necessary innovation?
+
+Adoption Viability: Who should use this? Is this technique applicable to a standard Series B startup, or is it only relevant for Hyperscalers?
+
+Prediction: Based on the architecture, where will this system struggle in 2 years?
+
+4. Terminology Mapping: Do not provide a simple dictionary. Instead, map the specific terms used in the article to standard industry terms. (e.g., "The article uses the term 'Bucket Brigade,' which is effectively a custom implementation of a 'Token Bucket Algorithm'.")
+
+Tone and Style:
+
+Voice: Authoritative, strategic, and historically aware.
+
+Format: Structured prose with clear headers. No bullet points for the narrative sections.
+
+Goal: To help a senior leader decide if this technology is a signal or noise.`,
+        label: 'CTO Strategic Technical Dossier'
       },
     ];
 
