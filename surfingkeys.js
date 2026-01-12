@@ -463,6 +463,23 @@ class AiSelector {
       { value: 'provide a short TL;DR summary', label: 'TL;DR', default: true },
       { value: 'provide a detailed summary', label: 'Detailed Summary' },
       { value: 'fact-check the key claims and provide sources', label: 'Fact-Check with Sources' },
+      {
+        value: `Research [COMPANY] ([URL]) for [PURPOSE: investing / vendor eval / interview / competitor intel]. Use web browsing and cite sources with links for every key claim. If info is missing or uncertain, say "Unknown" and list what to check next.
+
+Deliver in this exact structure (concise, skimmable):
+
+1) One-liner + Snapshot: what they do (1 sentence), HQ, founded, ownership (public/private), geos served; size signals (employees + revenue range or Unknown)
+2) Product & ICP: main products/services; target customers (industry + company size) and top use cases; pricing/packaging evidence
+3) Traction: named customers/case studies/partnerships; recent momentum (hiring, releases, contracts, growth claims—label estimates)
+4) Market & Competitors: category and positioning; top 5 competitors (table: company | who they serve | key difference)
+5) Business Model: how they make money + go-to-market (sales-led/PLG/channel); distribution advantages
+6) Risks / Red Flags: legal/regulatory, security incidents, major complaints/outages, reputational issues
+7) Recent News (last 12–24 months): 5–10 key events with dates + links
+8) Bottom Line: 3 strengths, 3 weaknesses, 3 open questions; suggested next steps to verify
+
+Keep it under ~500–700 words. Prefer primary sources (company site, filings, regulators) then reputable press/analyst notes.`,
+        label: 'Company Research (Web)'
+      },
       { value: 'explain this in simple terms suitable for beginners', label: 'Explain Simply' },
       {
         value: `Role: Act as a Senior Staff Engineer and System Architect. Your goal is to explain the provided article to another engineer who is new to this specific domain but possesses a high level of general technical literacy.
@@ -551,7 +568,7 @@ Prediction: Based on the architecture, where will this system struggle in 2 year
 
 Tone and Style:
 
-Voice: Authoritative, strategic, and historically aware.
+Voice: Authoritative, strategic, and historically aware. BE CONCISE and logical in the overall flow of conversation
 
 Format: Structured prose with clear headers. No bullet points for the narrative sections.
 
@@ -591,7 +608,7 @@ Goal: To help a senior leader decide if this technology is a signal or noise.`,
 
       Tone Guidelines:
 
-      Style: Direct, academic, and efficient.
+      Style: Direct, academic, and efficient. BE CONCISE and logical in the overall flow of conversation
 
       Formatting: Use bold headers and clear paragraph breaks. No "Once upon a time" narratives.
 
