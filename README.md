@@ -87,8 +87,6 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
   ├── package.json               # Dependencies & scripts
   ├── tsconfig.json              # TypeScript configuration
   ├── tsup.config.ts             # tsup bundler config
-  ├── scripts/
-  │   └── rename-output.js       # Renames tsup iife output to surfingkeys.js
   └── dist/                      # Generated output (git ignored)
 ```
 

@@ -11,7 +11,7 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   outDir: 'dist',
-  onSuccess: 'node scripts/rename-output.js',
+  outExtension: () => ({ js: '.js' }),
   banner: {
     js: `/**
  * SurfingKeys Configuration
