@@ -78,11 +78,21 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
 ```
 /gist/
   ├── src/                       # TypeScript source files
+  │   ├── ai/
+  │   │   ├── selector.ts         # Multi-AI dialog UI/logic
+  │   │   └── templates.ts        # Prompt templates
+  │   ├── automations/
+  │   │   └── index.ts            # Site-specific automations
+  │   ├── keymaps/
+  │   │   └── register.ts         # Key mappings
+  │   ├── search/
+  │   │   └── engines.ts          # Search engine aliases
+  │   ├── theme/
+  │   │   └── apply.ts            # Theme styling
   │   ├── types/
   │   │   └── surfingkeys.d.ts   # SurfingKeys API type definitions
   │   ├── config.ts              # Configuration & constants
   │   ├── utils.ts               # Utility functions
-  │   ├── ai-selector.ts         # AI Selector class
   │   └── index.ts               # Main entry point
   ├── package.json               # Dependencies & scripts
   ├── tsconfig.json              # TypeScript configuration
