@@ -87,8 +87,9 @@ export interface SurfingKeysAPI {
     alias: string,
     prompt: string,
     searchUrl: string,
-    suggestionUrl?: string,
-    suggestionCallback?: string | ((response: any) => any),
+    suggestionUrlOrType?: string,
+    suggestionCallbackOrUrl?: string | ((response: any) => any),
+    suggestionCallbackOrOnlyThisSite?: string | ((response: any) => any) | boolean,
     onlyThisSite?: boolean
   ): void;
 
