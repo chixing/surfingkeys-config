@@ -5,14 +5,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "node build.mjs",
-    "watch": "node build.mjs --watch",
+    "build": "tsup",
+    "watch": "tsup --watch",
     "type-check": "tsc --noEmit",
-    "deploy": "npm run build && node update-gist.mjs"
+    "deploy": "npm run build && gh gist edit 82767d49380294ad7b298554e2c0e59b dist/surfingkeys.js"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",
     "esbuild": "^0.20.0",
+    "tsup": "^8.0.1",
     "typescript": "^5.3.3"
   }
 }

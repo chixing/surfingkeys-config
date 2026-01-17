@@ -10,7 +10,7 @@ Modern TypeScript-based SurfingKeys configuration with full type safety and IDE 
 
 This project uses two remotes:
 - **Regular GitHub repo** stores all TypeScript source and tooling.
-- **Gist** hosts the generated `surfingkeys.js` file that SurfingKeys loads.
+- **Gist** hosts the generated `dist/surfingkeys.js` file that SurfingKeys loads.
 
 ## Quick Start
 
@@ -28,7 +28,7 @@ npm run build
 npm run watch
 
 # Terminal 2
-vim src-ts/*.ts
+vim src/*.ts
 
 # When ready
 git add -A
@@ -41,7 +41,7 @@ npm run deploy
 
 ```bash
 # Edit files
-vim src-ts/config.ts
+vim src/config.ts
 
 # Build
 npm run build
@@ -58,17 +58,17 @@ npm run deploy
 ## Build & Deploy (What Happens)
 
 ```
-src-ts/*.ts  --(npm run build)-->  surfingkeys.js  --(npm run deploy)-->  GitHub Gist
+src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitHub Gist
 ```
 
-- `npm run build` compiles TypeScript to a single `surfingkeys.js` bundle.
+- `npm run build` compiles TypeScript to a single `dist/surfingkeys.js` bundle.
 - `npm run deploy` runs the build and then updates the gist via `gh gist edit`.
 
 ## Scripts
 
 | Command | Description |
 |---------|-------------|
-| `npm run build` | Build `surfingkeys.js` from TypeScript sources |
+| `npm run build` | Build `dist/surfingkeys.js` from TypeScript sources |
 | `npm run watch` | Auto-rebuild on file changes |
 | `npm run type-check` | Validate types without building |
 | `npm run deploy` | Build and push to gist |
@@ -77,7 +77,7 @@ src-ts/*.ts  --(npm run build)-->  surfingkeys.js  --(npm run deploy)-->  GitHub
 
 ```
 /gist/
-  ├── src-ts/                    # TypeScript source files
+  ├── src/                       # TypeScript source files
   │   ├── types/
   │   │   └── surfingkeys.d.ts   # SurfingKeys API type definitions
   │   ├── config.ts              # Configuration & constants
@@ -86,9 +86,10 @@ src-ts/*.ts  --(npm run build)-->  surfingkeys.js  --(npm run deploy)-->  GitHub
   │   └── index.ts               # Main entry point
   ├── package.json               # Dependencies & scripts
   ├── tsconfig.json              # TypeScript configuration
-  ├── build.mjs                  # esbuild bundler script
-  ├── update-gist.mjs            # Gist deployment script
-  └── surfingkeys.js             # Generated output (git ignored)
+  ├── tsup.config.ts             # tsup bundler config
+  ├── scripts/
+  │   └── rename-output.js       # Renames tsup iife output to surfingkeys.js
+  └── dist/                      # Generated output (git ignored)
 ```
 
 ## Common Tasks
@@ -96,7 +97,7 @@ src-ts/*.ts  --(npm run build)-->  surfingkeys.js  --(npm run deploy)-->  GitHub
 ### Add a new key mapping
 
 ```typescript
-// src-ts/index.ts
+// src/index.ts
 api.mapkey('gn', 'My action', () => {
   api.Front.showBanner('Hello!');
 });
@@ -105,7 +106,7 @@ api.mapkey('gn', 'My action', () => {
 ### Change theme colors
 
 ```typescript
-// src-ts/config.ts
+// src/config.ts
 export const CONFIG = {
   theme: {
     colors: {
@@ -118,12 +119,12 @@ export const CONFIG = {
 ### Add a new AI service
 
 ```typescript
-// src-ts/config.ts
+// src/config.ts
 export const AI_SERVICES = {
   MY_AI: 'My AI',
 } as const;
 
-// src-ts/index.ts
+// src/index.ts
 api.mapkey('am', 'My AI Search', () => {
   aiSelector.show('', [AI_SERVICES.MY_AI]);
 });
@@ -137,5 +138,5 @@ api.mapkey('am', 'My AI Search', () => {
 
 ## Notes
 
-- `surfingkeys.js` is generated and git-ignored.
+- `dist/surfingkeys.js` is generated and git-ignored.
 - The repo tracks **source code**; the gist hosts **built output**.
