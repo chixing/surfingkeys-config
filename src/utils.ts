@@ -4,6 +4,9 @@
 
 import type { Config } from './config';
 
+export const isZenBrowser = (): boolean =>
+  navigator.userAgent.includes('Zen/');
+
 export const delay = (ms: number): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, ms));
 

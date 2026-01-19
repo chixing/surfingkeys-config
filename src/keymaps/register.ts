@@ -1,6 +1,7 @@
 import { AI_SERVICES } from '../config';
 import type { AIServiceName } from '../config';
 import { AiSelector } from '../ai/selector';
+import { isZenBrowser } from '../utils';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
   navigator.clipboard.readText().then(text => aiSelector.updateQuery(text)).catch(() => {});
@@ -77,6 +78,11 @@ function convertAndCopyImage(url: string): void {
 }
 
 export function registerKeyMappings(aiSelector: AiSelector): void {
+  // Zen Browser fix: use native Ctrl-w instead of SurfingKeys closeTab
+  if (isZenBrowser()) {
+    api.map('x', '<Ctrl-w>');
+  }
+
   // Navigation
   api.map('K', '[[');
   api.map('J', ']]');
