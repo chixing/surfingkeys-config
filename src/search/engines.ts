@@ -37,7 +37,7 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
   libhunt: { alias: 'l', search: 'https://www.libhunt.com/search?query=' },
   yandex: { alias: 'n', search: 'https://yandex.com/search/?text=' },
   skidrow: { alias: 'k', search: 'https://www.skidrowreloaded.com/?s=' },
-  anna: { alias: 'c', search: 'https://www.annas-archive.org/search?q=' },
+  anna: { alias: 'c', search: 'https://annas-archive.li/search?q=' },
   libgen: { alias: 'v', search: 'https://libgen.is/search.php?req=' },
   urban: { alias: 'u', search: 'https://www.urbandictionary.com/define.php?term=' },
   archive: { alias: 'r', search: 'https://archive.is/' },
