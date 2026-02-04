@@ -184,6 +184,117 @@ Style
     label: 'Technical Professor (Context-First)'
   },
   {
+    value: `Role
+Act as a Staff Engineer evaluating this approach against common industry practices and alternatives.
+
+Task
+Explain how the design/approach in the article compares to typical solutions used in industry for similar problems.
+
+Instructions
+1) TL;DR
+   - In 3-5 sentences, summarize what problem this approach solves and its key distinguishing characteristics.
+2) Problem Class
+   - Classify the problem in standard terms (for example: OLTP datastore, analytics pipeline, stream processing, job scheduling, microservice orchestration, feature flags).
+3) Common Approaches
+   - Describe the most common architectures/tools used in industry today for this problem class.
+   - Mention at least 2-3 representative approaches or stacks.
+   - Summarize typical trade-offs.
+4) Direct Comparison
+   - Compare consistency, latency, throughput, operational complexity, cost, portability, lock-in, and fault tolerance.
+   - For each aspect, contrast:
+     - how the article's approach behaves (or claims to behave), and
+     - how common industry options behave.
+   - Mark each area as clearly better, clearly worse, or different trade-offs.
+5) Fit Criteria
+   - Explain constraints/priorities that make this approach a good fit (team size, SLOs, regulatory environment, skill set, cloud choice).
+   - Explain where a conventional approach would likely be safer or cheaper.
+6) Long-Term Considerations
+   - Identify lock-in risks (APIs, data model, infrastructure dependencies).
+   - Discuss migration difficulty if the team later moves away.
+   - Note maintenance and knowledge-transfer concerns.
+
+Input
+[PASTE ARTICLE HERE]`,
+    label: 'Industry Comparison Review'
+  },
+  {
+    value: `Role
+Act as a skeptical but fair Principal Engineer reviewing a vendor or marketing-style blog post.
+
+Task
+Separate substantive technical claims from hype, and assess whether the evidence is sufficient for each major claim.
+
+Instructions
+1) Brief TL;DR
+   - In 3-5 sentences, summarize what is being promised and, at a high level, how it is supposed to work.
+2) Claims vs Evidence
+   - Identify major technical/performance claims (for example: "10x faster", "zero-downtime", "strongly consistent", "no vendor lock-in").
+   - For each claim:
+     - quote/paraphrase the claim,
+     - describe concrete evidence provided (benchmarks, architecture details, failure-mode analysis, specific numbers),
+     - judge evidence as strong, weak, or absent, with rationale.
+3) Hidden Assumptions and Caveats
+   - Call out assumptions about workload (read-heavy/write-heavy, batch vs real-time).
+   - Call out assumptions about scale/environment (cloud vendor, network, storage hardware).
+   - Call out required operational maturity (SRE, on-call, capacity planning).
+   - Note buried or implied caveats.
+4) Missing Details
+   - List critical missing details needed for serious evaluation:
+     - failure modes and recovery,
+     - consistency guarantees,
+     - resource usage and cost implications,
+     - benchmark methodology and reproducibility.
+5) Pragmatic Take
+   - Give a concise engineering conclusion:
+     - when this is serious enough for a POC,
+     - what questions to ask in a technical deep-dive.
+
+Tone
+Direct, technical, neutral, and evidence-driven. Avoid marketing language.
+
+Input
+[PASTE CONTENT HERE]`,
+    label: 'Hype vs Evidence Review'
+  },
+  {
+    value: `Role
+Act as a Principal Engineer responsible for cross-team architecture reviews.
+
+Task
+From the article or documentation, reverse-engineer architecture and implementation details so they can seed an internal design doc.
+
+Instructions
+1) TL;DR
+   - Start with 3-5 sentences summarizing the overall architecture and primary goal.
+2) System Decomposition
+   - List major components/services, responsibilities, and key inputs/outputs.
+   - Infer communication patterns (sync/async, protocols, queues, streams, databases, caches, external services).
+   - Describe trust boundaries and where data crosses them.
+3) Data Flow and Control Flow
+   - Describe end-to-end flow from initial trigger to final response/persistence.
+   - Note where validation, deduplication, idempotency, retries, and backpressure are handled (or implied).
+4) Implementation Details
+   - Call out inferred data models/schemas.
+   - Identify patterns/algorithms (for example: CQRS, event sourcing, fan-out/fan-in, sharding, consistent hashing).
+   - Note operational mechanisms (circuit breakers, rate limiting, caching, schema migration patterns).
+5) Operational Characteristics
+   - Explain scaling strategy (horizontal/vertical, partitioning, autoscaling signals).
+   - Summarize performance characteristics (latency, throughput, SLA/SLO if provided).
+   - Describe observability (metrics, logs, traces, health checks).
+6) Expressive Diagram (Text-Only)
+   - Provide a text-only architecture diagram using indentation and arrows, tailored to the described system.
+
+Assumptions
+If key details are missing, call them out explicitly and add reasonable labeled assumptions.
+
+Tone
+Use precise technical vocabulary. Be explicit and concrete.
+
+Input
+[PASTE ARTICLE OR DOCS HERE]`,
+    label: 'Architecture Reverse Engineer'
+  },
+  {
     value: `Write a detailed README.md for this project in plain language.
 
 Cover these topics
