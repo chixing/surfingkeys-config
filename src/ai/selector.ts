@@ -23,7 +23,7 @@ export class AiSelector {
   private blurHandler: ((e: FocusEvent) => void) | null = null;
 
   private services: AIService[] = [
-    { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
+    { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?prompt=', checked: true },
     { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
     { name: AI_SERVICES.ALICE, url: 'https://alice.yandex.ru/?q=', checked: true },
     { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },

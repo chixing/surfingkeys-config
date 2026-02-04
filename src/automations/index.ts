@@ -12,10 +12,76 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
       host: 'chatgpt.com',
       run: async () => {
         const params = new URLSearchParams(window.location.search);
-        if (params.get('q')) {
-          await utils.delay(config.delayMs);
-          const submitBtn = document.getElementById('composer-submit-button');
-          if (submitBtn instanceof HTMLElement) submitBtn.click();
+        const promptParam = params.get('prompt') || params.get('q');
+        if (!promptParam) return;
+
+        const isVisible = (el: HTMLElement): boolean => {
+          const style = window.getComputedStyle(el);
+          if (style.display === 'none' || style.visibility === 'hidden') return false;
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        };
+
+        const isEnabledButton = (el: HTMLElement | null): el is HTMLButtonElement => {
+          if (!(el instanceof HTMLButtonElement)) return false;
+          if (!el.isConnected || !isVisible(el)) return false;
+          return !el.disabled && el.getAttribute('aria-disabled') !== 'true';
+        };
+
+        const getEditor = (): HTMLElement | null =>
+          document.querySelector<HTMLElement>('#prompt-textarea, div.ProseMirror[contenteditable="true"]');
+
+        const hasEditorText = (el: HTMLElement | null): boolean =>
+          !!el && el.textContent?.trim().length !== 0;
+
+        const getSubmitButton = (): HTMLElement | null =>
+          (document.getElementById('composer-submit-button') as HTMLElement | null) ||
+          (document.querySelector('button[aria-label*="send" i]') as HTMLElement | null);
+
+        const pointerClick = (el: HTMLElement): void => {
+          const rect = el.getBoundingClientRect();
+          const opts: PointerEventInit = {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: rect.left + rect.width / 2,
+            clientY: rect.top + rect.height / 2,
+            pointerType: 'mouse',
+            isPrimary: true,
+          };
+          el.dispatchEvent(new PointerEvent('pointerdown', opts));
+          el.dispatchEvent(new PointerEvent('pointerup', opts));
+          el.click();
+        };
+
+        const sendEnter = (el: HTMLElement): void => {
+          const eventInit = {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13
+          };
+          el.focus();
+          el.dispatchEvent(new KeyboardEvent('keydown', eventInit));
+          el.dispatchEvent(new KeyboardEvent('keyup', eventInit));
+        };
+
+        await utils.delay(config.delayMs);
+
+        for (let i = 0; i < 60; i++) {
+          const editor = getEditor();
+          const submitBtn = getSubmitButton();
+          if (hasEditorText(editor) && isEnabledButton(submitBtn)) {
+            pointerClick(submitBtn);
+            await utils.delay(250);
+            if (window.location.pathname === '/' && isEnabledButton(getSubmitButton()) && editor) {
+              sendEnter(editor);
+            }
+            return;
+          }
+          await utils.delay(150);
         }
       }
     },
