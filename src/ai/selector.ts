@@ -12,12 +12,19 @@ interface AIService {
   checked: boolean;
 }
 
+const TAB_WARNING_THRESHOLD = 12;
+
 export class AiSelector {
   private config: Config;
   private lastQuery: string | null = null;
   private overlay: HTMLElement | null = null;
   private queryInput: HTMLTextAreaElement | null = null;
-  private promptInput: HTMLTextAreaElement | null = null;
+  private promptPreviewInput: HTMLTextAreaElement | null = null;
+  private promptPreviewTitle: HTMLElement | null = null;
+  private templateRows: HTMLElement[] = [];
+  private promptDrafts: string[] = [];
+  private selectedPromptIndexes = new Set<number>();
+  private activePromptIndex: number | null = null;
   private keyHandler: ((e: KeyboardEvent) => void) | null = null;
   private focusHandler: ((e: FocusEvent) => void) | null = null;
   private blurHandler: ((e: FocusEvent) => void) | null = null;
@@ -42,29 +49,30 @@ export class AiSelector {
   // ===========================================================================
 
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
+    this.initializePromptState();
+
     this.overlay = this.createOverlay();
     const dialog = this.createDialog();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
 
     const title = this.createTitle();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
+    const { label: promptLabel, controls: promptControls, picker: promptPicker } = this.createPromptPicker();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
-    const selectAllButtons = this.createSelectAllButtons();
+    const serviceSelectButtons = this.createServiceSelectButtons();
     const buttonsContainer = this.createButtons();
 
     this.queryInput = queryInput;
-    this.promptInput = promptInput;
 
     [
       title,
       queryLabel,
       queryInput,
       promptLabel,
-      promptSelect,
-      promptInput,
+      promptControls,
+      promptPicker,
       servicesLabel,
-      selectAllButtons,
+      serviceSelectButtons,
       servicesContainer,
       buttonsContainer,
     ].forEach(el => dialog.appendChild(el));
@@ -99,7 +107,12 @@ export class AiSelector {
     }
     this.overlay = null;
     this.queryInput = null;
-    this.promptInput = null;
+    this.promptPreviewInput = null;
+    this.promptPreviewTitle = null;
+    this.templateRows = [];
+    this.promptDrafts = [];
+    this.selectedPromptIndexes.clear();
+    this.activePromptIndex = null;
   }
 
   updateQuery(text: string): void {
@@ -255,13 +268,121 @@ export class AiSelector {
       return;
     }
 
+    this.persistPreviewInput();
+    const selectedPrompts = this.getSelectedPromptTexts();
+    if (selectedPrompts.length === 0) {
+      alert('Please select at least one prompt template');
+      return;
+    }
+
+    const tabCount = selectedUrls.length * selectedPrompts.length;
+    if (tabCount > TAB_WARNING_THRESHOLD) {
+      const message = `This will open ${tabCount} tabs (${selectedUrls.length} services x ${selectedPrompts.length} prompts). Continue?`;
+      if (!window.confirm(message)) return;
+    }
+
     this.lastQuery = this.queryInput.value;
 
-    const promptTemplate = this.promptInput ? this.promptInput.value.trim() : '';
-    const combinedQuery = promptTemplate ? `${query} \n${promptTemplate}` : query;
-
-    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
+    selectedUrls.forEach(url => {
+      selectedPrompts.forEach(promptTemplate => {
+        const combinedQuery = promptTemplate ? `${query} \n${promptTemplate}` : query;
+        api.tabOpenLink(url + encodeURIComponent(combinedQuery));
+      });
+    });
     this.close();
+  }
+
+  private initializePromptState(): void {
+    this.promptDrafts = PROMPT_TEMPLATES.map(template => template.value);
+    this.selectedPromptIndexes.clear();
+
+    PROMPT_TEMPLATES.forEach((template, index) => {
+      if (template.default) this.selectedPromptIndexes.add(index);
+    });
+
+    if (this.selectedPromptIndexes.size === 0 && PROMPT_TEMPLATES.length > 0) {
+      this.selectedPromptIndexes.add(0);
+    }
+
+    if (PROMPT_TEMPLATES.length === 0) {
+      this.activePromptIndex = null;
+      return;
+    }
+
+    const selectedIndexes = this.getSelectedPromptIndexesInOrder();
+    this.activePromptIndex = selectedIndexes.length > 0 ? selectedIndexes[0] : 0;
+  }
+
+  private persistPreviewInput(): void {
+    if (this.activePromptIndex === null || !this.promptPreviewInput) return;
+    this.promptDrafts[this.activePromptIndex] = this.promptPreviewInput.value;
+  }
+
+  private setActivePrompt(index: number, persistCurrent: boolean = true): void {
+    if (index < 0 || index >= this.promptDrafts.length) return;
+
+    if (persistCurrent) {
+      this.persistPreviewInput();
+    }
+    this.activePromptIndex = index;
+
+    if (this.promptPreviewInput) {
+      this.promptPreviewInput.value = this.promptDrafts[index] || '';
+      this.promptPreviewInput.focus();
+      this.promptPreviewInput.selectionStart = this.promptPreviewInput.value.length;
+      this.promptPreviewInput.selectionEnd = this.promptPreviewInput.value.length;
+    }
+
+    this.updatePromptPreviewTitle();
+    this.updatePromptRowStyles();
+  }
+
+  private updatePromptPreviewTitle(): void {
+    if (!this.promptPreviewTitle) return;
+    if (this.activePromptIndex === null) {
+      this.promptPreviewTitle.textContent = 'Preview / Edit';
+      return;
+    }
+
+    const activeTemplate = PROMPT_TEMPLATES[this.activePromptIndex];
+    this.promptPreviewTitle.textContent = `Preview / Edit: ${activeTemplate?.label || 'Custom'}`;
+  }
+
+  private updatePromptRowStyles(): void {
+    this.templateRows.forEach((row, index) => {
+      const isActive = this.activePromptIndex === index;
+      const isSelected = this.selectedPromptIndexes.has(index);
+      row.style.borderColor = isActive ? this.config.theme.colors.mainFg : this.config.theme.colors.border;
+      row.style.background = isActive ? this.config.theme.colors.border : 'transparent';
+
+      const text = row.querySelector('span');
+      if (text) {
+        (text as HTMLElement).style.color = isSelected ? this.config.theme.colors.accentFg : this.config.theme.colors.fg;
+      }
+    });
+  }
+
+  private getSelectedPromptIndexesInOrder(): number[] {
+    const selectedIndexes: number[] = [];
+    PROMPT_TEMPLATES.forEach((_, index) => {
+      if (this.selectedPromptIndexes.has(index)) selectedIndexes.push(index);
+    });
+    return selectedIndexes;
+  }
+
+  private getSelectedPromptTexts(): string[] {
+    const selectedIndexes = this.getSelectedPromptIndexesInOrder();
+    const uniquePrompts = new Set<string>();
+    const promptTexts: string[] = [];
+
+    selectedIndexes.forEach(index => {
+      const promptText = (this.promptDrafts[index] || '').trim();
+      if (uniquePrompts.has(promptText)) return;
+      uniquePrompts.add(promptText);
+      promptTexts.push(promptText);
+    });
+
+    return promptTexts;
   }
 
   // ===========================================================================
@@ -294,8 +415,9 @@ export class AiSelector {
       border: 2px solid ${this.config.theme.colors.border};
       border-radius: 8px;
       padding: 24px;
-      min-width: 480px;
-      max-width: 600px;
+      width: min(920px, 92vw);
+      max-height: 88vh;
+      overflow-y: auto;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       color: ${this.config.theme.colors.fg};
     `;
@@ -327,9 +449,10 @@ export class AiSelector {
     const input = document.createElement('textarea');
     input.id = 'sk-ai-query-input';
     input.value = initialQuery;
-    input.rows = 3;
+    input.rows = 4;
     input.style.cssText = `
       width: 100%;
+      min-height: 110px;
       padding: 12px;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
@@ -345,9 +468,9 @@ export class AiSelector {
     return { label, input };
   }
 
-  private createPromptInput(): { label: HTMLElement; input: HTMLTextAreaElement; select: HTMLSelectElement } {
+  private createPromptPicker(): { label: HTMLElement; controls: HTMLElement; picker: HTMLElement } {
     const label = document.createElement('label');
-    label.textContent = 'Prompt Template (optional):';
+    label.textContent = 'Prompt Templates:';
     label.style.cssText = `
       display: block;
       margin-bottom: 8px;
@@ -355,39 +478,73 @@ export class AiSelector {
       font-size: 14px;
     `;
 
-    const select = document.createElement('select');
-    select.style.cssText = `
-      width: 100%;
-      padding: 10px 12px;
+    const controls = this.createPromptSelectButtons();
+
+    const picker = document.createElement('div');
+    picker.style.cssText = `
+      display: grid;
+      grid-template-columns: minmax(220px, 38%) 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    `;
+
+    const leftPane = document.createElement('div');
+    leftPane.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      min-height: 280px;
+      gap: 8px;
+    `;
+
+    const leftTitle = document.createElement('div');
+    leftTitle.textContent = 'Templates';
+    leftTitle.style.cssText = `
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 13px;
+      font-weight: 600;
+    `;
+
+    const templateList = document.createElement('div');
+    templateList.style.cssText = `
+      max-height: 280px;
+      overflow-y: auto;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
       border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: ${this.config.theme.fontSize};
-      margin-bottom: 8px;
-      cursor: pointer;
+      padding: 8px;
+      flex: 1;
       box-sizing: border-box;
     `;
 
-    const defaultTemplate = PROMPT_TEMPLATES.find(t => t.default) || PROMPT_TEMPLATES[0];
-
-    PROMPT_TEMPLATES.forEach(template => {
-      const option = document.createElement('option');
-      option.value = template.value;
-      option.textContent = template.label;
-      if (template.default) {
-        option.selected = true;
-      }
-      select.appendChild(option);
+    this.templateRows = [];
+    PROMPT_TEMPLATES.forEach((template, index) => {
+      const row = this.createPromptTemplateRow(template.label, index);
+      this.templateRows.push(row);
+      templateList.appendChild(row);
     });
 
+    const rightPane = document.createElement('div');
+    rightPane.style.cssText = `
+      display: flex;
+      flex-direction: column;
+      min-height: 280px;
+      gap: 8px;
+    `;
+
+    const previewTitle = document.createElement('div');
+    previewTitle.style.cssText = `
+      color: ${this.config.theme.colors.mainFg};
+      font-size: 13px;
+      font-weight: 600;
+    `;
+    this.promptPreviewTitle = previewTitle;
+
     const input = document.createElement('textarea');
-    input.rows = 2;
-    input.value = defaultTemplate.value;
-    input.placeholder = 'Custom prompt template...';
+    input.rows = 12;
+    input.placeholder = 'Template preview / editor...';
     input.style.cssText = `
       width: 100%;
+      min-height: 220px;
       padding: 12px;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
@@ -395,16 +552,158 @@ export class AiSelector {
       color: ${this.config.theme.colors.fg};
       font-family: ${this.config.theme.font};
       font-size: ${this.config.theme.fontSize};
-      margin-bottom: 20px;
       resize: vertical;
       box-sizing: border-box;
+      flex: 1;
     `;
+    input.addEventListener('input', () => {
+      if (this.activePromptIndex === null) return;
+      this.promptDrafts[this.activePromptIndex] = input.value;
+    });
+    this.promptPreviewInput = input;
 
-    select.addEventListener('change', () => {
-      input.value = select.value;
+    leftPane.appendChild(leftTitle);
+    leftPane.appendChild(templateList);
+
+    rightPane.appendChild(previewTitle);
+    rightPane.appendChild(input);
+
+    picker.appendChild(leftPane);
+    picker.appendChild(rightPane);
+
+    if (this.activePromptIndex !== null) {
+      this.setActivePrompt(this.activePromptIndex, false);
+    } else {
+      this.updatePromptPreviewTitle();
+      this.updatePromptRowStyles();
+    }
+
+    return { label, controls, picker };
+  }
+
+  private createPromptTemplateRow(templateLabel: string, index: number): HTMLElement {
+    const row = document.createElement('div');
+    row.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid ${this.config.theme.colors.border};
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    `;
+    row.onclick = () => this.setActivePrompt(index);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `sk-template-${index}`;
+    checkbox.checked = this.selectedPromptIndexes.has(index);
+    checkbox.style.cssText = `
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: ${this.config.theme.colors.accentFg};
+    `;
+    checkbox.addEventListener('click', e => e.stopPropagation());
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        this.selectedPromptIndexes.add(index);
+      } else {
+        this.selectedPromptIndexes.delete(index);
+      }
+      this.setActivePrompt(index);
     });
 
-    return { label, input, select };
+    const label = document.createElement('span');
+    label.textContent = templateLabel;
+    label.style.cssText = `
+      font-size: 13px;
+      line-height: 1.35;
+      color: ${this.config.theme.colors.fg};
+      user-select: none;
+    `;
+
+    row.appendChild(checkbox);
+    row.appendChild(label);
+    return row;
+  }
+
+  private createPromptSelectButtons(): HTMLElement {
+    const container = document.createElement('div');
+    container.style.cssText = `
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: flex-start;
+    `;
+
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.textContent = 'Select All Prompts';
+    selectAllBtn.type = 'button';
+    selectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.accentFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    selectAllBtn.onmouseenter = () => {
+      selectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    selectAllBtn.onmouseleave = () => {
+      selectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    selectAllBtn.onclick = () => {
+      PROMPT_TEMPLATES.forEach((_, index) => {
+        this.selectedPromptIndexes.add(index);
+        const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
+        if (checkbox) checkbox.checked = true;
+      });
+      if (this.activePromptIndex === null && PROMPT_TEMPLATES.length > 0) {
+        this.setActivePrompt(0);
+        return;
+      }
+      this.updatePromptRowStyles();
+    };
+
+    const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.textContent = 'Unselect All Prompts';
+    unselectAllBtn.type = 'button';
+    unselectAllBtn.style.cssText = `
+      padding: 4px 12px;
+      background: ${this.config.theme.colors.bgDark};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.infoFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    `;
+    unselectAllBtn.onmouseenter = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.border;
+    };
+    unselectAllBtn.onmouseleave = () => {
+      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
+    };
+    unselectAllBtn.onclick = () => {
+      this.selectedPromptIndexes.clear();
+      PROMPT_TEMPLATES.forEach((_, index) => {
+        const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
+        if (checkbox) checkbox.checked = false;
+      });
+      this.updatePromptRowStyles();
+    };
+
+    container.appendChild(selectAllBtn);
+    container.appendChild(unselectAllBtn);
+    return container;
   }
 
   private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): { label: HTMLElement; container: HTMLElement } {
@@ -439,7 +738,7 @@ export class AiSelector {
     return { label, container };
   }
 
-  private createSelectAllButtons(): HTMLElement {
+  private createServiceSelectButtons(): HTMLElement {
     const container = document.createElement('div');
     container.style.cssText = `
       display: flex;

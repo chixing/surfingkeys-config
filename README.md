@@ -138,6 +138,13 @@ api.mapkey('am', 'My AI Search', () => {
 });
 ```
 
+### Use multi-prompt fanout
+
+- Press `aa` to open the Multi-AI dialog.
+- Enter your query, select one or more prompt templates, then select one or more AI services.
+- Submit opens tabs for every selected `service x prompt` combination.
+- If the selection would open more than 12 tabs, the dialog asks for confirmation first.
+
 ## Troubleshooting
 
 - **Build fails:** `npm run type-check` to see errors.
