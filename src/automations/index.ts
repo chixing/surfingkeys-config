@@ -77,7 +77,7 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
         if (!hash.includes('sk_')) return;
 
         for (let i = 0; i < 50; i++) {
-          if (document.querySelector('[role="textbox"]') && document.querySelector('[role="radio"]')) break;
+          if (document.querySelector('[role="textbox"]')) break;
           await utils.delay(100);
         }
 
@@ -108,6 +108,152 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
           el.click();
         };
 
+        const normalizeText = (text: string): string =>
+          text.replace(/\s+/g, ' ').trim().toLowerCase();
+
+        const elementLabel = (el: HTMLElement): string => normalizeText([
+          el.textContent,
+          el.getAttribute('aria-label'),
+          el.getAttribute('title')
+        ].filter(Boolean).join(' '));
+
+        const isVisible = (el: HTMLElement): boolean => {
+          const style = window.getComputedStyle(el);
+          if (style.display === 'none' || style.visibility === 'hidden') return false;
+          const rect = el.getBoundingClientRect();
+          return rect.width > 0 && rect.height > 0;
+        };
+
+        const sendEnter = (el: HTMLElement): void => {
+          const eventInit = {
+            bubbles: true,
+            cancelable: true,
+            key: 'Enter',
+            code: 'Enter',
+            keyCode: 13,
+            which: 13
+          };
+          el.dispatchEvent(new KeyboardEvent('keydown', eventInit));
+          el.dispatchEvent(new KeyboardEvent('keyup', eventInit));
+        };
+
+        const openMenus = (): HTMLElement[] =>
+          Array.from(document.querySelectorAll<HTMLElement>('[role="menu"][data-state="open"]')).filter(isVisible);
+
+        const findPrimaryToolsMenu = (): HTMLElement | null => {
+          for (const menu of openMenus()) {
+            const hasDeepResearch = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemradio"]'))
+              .some(item => elementLabel(item).includes('deep research'));
+            const hasConnectors = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"]'))
+              .some(item => {
+                const label = elementLabel(item);
+                return label.includes('connectors') && label.includes('sources');
+              });
+            if (hasDeepResearch || hasConnectors) return menu;
+          }
+          return null;
+        };
+
+        const findSourcesSubMenu = (): HTMLElement | null => {
+          for (const menu of openMenus()) {
+            const checkboxes = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]'));
+            const hasWeb = checkboxes.some(item => elementLabel(item).includes('web'));
+            const hasSocial = checkboxes.some(item => elementLabel(item).includes('social'));
+            if (hasWeb && hasSocial) return menu;
+          }
+          return null;
+        };
+
+        const findAddFilesToolsButton = (): HTMLElement | null =>
+          Array.from(document.querySelectorAll<HTMLElement>('button, [role="button"]')).find(el =>
+            isVisible(el) &&
+            el.getAttribute('aria-disabled') !== 'true' &&
+            !el.hasAttribute('disabled') &&
+            elementLabel(el).includes('add files or tools')
+          ) ?? null;
+
+        const openPrimaryToolsMenu = async (): Promise<HTMLElement | null> => {
+          const existing = findPrimaryToolsMenu();
+          if (existing) return existing;
+
+          const addFilesButton = findAddFilesToolsButton();
+          if (!addFilesButton) return null;
+
+          pointerClick(addFilesButton);
+          for (let i = 0; i < 20; i++) {
+            const menu = findPrimaryToolsMenu();
+            if (menu) return menu;
+            await utils.delay(100);
+          }
+          return null;
+        };
+
+        const ensureWebAndSocialSources = async (): Promise<void> => {
+          const primaryMenu = await openPrimaryToolsMenu();
+          if (!primaryMenu) return;
+
+          const connectorsItem = Array.from(primaryMenu.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(item => {
+            const label = elementLabel(item);
+            return label.includes('connectors') && label.includes('sources');
+          });
+          if (!connectorsItem) return;
+
+          pointerClick(connectorsItem);
+
+          let sourcesMenu: HTMLElement | null = null;
+          for (let i = 0; i < 20; i++) {
+            sourcesMenu = findSourcesSubMenu();
+            if (sourcesMenu) break;
+            await utils.delay(100);
+          }
+          if (!sourcesMenu) return;
+
+          const ensureChecked = async (label: 'web' | 'social') => {
+            const item = Array.from(sourcesMenu!.querySelectorAll<HTMLElement>('[role="menuitemcheckbox"]')).find(checkbox =>
+              isVisible(checkbox) &&
+              checkbox.getAttribute('aria-disabled') !== 'true' &&
+              !checkbox.hasAttribute('disabled') &&
+              elementLabel(checkbox).includes(label)
+            );
+            if (item && item.getAttribute('aria-checked') !== 'true') {
+              pointerClick(item);
+              await utils.delay(160);
+            }
+          };
+
+          await ensureChecked('web');
+          await ensureChecked('social');
+        };
+
+        const ensureDeepResearch = async (): Promise<void> => {
+          const deepResearchChipVisible = Array.from(document.querySelectorAll<HTMLElement>('button, [role="button"]')).some(el =>
+            isVisible(el) &&
+            !el.closest('[role="menu"]') &&
+            elementLabel(el) === 'deep research'
+          );
+          if (deepResearchChipVisible) return;
+
+          const primaryMenu = await openPrimaryToolsMenu();
+          if (!primaryMenu) return;
+
+          const deepResearchItem = Array.from(primaryMenu.querySelectorAll<HTMLElement>('[role="menuitemradio"]')).find(item =>
+            isVisible(item) &&
+            item.getAttribute('aria-disabled') !== 'true' &&
+            !item.hasAttribute('disabled') &&
+            elementLabel(item).includes('deep research')
+          );
+          if (!deepResearchItem) return;
+
+          if (deepResearchItem.getAttribute('aria-checked') !== 'true') {
+            pointerClick(deepResearchItem);
+            await utils.delay(220);
+            return;
+          }
+
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          await utils.delay(120);
+        };
+
         if (query) {
           const inputBox = document.querySelector<HTMLElement>('[role="textbox"]');
           if (inputBox) {
@@ -125,55 +271,22 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
         }
 
         if (hash.includes('sk_social=on')) {
-          const sourcesBtn = Array.from(document.querySelectorAll('button')).find(btn =>
-            btn.getAttribute('aria-label')?.toLowerCase().includes('source')
-          ) as HTMLElement | undefined;
-          if (sourcesBtn) {
-            pointerClick(sourcesBtn);
-
-            let menu: Element | null = null;
-            for (let i = 0; i < 15; i++) {
-              menu = document.querySelector('[role="menu"]');
-              if (menu) break;
-              await utils.delay(200);
-            }
-
-            if (menu) {
-              const socialItem = Array.from(menu.querySelectorAll('[role="menuitemcheckbox"]')).find(item =>
-                item.textContent?.toLowerCase().includes('social')
-              );
-              const toggle = socialItem?.querySelector('[role="switch"]') as HTMLElement | null;
-              if (toggle && toggle.getAttribute('aria-checked') !== 'true') {
-                toggle.click();
-                await utils.delay(300);
-              }
-              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-              await utils.delay(300);
-            }
-          }
+          await ensureWebAndSocialSources();
         }
 
         if (hash.includes('sk_mode=research')) {
-          for (let i = 0; i < 5; i++) {
-            if (document.querySelector('[role="radio"][value="research"][aria-checked="true"]')) break;
-            const checkedRadio = document.querySelector('[role="radio"][aria-checked="true"]') as HTMLElement | null;
-            if (checkedRadio) {
-              checkedRadio.focus();
-              checkedRadio.dispatchEvent(new KeyboardEvent('keydown', {
-                key: 'ArrowRight',
-                code: 'ArrowRight',
-                keyCode: 39,
-                bubbles: true,
-              }));
-            }
-            await utils.delay(150);
-          }
+          await ensureDeepResearch();
+        }
+
+        if (openMenus().length > 0) {
+          document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+          await utils.delay(100);
         }
 
         const textbox = document.querySelector<HTMLElement>('[role="textbox"]');
         if (textbox) {
           textbox.focus();
-          textbox.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, bubbles: true }));
+          sendEnter(textbox);
         }
       }
     }
