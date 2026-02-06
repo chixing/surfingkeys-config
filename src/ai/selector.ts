@@ -69,11 +69,11 @@ export class AiSelector {
       queryLabel,
       queryInput,
       promptLabel,
-      promptControls,
       promptPicker,
+      promptControls,
       servicesLabel,
-      serviceSelectButtons,
       servicesContainer,
+      serviceSelectButtons,
       buttonsContainer,
     ].forEach(el => dialog.appendChild(el));
     this.overlay.appendChild(dialog);
@@ -160,6 +160,12 @@ export class AiSelector {
       }
 
       e.stopPropagation();
+
+      const isTextArea = target?.tagName === 'TEXTAREA';
+      if (!isTextArea && target && this.overlay?.contains(target)) {
+        if (this.tryHandlePromptTemplateKeyNav(e, target)) return;
+        if (this.tryHandleServiceKeyNav(e, target)) return;
+      }
 
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -318,7 +324,7 @@ export class AiSelector {
     this.promptDrafts[this.activePromptIndex] = this.promptPreviewInput.value;
   }
 
-  private setActivePrompt(index: number, persistCurrent: boolean = true): void {
+  private setActivePrompt(index: number, persistCurrent: boolean = true, focusPreview: boolean = true): void {
     if (index < 0 || index >= this.promptDrafts.length) return;
 
     if (persistCurrent) {
@@ -328,9 +334,11 @@ export class AiSelector {
 
     if (this.promptPreviewInput) {
       this.promptPreviewInput.value = this.promptDrafts[index] || '';
-      this.promptPreviewInput.focus();
-      this.promptPreviewInput.selectionStart = this.promptPreviewInput.value.length;
-      this.promptPreviewInput.selectionEnd = this.promptPreviewInput.value.length;
+      if (focusPreview) {
+        this.promptPreviewInput.focus();
+        this.promptPreviewInput.selectionStart = this.promptPreviewInput.value.length;
+        this.promptPreviewInput.selectionEnd = this.promptPreviewInput.value.length;
+      }
     }
 
     this.updatePromptPreviewTitle();
@@ -383,6 +391,87 @@ export class AiSelector {
     });
 
     return promptTexts;
+  }
+
+  // ===========================================================================
+  // Keyboard Navigation Helpers
+  // ===========================================================================
+
+  private tryHandlePromptTemplateKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
+    const index = this.getPromptTemplateIndexFromTarget(target);
+    if (index === null) return false;
+
+    let nextIndex: number | null = null;
+    if (e.key === 'ArrowDown' || e.key === 'j') nextIndex = index + 1;
+    else if (e.key === 'ArrowUp' || e.key === 'k') nextIndex = index - 1;
+    else if (e.key === 'Home') nextIndex = 0;
+    else if (e.key === 'End') nextIndex = PROMPT_TEMPLATES.length - 1;
+    else return false;
+
+    e.preventDefault();
+
+    if (nextIndex < 0 || nextIndex >= PROMPT_TEMPLATES.length) return true;
+
+    const next = document.getElementById(`sk-template-${nextIndex}`) as HTMLInputElement | null;
+    if (next) {
+      next.focus();
+      next.scrollIntoView({ block: 'nearest' });
+    }
+    this.setActivePrompt(nextIndex, true, false);
+    return true;
+  }
+
+  private tryHandleServiceKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
+    const index = this.getServiceIndexFromTarget(target);
+    if (index === null) return false;
+
+    let nextIndex: number | null = null;
+    if (e.key === 'ArrowDown' || e.key === 'j') nextIndex = index + 1;
+    else if (e.key === 'ArrowUp' || e.key === 'k') nextIndex = index - 1;
+    else if (e.key === 'Home') nextIndex = 0;
+    else if (e.key === 'End') nextIndex = this.services.length - 1;
+    else return false;
+
+    e.preventDefault();
+
+    if (nextIndex < 0 || nextIndex >= this.services.length) return true;
+
+    const next = document.getElementById(`sk-ai-${nextIndex}`) as HTMLInputElement | null;
+    if (next) {
+      next.focus();
+      next.scrollIntoView({ block: 'nearest' });
+    }
+    return true;
+  }
+
+  private getPromptTemplateIndexFromTarget(target: HTMLElement): number | null {
+    if (target.id) {
+      const match = /^sk-template-(\d+)$/.exec(target.id);
+      if (match) return Number(match[1]);
+    }
+
+    const row = target.closest('[data-sk-template-index]') as HTMLElement | null;
+    const rowIndex = row?.dataset?.skTemplateIndex;
+    if (rowIndex) {
+      const n = Number(rowIndex);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  private getServiceIndexFromTarget(target: HTMLElement): number | null {
+    if (target.id) {
+      const match = /^sk-ai-(\d+)$/.exec(target.id);
+      if (match) return Number(match[1]);
+    }
+
+    const row = target.closest('[data-sk-service-index]') as HTMLElement | null;
+    const rowIndex = row?.dataset?.skServiceIndex;
+    if (rowIndex) {
+      const n = Number(rowIndex);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
   }
 
   // ===========================================================================
@@ -485,7 +574,7 @@ export class AiSelector {
       display: grid;
       grid-template-columns: minmax(220px, 38%) 1fr;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 8px;
     `;
 
     const leftPane = document.createElement('div');
@@ -583,6 +672,7 @@ export class AiSelector {
 
   private createPromptTemplateRow(templateLabel: string, index: number): HTMLElement {
     const row = document.createElement('div');
+    row.dataset.skTemplateIndex = String(index);
     row.style.cssText = `
       display: flex;
       align-items: center;
@@ -607,13 +697,14 @@ export class AiSelector {
       accent-color: ${this.config.theme.colors.accentFg};
     `;
     checkbox.addEventListener('click', e => e.stopPropagation());
+    checkbox.addEventListener('focus', () => this.setActivePrompt(index, true, false));
     checkbox.addEventListener('change', () => {
       if (checkbox.checked) {
         this.selectedPromptIndexes.add(index);
       } else {
         this.selectedPromptIndexes.delete(index);
       }
-      this.setActivePrompt(index);
+      this.setActivePrompt(index, true, false);
     });
 
     const label = document.createElement('span');
@@ -635,7 +726,7 @@ export class AiSelector {
     container.style.cssText = `
       display: flex;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 20px;
       justify-content: flex-start;
     `;
 
@@ -722,7 +813,7 @@ export class AiSelector {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-bottom: 24px;
+      margin-bottom: 8px;
       padding: 16px;
       background: ${this.config.theme.colors.bgDark};
       border-radius: 4px;
@@ -743,7 +834,7 @@ export class AiSelector {
     container.style.cssText = `
       display: flex;
       gap: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 24px;
       justify-content: flex-start;
     `;
 
@@ -808,6 +899,7 @@ export class AiSelector {
 
   private createCheckbox(service: AIService, index: number, isChecked: boolean = true): HTMLElement {
     const wrapper = document.createElement('label');
+    wrapper.dataset.skServiceIndex = String(index);
     wrapper.style.cssText = `
       display: flex;
       align-items: center;

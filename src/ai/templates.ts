@@ -6,8 +6,8 @@ export interface PromptTemplate {
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   { value: '', label: 'None' },
-  { value: 'Provide a short TL;DR summary.', label: 'TL;DR', default: true },
-  { value: 'Provide a detailed summary.', label: 'Detailed Summary' },
+  { value: 'Provide a short TL;DR summary.', label: 'TL;DR' },
+  { value: 'Provide a detailed summary.', label: 'Detailed Summary', default: true },
   { value: 'Fact-check key claims and provide sources.', label: 'Fact-Check with Sources' },
   {
     value: `Role
