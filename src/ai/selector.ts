@@ -535,47 +535,15 @@ export class AiSelector {
   }
 
   private createTitle(): HTMLElement {
-    const titleRow = document.createElement('div');
-    titleRow.style.cssText = `
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin: 0 0 16px 0;
-    `;
-
     const title = document.createElement('h2');
     title.textContent = 'Multi-AI Search';
     title.style.cssText = `
-      margin: 0;
+      margin: 0 0 16px 0;
       color: ${this.config.theme.colors.accentFg};
       font-size: 20px;
       font-weight: 600;
     `;
-
-    const clipboardIndicator = document.createElement('span');
-    clipboardIndicator.textContent = 'CLIP';
-    clipboardIndicator.title = 'Clipboard differs from query';
-    clipboardIndicator.style.cssText = `
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 2px 10px;
-      border-radius: 999px;
-      border: 1px solid ${this.config.theme.colors.border};
-      background: ${this.config.theme.colors.bgDark};
-      color: ${this.config.theme.colors.infoFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      user-select: none;
-    `;
-    this.clipboardIndicator = clipboardIndicator;
-
-    titleRow.appendChild(title);
-    titleRow.appendChild(clipboardIndicator);
-    return titleRow;
+    return title;
   }
 
   private createQueryInput(initialQuery: string): { label: HTMLElement; input: HTMLTextAreaElement } {
@@ -587,6 +555,29 @@ export class AiSelector {
       color: ${this.config.theme.colors.mainFg};
       font-size: 14px;
     `;
+
+    const clipboardIndicator = document.createElement('span');
+    clipboardIndicator.textContent = 'Clipboard different';
+    clipboardIndicator.title = 'Clipboard differs from query';
+    clipboardIndicator.style.cssText = `
+      display: none;
+      align-items: center;
+      justify-content: center;
+      margin-left: 10px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid ${this.config.theme.colors.border};
+      background: ${this.config.theme.colors.bgDark};
+      color: ${this.config.theme.colors.infoFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      user-select: none;
+      vertical-align: middle;
+    `;
+    this.clipboardIndicator = clipboardIndicator;
+    label.appendChild(clipboardIndicator);
 
     const input = document.createElement('textarea');
     input.id = 'sk-ai-query-input';
