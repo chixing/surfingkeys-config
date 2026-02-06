@@ -21,6 +21,8 @@ export class AiSelector {
   private queryInput: HTMLTextAreaElement | null = null;
   private promptPreviewInput: HTMLTextAreaElement | null = null;
   private promptPreviewTitle: HTMLElement | null = null;
+  private clipboardText: string | null = null;
+  private clipboardIndicator: HTMLElement | null = null;
   private templateRows: HTMLElement[] = [];
   private promptDrafts: string[] = [];
   private selectedPromptIndexes = new Set<number>();
@@ -50,6 +52,7 @@ export class AiSelector {
 
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
     this.initializePromptState();
+    this.clipboardText = null;
 
     this.overlay = this.createOverlay();
     const dialog = this.createDialog();
@@ -109,6 +112,8 @@ export class AiSelector {
     this.queryInput = null;
     this.promptPreviewInput = null;
     this.promptPreviewTitle = null;
+    this.clipboardText = null;
+    this.clipboardIndicator = null;
     this.templateRows = [];
     this.promptDrafts = [];
     this.selectedPromptIndexes.clear();
@@ -116,11 +121,17 @@ export class AiSelector {
   }
 
   updateQuery(text: string): void {
-    const input = document.getElementById('sk-ai-query-input') as HTMLTextAreaElement | null;
-    if (input && !this.lastQuery) {
+    this.clipboardText = text;
+    this.updateClipboardIndicator();
+
+    const input = this.queryInput ?? (document.getElementById('sk-ai-query-input') as HTMLTextAreaElement | null);
+    if (!input) return;
+
+    if (!this.lastQuery) {
       input.value = text;
       input.focus();
       input.select();
+      this.updateClipboardIndicator();
     }
   }
 
@@ -474,6 +485,16 @@ export class AiSelector {
     return null;
   }
 
+  private updateClipboardIndicator(): void {
+    if (!this.clipboardIndicator || !this.queryInput) return;
+
+    const clipboard = (this.clipboardText ?? '').replace(/\r\n/g, '\n').trim();
+    const query = (this.queryInput.value ?? '').replace(/\r\n/g, '\n').trim();
+
+    const shouldShow = clipboard.length > 0 && clipboard !== query;
+    this.clipboardIndicator.style.display = shouldShow ? 'inline-flex' : 'none';
+  }
+
   // ===========================================================================
   // DOM Creation
   // ===========================================================================
@@ -514,15 +535,47 @@ export class AiSelector {
   }
 
   private createTitle(): HTMLElement {
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 16px 0;
+    `;
+
     const title = document.createElement('h2');
     title.textContent = 'Multi-AI Search';
     title.style.cssText = `
-      margin: 0 0 16px 0;
+      margin: 0;
       color: ${this.config.theme.colors.accentFg};
       font-size: 20px;
       font-weight: 600;
     `;
-    return title;
+
+    const clipboardIndicator = document.createElement('span');
+    clipboardIndicator.textContent = 'CLIP';
+    clipboardIndicator.title = 'Clipboard differs from query';
+    clipboardIndicator.style.cssText = `
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 10px;
+      border-radius: 999px;
+      border: 1px solid ${this.config.theme.colors.border};
+      background: ${this.config.theme.colors.bgDark};
+      color: ${this.config.theme.colors.infoFg};
+      font-family: ${this.config.theme.font};
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      user-select: none;
+    `;
+    this.clipboardIndicator = clipboardIndicator;
+
+    titleRow.appendChild(title);
+    titleRow.appendChild(clipboardIndicator);
+    return titleRow;
   }
 
   private createQueryInput(initialQuery: string): { label: HTMLElement; input: HTMLTextAreaElement } {
@@ -553,6 +606,7 @@ export class AiSelector {
       resize: vertical;
       box-sizing: border-box;
     `;
+    input.addEventListener('input', () => this.updateClipboardIndicator());
 
     return { label, input };
   }
