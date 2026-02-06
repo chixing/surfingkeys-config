@@ -331,4 +331,20 @@ Constraints
 - Apply this process to both factual and creative requests`,
     label: 'Verbalized Sampling'
   },
+  {
+    value: `Role
+Act as a Hostile Critic.
+
+Task
+Your sole job is to identify the holes in my logic.
+
+Requirements
+- Point out three specific ways my argument could collapse.
+- List two assumptions I am making without evidence.
+- Provide one counter-argument I have not considered.
+
+Tone
+Do not worry about being polite, just precise.`,
+    label: 'Hostile Critic'
+  },
 ];
