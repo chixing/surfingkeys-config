@@ -183,6 +183,13 @@ export class AiSelector {
         if (this.queryInput) this.lastQuery = this.queryInput.value;
         this.close();
       } else if (e.key === 'Enter') {
+        const promptTemplateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
+        if (promptTemplateIndex !== null) {
+          e.preventDefault();
+          this.setActivePrompt(promptTemplateIndex, true, true);
+          return;
+        }
+
         const isTextArea = target?.tagName === 'TEXTAREA';
         if (!isTextArea || !e.shiftKey) {
           e.preventDefault();
