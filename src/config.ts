@@ -61,11 +61,9 @@ Object.assign(settings, {
 export const AI_SERVICES = {
   CHATGPT: 'ChatGPT',
   DOUBAO: 'Doubao',
-  ALICE: 'Alice (Yandex)',
   CLAUDE: 'Claude',
   GEMINI: 'Gemini',
   PERPLEXITY: 'Perplexity',
-  PERPLEXITY_RESEARCH: 'Perplexity Research',
   GROK: 'Grok'
 } as const;
 

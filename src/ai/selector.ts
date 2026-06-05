@@ -34,11 +34,9 @@ export class AiSelector {
   private services: AIService[] = [
     { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?prompt=', checked: true },
     { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
-    { name: AI_SERVICES.ALICE, url: 'https://alice.yandex.ru/?q=', checked: true },
     { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },
     { name: AI_SERVICES.GEMINI, url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
     { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
-    { name: AI_SERVICES.PERPLEXITY_RESEARCH, url: 'https://perplexity.ai#sk_prompt=&sk_mode=research&sk_social=on', checked: true },
     { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
   ];
 

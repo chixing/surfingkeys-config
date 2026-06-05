@@ -126,10 +126,8 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', createAiShortcut(aiSelector));
   api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.CHATGPT]));
   api.mapkey('ad', 'Doubao Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.DOUBAO]));
-  api.mapkey('ay', 'Alice Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.ALICE]));
   api.mapkey('ae', 'Claude Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.CLAUDE]));
   api.mapkey('ag', 'Gemini Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GEMINI]));
   api.mapkey('ap', 'Perplexity Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]));
-  api.mapkey('aP', 'Perplexity Research Mode (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY_RESEARCH]));
   api.mapkey('ak', 'Grok Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GROK]));
 }
