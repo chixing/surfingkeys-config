@@ -33,6 +33,15 @@ export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
   'experimental',
 ];
 
+/** Shared voice for long-form templates (anchored on Senior Staff Engineer Narrative). */
+const NARRATIVE_SPINE = `Narrative requirements
+- Start with a concise TL;DR.
+- Main body must be prose/story form (no bullet-point summary style in narrative sections).
+- Set the scene first: context, constraints, and why things evolved as they did.
+- Walk through decisions, friction, and resolution — not just feature lists.
+- Define each technical term on first use, woven into the prose.
+- End with broader context: implications, trade-offs, or what to watch next.`;
+
 /** Combine user query and template for tab URLs. */
 export function formatCombinedQuery(query: string, promptTemplate: string): string {
   const instructions = promptTemplate.trim();
@@ -66,63 +75,50 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   },
   {
     label: 'TL;DR',
-    value: 'Provide a short TL;DR summary in 5-8 bullet points or a tight paragraph.',
+    value: `Open with a one-paragraph story hook (what happened and why it matters), then a tight TL;DR in prose or at most 5 bullets.`,
     category: 'meta',
-    description: 'Fast skim summary',
+    description: 'Fast skim with narrative hook',
     tier: 'short',
     tags: ['summary'],
   },
   {
     label: 'Detailed Summary',
-    value:
-      'Provide a detailed summary with clear section headers. Cover main claims, evidence, and open questions.',
+    value: `Tell the story of the source in clear sections with headers: setup, core argument, evidence, gaps, and open questions. Use prose in each section; avoid bare bullet dumps.`,
     category: 'meta',
-    description: 'Structured longer summary',
+    description: 'Structured summary as narrative',
     tier: 'short',
     tags: ['summary'],
   },
   {
     label: 'Fact-Check',
-    value: 'Fact-check key claims and provide sources. Flag uncertain claims explicitly.',
+    value: `In prose, walk through the main claims in the order they appear. For each: what was claimed, whether it holds, and sources or why uncertain. End with a short "what still needs verification" paragraph.`,
     category: 'meta',
-    description: 'Verify claims with citations',
+    description: 'Claims reviewed as a narrative',
     tier: 'short',
     tags: ['skeptical'],
   },
   {
     label: 'Explain Simply',
-    value:
-      'Explain this in simple terms suitable for beginners. Stay under 300 words. Use one short analogy only if it helps.',
+    value: `Explain like a patient senior engineer teaching a smart newcomer: short story setup, then simple explanation under 300 words. One analogy only if it clarifies. Define jargon inline.`,
     category: 'meta',
-    description: 'Beginner-friendly, capped length',
+    description: 'Beginner-friendly story explainer',
     tier: 'short',
   },
   {
     label: 'Action Items',
-    value: `Extract actionable output from the source material.
-
-Include:
-1) Decisions made (or implied)
-2) Action items with owner if stated (otherwise "Unassigned")
-3) Deadlines or dates mentioned
-4) Open questions and blockers
-5) A one-line "if you only do three things" priority list
-
-Use a checklist format. Be concise.`,
+    value: `Brief narrative of what the source is about and what decision it implies, then a concise checklist:
+- Decisions made or implied
+- Action items (owner if known, else Unassigned)
+- Dates/deadlines mentioned
+- Open questions and blockers
+- "If you only do three things" line`,
     category: 'meta',
-    description: 'Decisions, tasks, blockers',
+    description: 'Context plus action checklist',
     tier: 'short',
   },
   {
     label: 'Hostile Critic',
-    value: `Act as a Hostile Critic. The user's message under --- SOURCE --- is the argument, draft, or position to attack.
-
-Requirements:
-- Point out three specific ways the argument could collapse.
-- List two assumptions made without evidence.
-- Provide one counter-argument not considered.
-
-Tone: precise, not polite.`,
+    value: `The source is the argument to attack. In direct prose (not polite filler): how the argument could collapse (three specific failure modes), two unsupported assumptions, and one serious counter-argument not addressed.`,
     category: 'meta',
     description: 'Stress-test an argument',
     tier: 'short',
@@ -166,267 +162,194 @@ Cover These Sections
     tags: ['architecture', 'narrative'],
   },
   {
-    label: 'Senior Staff Engineer Narrative v2',
-    value: `Role
-You are a Senior Staff Engineer and System Architect.
-
-Audience
-A technically literate peer who is new to this specific domain.
-
-Task
-Provide a critical, narrative-driven architectural analysis.
-
-Output Format
-1) Technical Narrative (why + how)
-   - Reverse-engineer the decision process, not just features.
-   - Start with constraints: CPU, I/O, organizational scaling, etc.
-   - Explain the pivot: core trade-offs and why this design won.
-   - Describe implementation reality: race conditions, migrations, custom sharding, or other hard edges.
-2) Domain-Specific Glossary
-   - Define only domain-specific jargon, novel acronyms, or non-standard term usage.
-   - Do not define baseline terms like latency or container.
-   - Structured list is allowed for this section only.
-3) Senior Engineer Critique
-   - Classify the approach as standard/boring vs novel/bleeding-edge.
-   - Identify what the article leaves unsaid.
-   - Predict the most likely next failure point.
-
-Style
-- Sections 1 and 3 must be prose/narrative.
-- Section 2 can be structured for scanability.
-- Use peer-to-peer, high-bandwidth language`,
-    category: 'article',
-    description: 'Narrative analysis with senior critique',
-    tier: 'long',
-    tags: ['architecture', 'narrative', 'critique'],
-  },
-  {
-    label: 'Article · Strategic',
-    value: `Role
-Act as a Principal Engineer or CTO.
-
-Goal
-Treat the source as an engineering implementation and a signal in the evolution of software architecture.
-
-Sections
-1) Core Architecture — problem limit reached, mechanism/patterns (not variable names), key design trick
-2) Ecosystem Landscape — lineage, standard alternatives rejected, macro trend alignment
-3) Critical Assessment — complexity cost, who should adopt (startup vs hyperscaler), two-year failure prediction
-4) Terminology Mapping — map source terms to standard industry terms (not a dictionary)
-
-Style: authoritative, concise headers; avoid bullets in narrative sections.`,
-    category: 'article',
-    description: 'CTO-level strategic dossier',
-    tier: 'long',
-    tags: ['architecture'],
-  },
-  {
     label: 'Article · Deep Teach',
     value: `Role
-Act as a Technical Professor.
+Act as a Technical Professor who teaches through story.
 
 Audience
-A strong engineer without background in this specific sub-domain.
+A strong engineer new to this sub-domain.
 
-Structure
-1) Prerequisite Context — sub-field overview, standard industry model, where it breaks down
-2) Source Analysis — problem solved, mechanism (data/control flow), differentiation vs standard model
-3) Technical Assessment — trade-offs; quantify impact when metrics exist
-4) Essential Vocabulary — rigorous definitions; minimal metaphors
+Task
+Explain the source as a context-first narrative.
 
-Style: direct, academic, efficient.`,
+${NARRATIVE_SPINE}
+
+Cover in prose
+1) How the field usually works (standard model) and where it breaks down
+2) The specific problem this technology addresses and how the mechanism unfolds (data/control flow as a story)
+3) How it differs from the standard path and what trade-offs that created
+4) Vocabulary defined inline on first use (rigorous, minimal metaphor)
+
+Tone: direct, patient, like a great lecture — not a slide outline.`,
     category: 'article',
-    description: 'Context-first deep explanation',
+    description: 'Context-first narrative explainer',
     tier: 'long',
+    tags: ['narrative'],
   },
   {
     label: 'Article · Design Doc',
     value: `Role
-Principal Engineer producing an internal design-doc seed from the source.
+Principal Engineer onboarding a teammate to a system described in the source.
 
-Sections
-1) TL;DR (3-5 sentences)
-2) System Decomposition — components, responsibilities, sync/async patterns, trust boundaries
-3) Data & Control Flow — end-to-end path; idempotency, retries, backpressure
-4) Implementation — data models, patterns (CQRS, sharding, etc.), operational mechanisms
-5) Operations — scaling, latency/throughput, observability
-6) Text Diagram — indentation + arrows
+Task
+Reverse-engineer the system as a narrative design walkthrough, then crystallize structure.
 
-If details are missing, label explicit assumptions.`,
+${NARRATIVE_SPINE}
+
+In prose, cover the journey of a request through the system: components, sync/async boundaries, trust boundaries, data and control flow, idempotency/retries/backpressure, scaling and observability.
+
+After the narrative, add a compact text diagram (indentation + arrows). Label explicit assumptions where the source is silent.`,
     category: 'article',
-    description: 'Reverse-engineer architecture',
+    description: 'System walkthrough as story + diagram',
     tier: 'long',
-    tags: ['architecture'],
+    tags: ['architecture', 'narrative'],
   },
   {
     label: 'Industry Comparison',
     value: `Role
-Staff Engineer comparing this approach to industry norms.
+Staff Engineer telling the story of a problem class and where this approach fits.
 
-Sections
-1) TL;DR (3-5 sentences)
-2) Problem Class (OLTP, stream processing, orchestration, etc.)
-3) Common Approaches (2-3 stacks + trade-offs)
-4) Direct Comparison — consistency, latency, throughput, ops complexity, cost, lock-in, fault tolerance; mark better/worse/different per row
-5) Fit Criteria — when to use vs conventional approach
-6) Long-Term — lock-in, migration, maintenance
+Task
+Compare the source to industry norms as a narrative, not a rubric dump.
 
-Be explicit and comparative.`,
+${NARRATIVE_SPINE}
+
+In prose, weave together
+- What problem class this is and how teams usually solve it today
+- The mainstream stacks/patterns and their typical trade-offs
+- How this approach behaves differently (consistency, latency, cost, ops, lock-in) and for whom it is a fit
+- What a conventional path would still be safer for
+- Long-term maintenance and migration story
+
+Use a short comparison table only if it sharpens the story; lead with narrative.`,
     category: 'article',
-    description: 'vs typical industry solutions',
+    description: 'Industry fit as narrative comparison',
     tier: 'long',
+    tags: ['narrative'],
   },
   {
     label: 'Hype vs Evidence',
     value: `Role
-Skeptical Principal Engineer reviewing vendor/marketing technical content.
+Skeptical Principal Engineer narrating a vendor or marketing post.
 
-Sections
-1) TL;DR (3-5 sentences)
-2) Claims vs Evidence — quote/paraphrase each major claim; evidence quality (strong/weak/absent)
-3) Hidden Assumptions — workload, scale/environment, operational maturity
-4) Missing Details — failure modes, consistency, cost, benchmark methodology
-5) Pragmatic Take — POC-worthy? questions for a deep-dive
+Task
+Tell the story of what is being sold, what would have to be true for it to work, and what the evidence actually supports.
 
-Tone: neutral, evidence-driven; no marketing language.`,
+${NARRATIVE_SPINE}
+
+In prose, cover
+- The promise and the implied production story
+- Major claims and whether evidence is strong, weak, or absent (quote or paraphrase claims inline)
+- Hidden workload, scale, and operational assumptions
+- What is missing for a serious evaluation
+- A pragmatic closing: POC-worthy or not, and questions for a deep-dive
+
+Tone: neutral, evidence-driven; no marketing voice.`,
     category: 'article',
-    description: 'Separate hype from proof',
+    description: 'Hype vs proof as narrative',
     tier: 'long',
-    tags: ['skeptical'],
+    tags: ['skeptical', 'narrative'],
   },
 
   // --- research ---
   {
     label: 'Company Research',
     value: `Role
-Research analyst.
+Research analyst writing a diligence brief that reads like informed narrative, not a form.
 
 Goal
-Research the company implied in the source (infer company name and URL from --- SOURCE ---; if missing, state Unknown and list what to verify).
-
-Purpose default: vendor evaluation unless the source states otherwise.
+Research the company implied in the source (infer name and URL; if missing, say Unknown and what to verify). Default purpose: vendor evaluation unless the source says otherwise.
 
 Rules
-- Use web browsing when available.
-- If browsing is unavailable, say so upfront and rely on --- SOURCE --- plus clearly labeled inference.
-- Source link for every key claim when possible.
-- Missing data: write "Unknown" + verification step.
+- Use web browsing when available; if not, state that upfront and rely on the source plus labeled inference.
+- Source link for key claims when possible; Unknown + verification step when data is missing.
 
-Output (500-700 words max)
-1) One-liner + Snapshot (HQ, founded, ownership, geographies, size signals)
+Open with a narrative executive summary (5-8 sentences): what the company is, why it matters now, and your early read.
+
+Then cover each section in prose with a short narrative lead-in before any lists or tables:
+1) Snapshot (HQ, founded, ownership, geographies, size)
 2) Product + ICP
 3) Traction
-4) Market + Competitors (top 5 table)
+4) Market + Competitors (table allowed for top 5)
 5) Business Model
 6) Risks / Red Flags
 7) Recent News (12-24 months, dated)
-8) Bottom Line (3 strengths, 3 weaknesses, 3 open questions)
+8) Bottom Line (strengths, weaknesses, open questions as prose, then three bullets max)
 
-Source priority: primary filings/site, then reputable press.`,
+Cap total length ~500-700 words. Primary sources first.`,
     category: 'research',
-    description: 'Company diligence brief',
+    description: 'Company diligence as narrative brief',
     tier: 'long',
-    tags: ['web'],
+    tags: ['web', 'narrative'],
   },
 
   // --- code ---
   {
     label: 'README · Project',
-    value: `Write a detailed README.md for the project described in the source.
+    value: `Write a README.md that tells the story of the project.
 
-If the source is not a codebase/repo, say what is missing and summarize what can be inferred.
+If the source is not a repo/codebase, say what is missing and narrate what can be inferred.
 
-Cover:
-1) What it does and why it exists
-2) Architecture and component connections
-3) Directory/module roles
-4) Tech choices and rationale
-5) Key trade-offs
-6) Lessons learned (bugs, pitfalls, practices)
+${NARRATIVE_SPINE}
 
-Style: engaging, readable, technically deep.`,
+Cover as engaging prose (headers OK): why the project exists, how architecture evolved, how pieces connect, tech choices as decisions-not-catalogs, trade-offs, and lessons learned (bugs, pitfalls, practices) as stories where possible.
+
+Balance readability with technical depth — memorable, not textbook dry.`,
     category: 'code',
-    description: 'README from repo/docs',
+    description: 'README as project story',
     tier: 'long',
+    tags: ['narrative'],
   },
   {
     label: 'Code / PR Review',
     value: `Role
-Senior engineer doing a code or PR review on the source (diff, snippet, or description).
+Senior engineer reviewing a change described in the source.
 
-Sections
-1) Summary (what changed and intent)
-2) Correctness & edge cases
-3) API/design & maintainability
-4) Security & data handling
-5) Tests & observability gaps
-6) Verdict: Approve / Approve with nits / Request changes — with top 3 must-fix items
+Task
+Review as narrative + clear verdict.
 
-Be specific; reference lines or symbols when present in the source.`,
+Open with a prose paragraph: what changed, what problem it solves, and the reviewer's mental model of risk.
+
+${NARRATIVE_SPINE}
+
+Then in prose sections (not bullet rubrics): correctness and edge cases, API/design, security/data, tests/observability. Reference lines or symbols when present.
+
+Close with verdict (Approve / Approve with nits / Request changes) and the top three must-fix items woven into a short closing paragraph.`,
     category: 'code',
-    description: 'Review diff or snippet',
+    description: 'PR review as narrative',
     tier: 'long',
+    tags: ['narrative'],
   },
 
   // --- utility ---
   {
     label: 'Compare A vs B',
-    value: `The source contains two items to compare (label them A and B; if unclear, infer split from headings or "vs" language).
+    value: `The source compares two options (label A and B; infer from headings or "vs" if unclear).
 
-For each dimension: summarize A, summarize B, declare winner or "trade-off".
-
-Dimensions (at minimum):
-- Goal/fit
-- Complexity
-- Performance/scalability
-- Operational burden
-- Risk
-- Recommendation for a small team vs a large org
-
-End with a one-paragraph recommendation.`,
+Tell the story of why both exist, then walk through each dimension in prose (goal, complexity, performance, ops burden, risk). End with a one-paragraph recommendation for a small team vs a large org.`,
     category: 'utility',
-    description: 'Side-by-side comparison',
+    description: 'Comparison as narrative',
     tier: 'short',
+    tags: ['narrative'],
   },
   {
     label: 'Steelman + Verdict',
-    value: `For the position or proposal in the source:
-
-1) Steelman — strongest good-faith version (prose)
-2) Key weaknesses — 3-5 bullets
-3) Verdict — support / oppose / conditional, with conditions
-4) What would change your mind
-
-Be fair before critical.`,
+    value: `For the position in the source: first steelman in full prose (strongest good-faith case). Then a short narrative of key weaknesses, your verdict (support/oppose/conditional) with conditions, and what would change your mind.`,
     category: 'utility',
-    description: 'Best case, then judgment',
+    description: 'Steelman story, then judgment',
     tier: 'short',
+    tags: ['narrative'],
   },
   {
     label: 'Email / Reply',
-    value: `Draft a professional email or comment reply to the thread/content in the source.
-
-Requirements:
-- Match the appropriate tone (reply to manager, peer, customer, or public comment)
-- Be concise; lead with the answer
-- Bullet action items if any
-- Offer a clear next step or ask one focused question if needed
-
-Output only the draft (no meta commentary).`,
+    value: `Draft a professional reply to the source thread. Lead with the answer in the first sentence, keep the body concise, use bullets only for action items if needed, match tone to audience (manager/peer/customer/public). Output only the draft.`,
     category: 'utility',
     description: 'Reply draft',
     tier: 'short',
   },
   {
     label: 'Translate + Tone',
-    value: `Translate the source into the target language implied by the user query (if none stated, use English).
-
-Rules:
-- Preserve technical terms, code, URLs, and numbers
-- Keep tone: professional and direct unless the source is casual
-- After the translation, add a 2-line "Term notes" section only for ambiguous terms
-
-Output: translation first, then term notes.`,
+    value: `Translate the source to the language implied in the user query (default English). Preserve code, URLs, numbers, and technical terms. Professional direct tone unless the source is casual. After translation, at most 2 lines of term notes for ambiguous words.`,
     category: 'utility',
     description: 'Translate preserving jargon',
     tier: 'short',
