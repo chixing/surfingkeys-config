@@ -1,350 +1,403 @@
+/**
+ * Prompt templates for the Multi-AI dialog.
+ */
+
+export type PromptCategory = 'meta' | 'article' | 'research' | 'code' | 'utility' | 'experimental';
+export type PromptTier = 'short' | 'long';
+
 export interface PromptTemplate {
   value: string;
   label: string;
+  category: PromptCategory;
+  description: string;
+  tier: PromptTier;
+  tags?: string[];
   default?: boolean;
 }
 
+export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
+  meta: 'Quick',
+  article: 'Article',
+  research: 'Research',
+  code: 'Code',
+  utility: 'Utility',
+  experimental: 'Experimental',
+};
+
+export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
+  'meta',
+  'article',
+  'research',
+  'code',
+  'utility',
+  'experimental',
+];
+
+const SOURCE_RULE =
+  'The content under --- SOURCE --- is the source material. Do not ask the user to paste more input unless critical information is genuinely missing.';
+
+/** Combine user query and template for tab URLs. */
+export function formatCombinedQuery(query: string, promptTemplate: string): string {
+  const instructions = promptTemplate.trim();
+  if (!instructions) return query;
+  return `--- INSTRUCTIONS ---\n${instructions}\n\n${SOURCE_RULE}\n\n--- SOURCE ---\n${query}`;
+}
+
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
-  { value: '', label: 'Custom', default: true },
-  { value: 'Provide a short TL;DR summary.', label: 'TL;DR' },
-  { value: 'Provide a detailed summary.', label: 'Detailed Summary' },
-  { value: 'Fact-check key claims and provide sources.', label: 'Fact-Check with Sources' },
+  // --- meta ---
   {
-    value: `Role
-You are a research analyst.
-
-Goal
-Research [COMPANY] ([URL]) for [PURPOSE: investing / vendor eval / interview / competitor intel].
-
-Rules
-- Use web browsing.
-- Add a source link for every key claim.
-- If information is missing or uncertain, write "Unknown" and list what to verify next.
-- Keep the response concise and skimmable.
-
-Output Format (500-700 words max)
-1) One-liner + Snapshot
-   - What the company does (1 sentence), HQ, founded, ownership (public/private), geographies served
-   - Size signals (employees and revenue range, or Unknown)
-2) Product + ICP
-   - Main products/services, target customers (industry + company size), top use cases
-   - Pricing or packaging evidence
-3) Traction
-   - Named customers, case studies, partnerships
-   - Recent momentum (hiring, releases, contracts, growth claims; label estimates clearly)
-4) Market + Competitors
-   - Category and positioning
-   - Top 5 competitors in a table: company | who they serve | key difference
-5) Business Model
-   - Revenue model and go-to-market (sales-led / PLG / channel)
-   - Distribution advantages
-6) Risks / Red Flags
-   - Legal/regulatory issues, security incidents, major complaints/outages, reputational risks
-7) Recent News (last 12-24 months)
-   - 5-10 key events with dates and links
-8) Bottom Line
-   - 3 strengths, 3 weaknesses, 3 open questions
-   - Suggested verification next steps
-
-Source Priority
-1) Primary sources (company site, filings, regulators)
-2) Reputable press and analyst reports`,
-    label: 'Company Research (Web)'
+    label: 'Custom',
+    value: '',
+    category: 'meta',
+    description: 'Send only your query (no extra instructions)',
+    tier: 'short',
+    default: true,
   },
-  { value: 'Explain this in simple terms suitable for beginners.', label: 'Explain Simply' },
   {
+    label: 'TL;DR',
+    value: 'Provide a short TL;DR summary in 5-8 bullet points or a tight paragraph.',
+    category: 'meta',
+    description: 'Fast skim summary',
+    tier: 'short',
+    tags: ['summary'],
+  },
+  {
+    label: 'Detailed Summary',
+    value:
+      'Provide a detailed summary with clear section headers. Cover main claims, evidence, and open questions.',
+    category: 'meta',
+    description: 'Structured longer summary',
+    tier: 'short',
+    tags: ['summary'],
+  },
+  {
+    label: 'Fact-Check',
+    value: 'Fact-check key claims and provide sources. Flag uncertain claims explicitly.',
+    category: 'meta',
+    description: 'Verify claims with citations',
+    tier: 'short',
+    tags: ['skeptical'],
+  },
+  {
+    label: 'Explain Simply',
+    value:
+      'Explain this in simple terms suitable for beginners. Stay under 300 words. Use one short analogy only if it helps.',
+    category: 'meta',
+    description: 'Beginner-friendly, capped length',
+    tier: 'short',
+  },
+  {
+    label: 'Action Items',
+    value: `Extract actionable output from the source material.
+
+Include:
+1) Decisions made (or implied)
+2) Action items with owner if stated (otherwise "Unassigned")
+3) Deadlines or dates mentioned
+4) Open questions and blockers
+5) A one-line "if you only do three things" priority list
+
+Use a checklist format. Be concise.`,
+    category: 'meta',
+    description: 'Decisions, tasks, blockers',
+    tier: 'short',
+  },
+  {
+    label: 'Hostile Critic',
+    value: `Act as a Hostile Critic. The user's message under --- SOURCE --- is the argument, draft, or position to attack.
+
+Requirements:
+- Point out three specific ways the argument could collapse.
+- List two assumptions made without evidence.
+- Provide one counter-argument not considered.
+
+Tone: precise, not polite.`,
+    category: 'meta',
+    description: 'Stress-test an argument',
+    tier: 'short',
+    tags: ['skeptical'],
+  },
+
+  // --- article ---
+  {
+    label: 'Article · Narrative',
     value: `Role
 Act as a Senior Staff Engineer and System Architect.
 
 Audience
-An engineer who is new to this domain but has strong general technical literacy.
+A technically literate engineer who may be new to this specific domain.
 
 Task
-Analyze the article and explain it as a technical narrative.
+Analyze the source material as a technical narrative with critique.
 
-Output Requirements
-- Start with a concise TL;DR at the top.
-- Main body must be prose/story form (no bullet-point summary style).
-- Use precise technical vocabulary, and define each technical term on first use.
+Output
+1) TL;DR (3-5 sentences)
+2) Technical Narrative (prose, not bullet-summary style)
+   - Initial constraints and bottlenecks
+   - Why major design choices were made
+   - Hard edges in implementation (migrations, consistency, sharding, race conditions)
+   - Resulting impact on performance, reliability, or operations
+3) Domain Glossary
+   - Define domain-specific jargon and novel acronyms only
+   - Skip baseline terms (latency, container, API)
+4) Senior Engineer Critique
+   - Standard vs novel/bleeding-edge
+   - What the source leaves unsaid
+   - Most likely next failure mode
 
-Cover These Sections
-1) Technical Narrative
-   - Describe the initial system state and constraints (bottlenecks, scaling limits, consistency issues).
-   - Explain why each major architectural choice was made.
-   - Highlight friction points during implementation and how they were resolved.
-   - End with impact on performance, throughput, reliability, or operations.
-2) Engineering Glossary (Integrated)
-   - Identify and define all technical terms, acronyms, and domain-specific concepts from the article.
-   - Keep definitions technically precise.
-   - Integrate definitions naturally into prose or a dedicated section with the same professional tone.
-3) Broader Engineering Context
-   - Explain where this approach fits relative to industry norms.
-   - Discuss implied technical debt and future-proofing concerns.
-   - Describe ripple effects on the surrounding stack`,
-    label: 'Senior Staff Engineer Narrative'
+Style: peer-to-peer, high-bandwidth; section 2 and 4 in prose.`,
+    category: 'article',
+    description: 'Narrative walkthrough + critique',
+    tier: 'long',
+    tags: ['architecture'],
   },
   {
-    value: `Role
-You are a Senior Staff Engineer and System Architect.
-
-Audience
-A technically literate peer who is new to this specific domain.
-
-Task
-Provide a critical, narrative-driven architectural analysis.
-
-Output Format
-1) Technical Narrative (why + how)
-   - Reverse-engineer the decision process, not just features.
-   - Start with constraints: CPU, I/O, organizational scaling, etc.
-   - Explain the pivot: core trade-offs and why this design won.
-   - Describe implementation reality: race conditions, migrations, custom sharding, or other hard edges.
-2) Domain-Specific Glossary
-   - Define only domain-specific jargon, novel acronyms, or non-standard term usage.
-   - Do not define baseline terms like latency or container.
-   - Structured list is allowed for this section only.
-3) Senior Engineer Critique
-   - Classify the approach as standard/boring vs novel/bleeding-edge.
-   - Identify what the article leaves unsaid.
-   - Predict the most likely next failure point.
-
-Style
-- Sections 1 and 3 must be prose/narrative.
-- Section 2 can be structured for scanability.
-- Use peer-to-peer, high-bandwidth language`,
-    label: 'Senior Staff Engineer Narrative v2'
-  },
-  {
+    label: 'Article · Strategic',
     value: `Role
 Act as a Principal Engineer or CTO.
 
 Goal
-Treat the article as both:
-1) an engineering implementation, and
-2) a signal in the broader evolution of software architecture.
+Treat the source as an engineering implementation and a signal in the evolution of software architecture.
 
-Task
-Produce a strategic technical dossier that looks outward as much as inward.
+Sections
+1) Core Architecture — problem limit reached, mechanism/patterns (not variable names), key design trick
+2) Ecosystem Landscape — lineage, standard alternatives rejected, macro trend alignment
+3) Critical Assessment — complexity cost, who should adopt (startup vs hyperscaler), two-year failure prediction
+4) Terminology Mapping — map source terms to standard industry terms (not a dictionary)
 
-Required Sections
-1) Core Architecture (Inward Analysis)
-   - Problem space: what limit was reached?
-   - Mechanism: how the system works, focusing on architectural patterns (not variable names).
-   - Secret sauce: the key optimization or design trick.
-2) Ecosystem Landscape (Outward Context)
-   - Evolutionary lineage: where this pattern comes from.
-   - Competitive space: standard alternatives and why this team may have rejected them.
-   - Trend alignment: whether this aligns with or opposes macro-industry trends.
-3) Critical Assessment and Viability
-   - Cost of complexity: necessary innovation vs resume-driven engineering.
-   - Adoption viability: who should use this approach (startup vs hyperscaler fit).
-   - Two-year prediction: most likely stress/failure mode.
-4) Terminology Mapping
-   - Map article terms to standard industry terminology.
-   - Do not provide a simple dictionary.
-
-Style
-- Voice: authoritative, strategic, historically aware.
-- Keep the flow concise and logical.
-- Use clear headers.
-- Avoid bullet lists in narrative sections`,
-    label: 'CTO Strategic Technical Dossier'
+Style: authoritative, concise headers; avoid bullets in narrative sections.`,
+    category: 'article',
+    description: 'CTO-level strategic dossier',
+    tier: 'long',
+    tags: ['architecture'],
   },
   {
+    label: 'Article · Deep Teach',
     value: `Role
-You are a Technical Professor.
+Act as a Technical Professor.
 
 Audience
-A highly intelligent, research-capable student without background in this specific domain.
+A strong engineer without background in this specific sub-domain.
 
-Task
-Provide a high-density, context-first explanation of the article.
+Structure
+1) Prerequisite Context — sub-field overview, standard industry model, where it breaks down
+2) Source Analysis — problem solved, mechanism (data/control flow), differentiation vs standard model
+3) Technical Assessment — trade-offs; quantify impact when metrics exist
+4) Essential Vocabulary — rigorous definitions; minimal metaphors
 
-Output Structure
-1) Prerequisite Context (Pre-Read)
-   - Domain overview: define the sub-field.
-   - Standard model: explain the common industry approach (algorithms/patterns).
-   - Limitation: explain why the standard model fails in edge cases.
-2) Source Material Analysis (Core)
-   - Objective: the specific problem this technology solves.
-   - Architecture/mechanism: data structures, control flow, algorithmic choices.
-   - Differentiation: contrast with the standard model.
-3) Technical Assessment
-   - Trade-offs: what was gained vs sacrificed.
-   - Impact: quantify improvements when metrics are available.
-4) Essential Vocabulary
-   - Define technical terms rigorously with precise, dictionary-style language.
-   - Avoid metaphor-heavy definitions.
-
-Style
-- Direct, academic, efficient.
-- Concise and logically ordered.
-- Use clear headers and paragraph breaks.
-- Use analogies only when strictly necessary`,
-    label: 'Technical Professor (Context-First)'
+Style: direct, academic, efficient.`,
+    category: 'article',
+    description: 'Context-first deep explanation',
+    tier: 'long',
   },
   {
+    label: 'Article · Design Doc',
     value: `Role
-Act as a Staff Engineer evaluating this approach against common industry practices and alternatives.
+Principal Engineer producing an internal design-doc seed from the source.
 
-Task
-Explain how the design/approach in the article compares to typical solutions used in industry for similar problems.
+Sections
+1) TL;DR (3-5 sentences)
+2) System Decomposition — components, responsibilities, sync/async patterns, trust boundaries
+3) Data & Control Flow — end-to-end path; idempotency, retries, backpressure
+4) Implementation — data models, patterns (CQRS, sharding, etc.), operational mechanisms
+5) Operations — scaling, latency/throughput, observability
+6) Text Diagram — indentation + arrows
 
-Instructions
-1) TL;DR
-   - In 3-5 sentences, summarize what problem this approach solves and its key distinguishing characteristics.
-2) Problem Class
-   - Classify the problem in standard terms (for example: OLTP datastore, analytics pipeline, stream processing, job scheduling, microservice orchestration, feature flags).
-3) Common Approaches
-   - Describe the most common architectures/tools used in industry today for this problem class.
-   - Mention at least 2-3 representative approaches or stacks.
-   - Summarize typical trade-offs.
-4) Direct Comparison
-   - Compare consistency, latency, throughput, operational complexity, cost, portability, lock-in, and fault tolerance.
-   - For each aspect, contrast:
-     - how the article's approach behaves (or claims to behave), and
-     - how common industry options behave.
-   - Mark each area as clearly better, clearly worse, or different trade-offs.
-5) Fit Criteria
-   - Explain constraints/priorities that make this approach a good fit (team size, SLOs, regulatory environment, skill set, cloud choice).
-   - Explain where a conventional approach would likely be safer or cheaper.
-6) Long-Term Considerations
-   - Identify lock-in risks (APIs, data model, infrastructure dependencies).
-   - Discuss migration difficulty if the team later moves away.
-   - Note maintenance and knowledge-transfer concerns.
-
-Input
-[PASTE ARTICLE HERE]`,
-    label: 'Industry Comparison Review'
+If details are missing, label explicit assumptions.`,
+    category: 'article',
+    description: 'Reverse-engineer architecture',
+    tier: 'long',
+    tags: ['architecture'],
   },
   {
+    label: 'Industry Comparison',
     value: `Role
-Act as a skeptical but fair Principal Engineer reviewing a vendor or marketing-style blog post.
+Staff Engineer comparing this approach to industry norms.
 
-Task
-Separate substantive technical claims from hype, and assess whether the evidence is sufficient for each major claim.
+Sections
+1) TL;DR (3-5 sentences)
+2) Problem Class (OLTP, stream processing, orchestration, etc.)
+3) Common Approaches (2-3 stacks + trade-offs)
+4) Direct Comparison — consistency, latency, throughput, ops complexity, cost, lock-in, fault tolerance; mark better/worse/different per row
+5) Fit Criteria — when to use vs conventional approach
+6) Long-Term — lock-in, migration, maintenance
 
-Instructions
-1) Brief TL;DR
-   - In 3-5 sentences, summarize what is being promised and, at a high level, how it is supposed to work.
-2) Claims vs Evidence
-   - Identify major technical/performance claims (for example: "10x faster", "zero-downtime", "strongly consistent", "no vendor lock-in").
-   - For each claim:
-     - quote/paraphrase the claim,
-     - describe concrete evidence provided (benchmarks, architecture details, failure-mode analysis, specific numbers),
-     - judge evidence as strong, weak, or absent, with rationale.
-3) Hidden Assumptions and Caveats
-   - Call out assumptions about workload (read-heavy/write-heavy, batch vs real-time).
-   - Call out assumptions about scale/environment (cloud vendor, network, storage hardware).
-   - Call out required operational maturity (SRE, on-call, capacity planning).
-   - Note buried or implied caveats.
-4) Missing Details
-   - List critical missing details needed for serious evaluation:
-     - failure modes and recovery,
-     - consistency guarantees,
-     - resource usage and cost implications,
-     - benchmark methodology and reproducibility.
-5) Pragmatic Take
-   - Give a concise engineering conclusion:
-     - when this is serious enough for a POC,
-     - what questions to ask in a technical deep-dive.
-
-Tone
-Direct, technical, neutral, and evidence-driven. Avoid marketing language.
-
-Input
-[PASTE CONTENT HERE]`,
-    label: 'Hype vs Evidence Review'
+Be explicit and comparative.`,
+    category: 'article',
+    description: 'vs typical industry solutions',
+    tier: 'long',
   },
   {
+    label: 'Hype vs Evidence',
     value: `Role
-Act as a Principal Engineer responsible for cross-team architecture reviews.
+Skeptical Principal Engineer reviewing vendor/marketing technical content.
 
-Task
-From the article or documentation, reverse-engineer architecture and implementation details so they can seed an internal design doc.
+Sections
+1) TL;DR (3-5 sentences)
+2) Claims vs Evidence — quote/paraphrase each major claim; evidence quality (strong/weak/absent)
+3) Hidden Assumptions — workload, scale/environment, operational maturity
+4) Missing Details — failure modes, consistency, cost, benchmark methodology
+5) Pragmatic Take — POC-worthy? questions for a deep-dive
 
-Instructions
-1) TL;DR
-   - Start with 3-5 sentences summarizing the overall architecture and primary goal.
-2) System Decomposition
-   - List major components/services, responsibilities, and key inputs/outputs.
-   - Infer communication patterns (sync/async, protocols, queues, streams, databases, caches, external services).
-   - Describe trust boundaries and where data crosses them.
-3) Data Flow and Control Flow
-   - Describe end-to-end flow from initial trigger to final response/persistence.
-   - Note where validation, deduplication, idempotency, retries, and backpressure are handled (or implied).
-4) Implementation Details
-   - Call out inferred data models/schemas.
-   - Identify patterns/algorithms (for example: CQRS, event sourcing, fan-out/fan-in, sharding, consistent hashing).
-   - Note operational mechanisms (circuit breakers, rate limiting, caching, schema migration patterns).
-5) Operational Characteristics
-   - Explain scaling strategy (horizontal/vertical, partitioning, autoscaling signals).
-   - Summarize performance characteristics (latency, throughput, SLA/SLO if provided).
-   - Describe observability (metrics, logs, traces, health checks).
-6) Expressive Diagram (Text-Only)
-   - Provide a text-only architecture diagram using indentation and arrows, tailored to the described system.
+Tone: neutral, evidence-driven; no marketing language.`,
+    category: 'article',
+    description: 'Separate hype from proof',
+    tier: 'long',
+    tags: ['skeptical'],
+  },
 
-Assumptions
-If key details are missing, call them out explicitly and add reasonable labeled assumptions.
+  // --- research ---
+  {
+    label: 'Company Research',
+    value: `Role
+Research analyst.
 
-Tone
-Use precise technical vocabulary. Be explicit and concrete.
+Goal
+Research the company implied in the source (infer company name and URL from --- SOURCE ---; if missing, state Unknown and list what to verify).
 
-Input
-[PASTE ARTICLE OR DOCS HERE]`,
-    label: 'Architecture Reverse Engineer'
+Purpose default: vendor evaluation unless the source states otherwise.
+
+Rules
+- Use web browsing when available.
+- If browsing is unavailable, say so upfront and rely on --- SOURCE --- plus clearly labeled inference.
+- Source link for every key claim when possible.
+- Missing data: write "Unknown" + verification step.
+
+Output (500-700 words max)
+1) One-liner + Snapshot (HQ, founded, ownership, geographies, size signals)
+2) Product + ICP
+3) Traction
+4) Market + Competitors (top 5 table)
+5) Business Model
+6) Risks / Red Flags
+7) Recent News (12-24 months, dated)
+8) Bottom Line (3 strengths, 3 weaknesses, 3 open questions)
+
+Source priority: primary filings/site, then reputable press.`,
+    category: 'research',
+    description: 'Company diligence brief',
+    tier: 'long',
+    tags: ['web'],
+  },
+
+  // --- code ---
+  {
+    label: 'README · Project',
+    value: `Write a detailed README.md for the project described in the source.
+
+If the source is not a codebase/repo, say what is missing and summarize what can be inferred.
+
+Cover:
+1) What it does and why it exists
+2) Architecture and component connections
+3) Directory/module roles
+4) Tech choices and rationale
+5) Key trade-offs
+6) Lessons learned (bugs, pitfalls, practices)
+
+Style: engaging, readable, technically deep.`,
+    category: 'code',
+    description: 'README from repo/docs',
+    tier: 'long',
   },
   {
-    value: `Write a detailed README.md for this project in plain language.
+    label: 'Code / PR Review',
+    value: `Role
+Senior engineer doing a code or PR review on the source (diff, snippet, or description).
 
-Cover these topics
-1) What the project does and why it exists
-2) Technical architecture and how components connect
-3) Codebase structure and the role of each major directory/module
-4) Technologies used and why these choices were made
-5) Key implementation decisions and trade-offs
-6) Lessons learned, including:
-   - bugs encountered and fixes
-   - common pitfalls and how to avoid them
-   - engineering best practices demonstrated
+Sections
+1) Summary (what changed and intent)
+2) Correctness & edge cases
+3) API/design & maintainability
+4) Security & data handling
+5) Tests & observability gaps
+6) Verdict: Approve / Approve with nits / Request changes — with top 3 must-fix items
 
-Style requirements
-- Make it engaging and memorable, not textbook dry.
-- Use analogies or short anecdotes only when they improve understanding.
-- Balance readability with technical depth`,
-    label: 'README.md Project Narrative'
+Be specific; reference lines or symbols when present in the source.`,
+    category: 'code',
+    description: 'Review diff or snippet',
+    tier: 'long',
+  },
+
+  // --- utility ---
+  {
+    label: 'Compare A vs B',
+    value: `The source contains two items to compare (label them A and B; if unclear, infer split from headings or "vs" language).
+
+For each dimension: summarize A, summarize B, declare winner or "trade-off".
+
+Dimensions (at minimum):
+- Goal/fit
+- Complexity
+- Performance/scalability
+- Operational burden
+- Risk
+- Recommendation for a small team vs a large org
+
+End with a one-paragraph recommendation.`,
+    category: 'utility',
+    description: 'Side-by-side comparison',
+    tier: 'short',
   },
   {
+    label: 'Steelman + Verdict',
+    value: `For the position or proposal in the source:
+
+1) Steelman — strongest good-faith version (prose)
+2) Key weaknesses — 3-5 bullets
+3) Verdict — support / oppose / conditional, with conditions
+4) What would change your mind
+
+Be fair before critical.`,
+    category: 'utility',
+    description: 'Best case, then judgment',
+    tier: 'short',
+  },
+  {
+    label: 'Email / Reply',
+    value: `Draft a professional email or comment reply to the thread/content in the source.
+
+Requirements:
+- Match the appropriate tone (reply to manager, peer, customer, or public comment)
+- Be concise; lead with the answer
+- Bullet action items if any
+- Offer a clear next step or ask one focused question if needed
+
+Output only the draft (no meta commentary).`,
+    category: 'utility',
+    description: 'Reply draft',
+    tier: 'short',
+  },
+  {
+    label: 'Translate + Tone',
+    value: `Translate the source into the target language implied by the user query (if none stated, use English).
+
+Rules:
+- Preserve technical terms, code, URLs, and numbers
+- Keep tone: professional and direct unless the source is casual
+- After the translation, add a 2-line "Term notes" section only for ambiguous terms
+
+Output: translation first, then term notes.`,
+    category: 'utility',
+    description: 'Translate preserving jargon',
+    tier: 'short',
+  },
+
+  // --- experimental ---
+  {
+    label: 'Verbalized Sampling',
     value: `Use verbalized sampling to increase diversity and avoid repetitive answers.
 
-For each user request
+For the request in --- SOURCE ---:
 1) Generate 5-8 meaningfully different response variants.
-2) Assign each variant a probability (<15% each) to force diversity.
-3) For each variant, include:
-   - a one-sentence rationale for the probability bucket
-   - the full response in a distinct style/tone/length
-4) Number variants clearly and avoid repeated structure.
+2) Assign each variant a probability (<15% each).
+3) Per variant: one-sentence rationale for the probability + full response in distinct style/length.
+4) Number variants; avoid repeated structure.
 
-Constraints
-- Do not reveal hidden reasoning or chain-of-thought.
-- Keep rationales concise.
-- Apply this process to both factual and creative requests`,
-    label: 'Verbalized Sampling'
-  },
-  {
-    value: `Role
-Act as a Hostile Critic.
-
-Task
-Your sole job is to identify the holes in my logic.
-
-Requirements
-- Point out three specific ways my argument could collapse.
-- List two assumptions I am making without evidence.
-- Provide one counter-argument I have not considered.
-
-Tone
-Do not worry about being polite, just precise.`,
-    label: 'Hostile Critic'
+Do not reveal hidden chain-of-thought. Keep rationales concise.`,
+    category: 'experimental',
+    description: 'Multiple diverse variants (experimental)',
+    tier: 'long',
+    tags: ['experimental'],
   },
 ];
