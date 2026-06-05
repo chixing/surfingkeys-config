@@ -33,6 +33,7 @@ export class AiSelector {
   private clipboardIndicator: HTMLElement | null = null;
   private templateRows: HTMLElement[] = [];
   private templateFilterInput: HTMLInputElement | null = null;
+  private templateFilterStatus: HTMLElement | null = null;
   private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
   private promptDrafts: string[] = [];
   private selectedPromptIndexes = new Set<number>();
@@ -69,7 +70,7 @@ export class AiSelector {
     const title = this.createTitle();
     const footerHints = this.createFooterHints();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: promptLabel, controls: promptControls, picker: promptPicker } = this.createPromptPicker();
+    const { label: promptLabel, picker: promptPicker } = this.createPromptPicker();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const serviceSelectButtons = this.createServiceSelectButtons();
     const buttonsContainer = this.createButtons();
@@ -83,7 +84,6 @@ export class AiSelector {
       queryInput,
       promptLabel,
       promptPicker,
-      promptControls,
       servicesLabel,
       servicesContainer,
       serviceSelectButtons,
@@ -126,6 +126,7 @@ export class AiSelector {
     this.clipboardIndicator = null;
     this.templateRows = [];
     this.templateFilterInput = null;
+    this.templateFilterStatus = null;
     this.templateCategoryHeadings.clear();
     this.promptDrafts = [];
     this.selectedPromptIndexes.clear();
@@ -422,6 +423,11 @@ export class AiSelector {
           ? this.config.theme.colors.accentFg
           : this.config.theme.colors.fg;
       }
+
+      const description = row.querySelector('[data-sk-template-description]') as HTMLElement | null;
+      if (description) {
+        description.style.display = isActive ? 'block' : 'none';
+      }
     });
   }
 
@@ -489,22 +495,70 @@ export class AiSelector {
     this.setActivePrompt(index, true, false);
   }
 
-  private applyTemplateFilter(raw: string): void {
-    const q = raw.trim().toLowerCase();
+  private getFilterQuery(): string {
+    return (this.templateFilterInput?.value ?? '').trim().toLowerCase();
+  }
+
+  private templateMatchesFilter(index: number): boolean {
+    const q = this.getFilterQuery();
+    if (!q) return true;
+    return templateSearchHaystack(PROMPT_TEMPLATES[index]).includes(q);
+  }
+
+  /** Show rows that match the filter or are already selected. */
+  private shouldShowTemplateRow(index: number): boolean {
+    return this.templateMatchesFilter(index) || this.selectedPromptIndexes.has(index);
+  }
+
+  private getVisibleTemplateIndexes(): number[] {
+    const visible: number[] = [];
+    PROMPT_TEMPLATES.forEach((_, index) => {
+      if (this.shouldShowTemplateRow(index)) visible.push(index);
+    });
+    return visible;
+  }
+
+  private applyTemplateFilter(raw?: string): void {
+    if (raw !== undefined && this.templateFilterInput) {
+      this.templateFilterInput.value = raw;
+    }
     const categoryHasVisible = new Map<PromptCategory, boolean>();
 
     PROMPT_TEMPLATES.forEach((template, index) => {
       const row = this.templateRows[index];
       if (!row) return;
 
-      const match = !q || templateSearchHaystack(template).includes(q);
-      row.style.display = match ? '' : 'none';
-      if (match) categoryHasVisible.set(template.category, true);
+      const show = this.shouldShowTemplateRow(index);
+      row.style.display = show ? '' : 'none';
+      if (show) categoryHasVisible.set(template.category, true);
     });
 
     this.templateCategoryHeadings.forEach((heading, category) => {
       heading.style.display = categoryHasVisible.get(category) ? '' : 'none';
     });
+
+    this.updateTemplateFilterStatus();
+  }
+
+  private updateTemplateFilterStatus(): void {
+    if (!this.templateFilterStatus) return;
+
+    const q = this.getFilterQuery();
+    const matched = PROMPT_TEMPLATES.filter((_, i) => this.templateMatchesFilter(i)).length;
+    const visible = this.getVisibleTemplateIndexes().length;
+    const selected = this.selectedPromptIndexes.size;
+
+    if (!q) {
+      this.templateFilterStatus.textContent = `${PROMPT_TEMPLATES.length} templates · ${selected} selected`;
+      return;
+    }
+
+    const selectedOutsideFilter = [...this.selectedPromptIndexes].filter(i => !this.templateMatchesFilter(i)).length;
+    const extra =
+      selectedOutsideFilter > 0
+        ? ` · ${selectedOutsideFilter} selected shown outside filter`
+        : '';
+    this.templateFilterStatus.textContent = `${visible} shown (${matched} match, ${selected} selected)${extra}`;
   }
 
   private tryHandlePromptTemplateKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
@@ -647,7 +701,7 @@ export class AiSelector {
   private createFooterHints(): HTMLElement {
     const hints = document.createElement('p');
     hints.textContent =
-      'Enter: send · Shift+Enter: newline · Filter: search templates · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
+      'Enter: send · Shift+Enter: newline · Filter: match + keep selected · Select shown · Templates+Tab: preview · Esc: close';
     hints.style.cssText = `
       margin: 0 0 16px 0;
       color: ${this.config.theme.colors.infoFg};
@@ -713,7 +767,7 @@ export class AiSelector {
     return { label, input };
   }
 
-  private createPromptPicker(): { label: HTMLElement; controls: HTMLElement; picker: HTMLElement } {
+  private createPromptPicker(): { label: HTMLElement; picker: HTMLElement } {
     const label = document.createElement('label');
     label.textContent = 'Prompt Templates:';
     label.style.cssText = `
@@ -723,22 +777,23 @@ export class AiSelector {
       font-size: 14px;
     `;
 
-    const controls = this.createPromptSelectButtons();
-
     const picker = document.createElement('div');
     picker.style.cssText = `
       display: grid;
-      grid-template-columns: minmax(220px, 38%) 1fr;
+      grid-template-columns: minmax(280px, 44%) 1fr;
       gap: 12px;
       margin-bottom: 8px;
+      align-items: stretch;
+      min-height: min(58vh, 560px);
     `;
 
     const leftPane = document.createElement('div');
     leftPane.style.cssText = `
       display: flex;
       flex-direction: column;
-      min-height: 280px;
-      gap: 8px;
+      min-height: 0;
+      height: 100%;
+      gap: 6px;
     `;
 
     const leftTitle = document.createElement('div');
@@ -766,18 +821,29 @@ export class AiSelector {
       font-size: 13px;
       box-sizing: border-box;
     `;
-    filterInput.addEventListener('input', () => this.applyTemplateFilter(filterInput.value));
+    filterInput.addEventListener('input', () => this.applyTemplateFilter());
     this.templateFilterInput = filterInput;
+
+    const filterStatus = document.createElement('div');
+    filterStatus.style.cssText = `
+      font-size: 11px;
+      color: ${this.config.theme.colors.mainFg};
+      line-height: 1.3;
+      min-height: 14px;
+    `;
+    this.templateFilterStatus = filterStatus;
+
+    const templateSelectButtons = this.createPromptSelectButtons();
 
     const templateList = document.createElement('div');
     templateList.style.cssText = `
-      max-height: 280px;
+      flex: 1;
+      min-height: 0;
       overflow-y: auto;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
       border-radius: 4px;
-      padding: 8px;
-      flex: 1;
+      padding: 6px;
       box-sizing: border-box;
     `;
 
@@ -812,7 +878,8 @@ export class AiSelector {
     rightPane.style.cssText = `
       display: flex;
       flex-direction: column;
-      min-height: 280px;
+      min-height: 0;
+      height: 100%;
       gap: 8px;
     `;
 
@@ -849,6 +916,8 @@ export class AiSelector {
 
     leftPane.appendChild(leftTitle);
     leftPane.appendChild(filterInput);
+    leftPane.appendChild(filterStatus);
+    leftPane.appendChild(templateSelectButtons);
     leftPane.appendChild(templateList);
 
     rightPane.appendChild(previewTitle);
@@ -864,7 +933,9 @@ export class AiSelector {
       this.updatePromptRowStyles();
     }
 
-    return { label, controls, picker };
+    this.applyTemplateFilter();
+
+    return { label, picker };
   }
 
   private createPromptTemplateRow(template: PromptTemplate, index: number): HTMLElement {
@@ -873,11 +944,11 @@ export class AiSelector {
     row.style.cssText = `
       display: flex;
       align-items: flex-start;
-      gap: 10px;
-      padding: 8px;
+      gap: 8px;
+      padding: 5px 6px;
       border-radius: 4px;
       border: 1px solid ${this.config.theme.colors.border};
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       cursor: pointer;
       transition: all 0.15s ease;
     `;
@@ -903,6 +974,7 @@ export class AiSelector {
       } else {
         this.selectedPromptIndexes.delete(index);
       }
+      this.applyTemplateFilter();
       this.setActivePrompt(index, true, false);
     });
 
@@ -952,12 +1024,14 @@ export class AiSelector {
 
     const description = document.createElement('div');
     description.textContent = template.description;
+    description.dataset.skTemplateDescription = String(index);
     description.style.cssText = `
       font-size: 11px;
       line-height: 1.3;
       color: ${this.config.theme.colors.mainFg};
       margin-top: 2px;
       user-select: none;
+      display: none;
     `;
 
     textCol.appendChild(titleRow);
@@ -973,12 +1047,13 @@ export class AiSelector {
     container.style.cssText = `
       display: flex;
       gap: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 0;
       justify-content: flex-start;
+      flex-wrap: wrap;
     `;
 
     const selectAllBtn = document.createElement('button');
-    selectAllBtn.textContent = 'Select All Prompts';
+    selectAllBtn.textContent = 'Select shown';
     selectAllBtn.type = 'button';
     selectAllBtn.style.cssText = `
       padding: 4px 12px;
@@ -998,20 +1073,22 @@ export class AiSelector {
       selectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     selectAllBtn.onclick = () => {
-      PROMPT_TEMPLATES.forEach((_, index) => {
+      const visible = this.getVisibleTemplateIndexes();
+      visible.forEach(index => {
         this.selectedPromptIndexes.add(index);
         const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
         if (checkbox) checkbox.checked = true;
       });
-      if (this.activePromptIndex === null && PROMPT_TEMPLATES.length > 0) {
-        this.setActivePrompt(0);
+      this.applyTemplateFilter();
+      if (this.activePromptIndex === null && visible.length > 0) {
+        this.setActivePrompt(visible[0]);
         return;
       }
       this.updatePromptRowStyles();
     };
 
     const unselectAllBtn = document.createElement('button');
-    unselectAllBtn.textContent = 'Unselect All Prompts';
+    unselectAllBtn.textContent = 'Unselect shown';
     unselectAllBtn.type = 'button';
     unselectAllBtn.style.cssText = `
       padding: 4px 12px;
@@ -1031,11 +1108,12 @@ export class AiSelector {
       unselectAllBtn.style.background = this.config.theme.colors.bgDark;
     };
     unselectAllBtn.onclick = () => {
-      this.selectedPromptIndexes.clear();
-      PROMPT_TEMPLATES.forEach((_, index) => {
+      this.getVisibleTemplateIndexes().forEach(index => {
+        this.selectedPromptIndexes.delete(index);
         const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
         if (checkbox) checkbox.checked = false;
       });
+      this.applyTemplateFilter();
       this.updatePromptRowStyles();
     };
 
