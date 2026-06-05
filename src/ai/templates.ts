@@ -43,6 +43,20 @@ export function formatCombinedQuery(query: string, promptTemplate: string): stri
   return `--- INSTRUCTIONS ---\n${instructions}\n\n${SOURCE_RULE}\n\n--- SOURCE ---\n${query}`;
 }
 
+/** Lowercase haystack for template list filtering. */
+export function templateSearchHaystack(template: PromptTemplate): string {
+  return [
+    template.label,
+    template.description,
+    PROMPT_CATEGORY_LABELS[template.category],
+    template.category,
+    template.tier,
+    ...(template.tags ?? []),
+  ]
+    .join(' ')
+    .toLowerCase();
+}
+
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   // --- meta ---
   {
@@ -120,36 +134,74 @@ Tone: precise, not polite.`,
 
   // --- article ---
   {
-    label: 'Article · Narrative',
+    label: 'Senior Staff Engineer Narrative',
     value: `Role
 Act as a Senior Staff Engineer and System Architect.
 
 Audience
-A technically literate engineer who may be new to this specific domain.
+An engineer who is new to this domain but has strong general technical literacy.
 
 Task
-Analyze the source material as a technical narrative with critique.
+Analyze the article and explain it as a technical narrative.
 
-Output
-1) TL;DR (3-5 sentences)
-2) Technical Narrative (prose, not bullet-summary style)
-   - Initial constraints and bottlenecks
-   - Why major design choices were made
-   - Hard edges in implementation (migrations, consistency, sharding, race conditions)
-   - Resulting impact on performance, reliability, or operations
-3) Domain Glossary
-   - Define domain-specific jargon and novel acronyms only
-   - Skip baseline terms (latency, container, API)
-4) Senior Engineer Critique
-   - Standard vs novel/bleeding-edge
-   - What the source leaves unsaid
-   - Most likely next failure mode
+Output Requirements
+- Start with a concise TL;DR at the top.
+- Main body must be prose/story form (no bullet-point summary style).
+- Use precise technical vocabulary, and define each technical term on first use.
 
-Style: peer-to-peer, high-bandwidth; section 2 and 4 in prose.`,
+Cover These Sections
+1) Technical Narrative
+   - Describe the initial system state and constraints (bottlenecks, scaling limits, consistency issues).
+   - Explain why each major architectural choice was made.
+   - Highlight friction points during implementation and how they were resolved.
+   - End with impact on performance, throughput, reliability, or operations.
+2) Engineering Glossary (Integrated)
+   - Identify and define all technical terms, acronyms, and domain-specific concepts from the article.
+   - Keep definitions technically precise.
+   - Integrate definitions naturally into prose or a dedicated section with the same professional tone.
+3) Broader Engineering Context
+   - Explain where this approach fits relative to industry norms.
+   - Discuss implied technical debt and future-proofing concerns.
+   - Describe ripple effects on the surrounding stack`,
     category: 'article',
-    description: 'Narrative walkthrough + critique',
+    description: 'Technical narrative with integrated glossary',
     tier: 'long',
-    tags: ['architecture'],
+    tags: ['architecture', 'narrative'],
+  },
+  {
+    label: 'Senior Staff Engineer Narrative v2',
+    value: `Role
+You are a Senior Staff Engineer and System Architect.
+
+Audience
+A technically literate peer who is new to this specific domain.
+
+Task
+Provide a critical, narrative-driven architectural analysis.
+
+Output Format
+1) Technical Narrative (why + how)
+   - Reverse-engineer the decision process, not just features.
+   - Start with constraints: CPU, I/O, organizational scaling, etc.
+   - Explain the pivot: core trade-offs and why this design won.
+   - Describe implementation reality: race conditions, migrations, custom sharding, or other hard edges.
+2) Domain-Specific Glossary
+   - Define only domain-specific jargon, novel acronyms, or non-standard term usage.
+   - Do not define baseline terms like latency or container.
+   - Structured list is allowed for this section only.
+3) Senior Engineer Critique
+   - Classify the approach as standard/boring vs novel/bleeding-edge.
+   - Identify what the article leaves unsaid.
+   - Predict the most likely next failure point.
+
+Style
+- Sections 1 and 3 must be prose/narrative.
+- Section 2 can be structured for scanability.
+- Use peer-to-peer, high-bandwidth language`,
+    category: 'article',
+    description: 'Narrative analysis with senior critique',
+    tier: 'long',
+    tags: ['architecture', 'narrative', 'critique'],
   },
   {
     label: 'Article · Strategic',

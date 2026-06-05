@@ -9,6 +9,8 @@ import {
   PROMPT_CATEGORY_LABELS,
   PROMPT_CATEGORY_ORDER,
   PROMPT_TEMPLATES,
+  templateSearchHaystack,
+  type PromptCategory,
   type PromptTemplate,
 } from './templates';
 
@@ -30,6 +32,8 @@ export class AiSelector {
   private clipboardText: string | null = null;
   private clipboardIndicator: HTMLElement | null = null;
   private templateRows: HTMLElement[] = [];
+  private templateFilterInput: HTMLInputElement | null = null;
+  private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
   private promptDrafts: string[] = [];
   private selectedPromptIndexes = new Set<number>();
   private activePromptIndex: number | null = null;
@@ -120,7 +124,9 @@ export class AiSelector {
     this.promptPreviewTitle = null;
     this.clipboardText = null;
     this.clipboardIndicator = null;
-    this.templateRows = new Array(PROMPT_TEMPLATES.length);
+    this.templateRows = [];
+    this.templateFilterInput = null;
+    this.templateCategoryHeadings.clear();
     this.promptDrafts = [];
     this.selectedPromptIndexes.clear();
     this.activePromptIndex = null;
@@ -208,6 +214,17 @@ export class AiSelector {
       } else if (e.key === 'Enter') {
         const isTextArea = target?.tagName === 'TEXTAREA';
         if (isTextArea && e.shiftKey) return;
+
+        if (target === this.templateFilterInput) {
+          e.preventDefault();
+          const first = this.findFirstVisibleTemplateIndex();
+          if (first !== null) {
+            const checkbox = document.getElementById(`sk-template-${first}`) as HTMLInputElement | null;
+            checkbox?.focus();
+            this.setActivePrompt(first, true, false);
+          }
+          return;
+        }
 
         e.preventDefault();
         this.handleSubmit();
@@ -435,27 +452,81 @@ export class AiSelector {
   // Keyboard Navigation Helpers
   // ===========================================================================
 
+  private isTemplateRowVisible(index: number): boolean {
+    const row = this.templateRows[index];
+    return !!row && row.style.display !== 'none';
+  }
+
+  private findFirstVisibleTemplateIndex(): number | null {
+    for (let i = 0; i < PROMPT_TEMPLATES.length; i++) {
+      if (this.isTemplateRowVisible(i)) return i;
+    }
+    return null;
+  }
+
+  private findLastVisibleTemplateIndex(): number | null {
+    for (let i = PROMPT_TEMPLATES.length - 1; i >= 0; i--) {
+      if (this.isTemplateRowVisible(i)) return i;
+    }
+    return null;
+  }
+
+  private findAdjacentVisibleTemplateIndex(from: number, delta: number): number | null {
+    let i = from + delta;
+    while (i >= 0 && i < PROMPT_TEMPLATES.length) {
+      if (this.isTemplateRowVisible(i)) return i;
+      i += delta;
+    }
+    return null;
+  }
+
+  private focusTemplateIndex(index: number): void {
+    const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
+    if (checkbox) {
+      checkbox.focus();
+      checkbox.scrollIntoView({ block: 'nearest' });
+    }
+    this.setActivePrompt(index, true, false);
+  }
+
+  private applyTemplateFilter(raw: string): void {
+    const q = raw.trim().toLowerCase();
+    const categoryHasVisible = new Map<PromptCategory, boolean>();
+
+    PROMPT_TEMPLATES.forEach((template, index) => {
+      const row = this.templateRows[index];
+      if (!row) return;
+
+      const match = !q || templateSearchHaystack(template).includes(q);
+      row.style.display = match ? '' : 'none';
+      if (match) categoryHasVisible.set(template.category, true);
+    });
+
+    this.templateCategoryHeadings.forEach((heading, category) => {
+      heading.style.display = categoryHasVisible.get(category) ? '' : 'none';
+    });
+  }
+
   private tryHandlePromptTemplateKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
     const index = this.getPromptTemplateIndexFromTarget(target);
     if (index === null) return false;
 
     let nextIndex: number | null = null;
-    if (e.key === 'ArrowDown' || e.key === 'j') nextIndex = index + 1;
-    else if (e.key === 'ArrowUp' || e.key === 'k') nextIndex = index - 1;
-    else if (e.key === 'Home') nextIndex = 0;
-    else if (e.key === 'End') nextIndex = PROMPT_TEMPLATES.length - 1;
-    else return false;
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      nextIndex = this.findAdjacentVisibleTemplateIndex(index, 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      nextIndex = this.findAdjacentVisibleTemplateIndex(index, -1);
+    } else if (e.key === 'Home') {
+      nextIndex = this.findFirstVisibleTemplateIndex();
+    } else if (e.key === 'End') {
+      nextIndex = this.findLastVisibleTemplateIndex();
+    } else return false;
 
     e.preventDefault();
 
-    if (nextIndex < 0 || nextIndex >= PROMPT_TEMPLATES.length) return true;
+    if (nextIndex === null) return true;
 
-    const next = document.getElementById(`sk-template-${nextIndex}`) as HTMLInputElement | null;
-    if (next) {
-      next.focus();
-      next.scrollIntoView({ block: 'nearest' });
-    }
-    this.setActivePrompt(nextIndex, true, false);
+    this.focusTemplateIndex(nextIndex);
     return true;
   }
 
@@ -576,7 +647,7 @@ export class AiSelector {
   private createFooterHints(): HTMLElement {
     const hints = document.createElement('p');
     hints.textContent =
-      'Enter: send · Shift+Enter: newline · Tab: next · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
+      'Enter: send · Shift+Enter: newline · Filter: search templates · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
     hints.style.cssText = `
       margin: 0 0 16px 0;
       color: ${this.config.theme.colors.infoFg};
@@ -678,6 +749,26 @@ export class AiSelector {
       font-weight: 600;
     `;
 
+    const filterInput = document.createElement('input');
+    filterInput.type = 'search';
+    filterInput.id = 'sk-template-filter';
+    filterInput.placeholder = 'Filter templates…';
+    filterInput.autocomplete = 'off';
+    filterInput.spellcheck = false;
+    filterInput.style.cssText = `
+      width: 100%;
+      padding: 8px 10px;
+      background: ${this.config.theme.colors.bg};
+      border: 1px solid ${this.config.theme.colors.border};
+      border-radius: 4px;
+      color: ${this.config.theme.colors.fg};
+      font-family: ${this.config.theme.font};
+      font-size: 13px;
+      box-sizing: border-box;
+    `;
+    filterInput.addEventListener('input', () => this.applyTemplateFilter(filterInput.value));
+    this.templateFilterInput = filterInput;
+
     const templateList = document.createElement('div');
     templateList.style.cssText = `
       max-height: 280px;
@@ -691,12 +782,14 @@ export class AiSelector {
     `;
 
     this.templateRows = new Array(PROMPT_TEMPLATES.length);
+    this.templateCategoryHeadings.clear();
     PROMPT_CATEGORY_ORDER.forEach(category => {
       const indexes = PROMPT_TEMPLATES.map((t, i) => (t.category === category ? i : -1)).filter(i => i >= 0);
       if (indexes.length === 0) return;
 
       const heading = document.createElement('div');
       heading.textContent = PROMPT_CATEGORY_LABELS[category];
+      heading.dataset.skCategoryHeading = category;
       heading.style.cssText = `
         color: ${this.config.theme.colors.infoFg};
         font-size: 11px;
@@ -705,6 +798,7 @@ export class AiSelector {
         text-transform: uppercase;
         margin: 10px 0 6px 0;
       `;
+      this.templateCategoryHeadings.set(category, heading);
       templateList.appendChild(heading);
 
       indexes.forEach(index => {
@@ -754,6 +848,7 @@ export class AiSelector {
     this.promptPreviewInput = input;
 
     leftPane.appendChild(leftTitle);
+    leftPane.appendChild(filterInput);
     leftPane.appendChild(templateList);
 
     rightPane.appendChild(previewTitle);
