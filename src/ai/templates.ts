@@ -33,14 +33,11 @@ export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
   'experimental',
 ];
 
-const SOURCE_RULE =
-  'The content under --- SOURCE --- is the source material. Do not ask the user to paste more input unless critical information is genuinely missing.';
-
 /** Combine user query and template for tab URLs. */
 export function formatCombinedQuery(query: string, promptTemplate: string): string {
   const instructions = promptTemplate.trim();
   if (!instructions) return query;
-  return `--- INSTRUCTIONS ---\n${instructions}\n\n${SOURCE_RULE}\n\n--- SOURCE ---\n${query}`;
+  return `--- INSTRUCTIONS ---\n${instructions}\n\n--- SOURCE ---\n${query}`;
 }
 
 /** Lowercase haystack for template list filtering. */
