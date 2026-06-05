@@ -4,7 +4,13 @@
 
 import type { Config, AIServiceName } from '../config';
 import { AI_SERVICES } from '../config';
-import { PROMPT_TEMPLATES } from './templates';
+import {
+  formatCombinedQuery,
+  PROMPT_CATEGORY_LABELS,
+  PROMPT_CATEGORY_ORDER,
+  PROMPT_TEMPLATES,
+  type PromptTemplate,
+} from './templates';
 
 interface AIService {
   name: AIServiceName;
@@ -114,7 +120,7 @@ export class AiSelector {
     this.promptPreviewTitle = null;
     this.clipboardText = null;
     this.clipboardIndicator = null;
-    this.templateRows = [];
+    this.templateRows = new Array(PROMPT_TEMPLATES.length);
     this.promptDrafts = [];
     this.selectedPromptIndexes.clear();
     this.activePromptIndex = null;
@@ -319,8 +325,7 @@ export class AiSelector {
 
     selectedUrls.forEach(url => {
       selectedPrompts.forEach(promptTemplate => {
-        const combinedQuery = promptTemplate ? `${query} \n${promptTemplate}` : query;
-        api.tabOpenLink(url + encodeURIComponent(combinedQuery));
+        api.tabOpenLink(url + encodeURIComponent(formatCombinedQuery(query, promptTemplate)));
       });
     });
     this.close();
@@ -385,15 +390,20 @@ export class AiSelector {
   }
 
   private updatePromptRowStyles(): void {
-    this.templateRows.forEach((row, index) => {
+    PROMPT_TEMPLATES.forEach((_, index) => {
+      const row = this.templateRows[index];
+      if (!row) return;
+
       const isActive = this.activePromptIndex === index;
       const isSelected = this.selectedPromptIndexes.has(index);
       row.style.borderColor = isActive ? this.config.theme.colors.mainFg : this.config.theme.colors.border;
       row.style.background = isActive ? this.config.theme.colors.border : 'transparent';
 
-      const text = row.querySelector('span');
-      if (text) {
-        (text as HTMLElement).style.color = isSelected ? this.config.theme.colors.accentFg : this.config.theme.colors.fg;
+      const title = row.querySelector('span');
+      if (title) {
+        (title as HTMLElement).style.color = isSelected
+          ? this.config.theme.colors.accentFg
+          : this.config.theme.colors.fg;
       }
     });
   }
@@ -680,11 +690,28 @@ export class AiSelector {
       box-sizing: border-box;
     `;
 
-    this.templateRows = [];
-    PROMPT_TEMPLATES.forEach((template, index) => {
-      const row = this.createPromptTemplateRow(template.label, index);
-      this.templateRows.push(row);
-      templateList.appendChild(row);
+    this.templateRows = new Array(PROMPT_TEMPLATES.length);
+    PROMPT_CATEGORY_ORDER.forEach(category => {
+      const indexes = PROMPT_TEMPLATES.map((t, i) => (t.category === category ? i : -1)).filter(i => i >= 0);
+      if (indexes.length === 0) return;
+
+      const heading = document.createElement('div');
+      heading.textContent = PROMPT_CATEGORY_LABELS[category];
+      heading.style.cssText = `
+        color: ${this.config.theme.colors.infoFg};
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        margin: 10px 0 6px 0;
+      `;
+      templateList.appendChild(heading);
+
+      indexes.forEach(index => {
+        const row = this.createPromptTemplateRow(PROMPT_TEMPLATES[index], index);
+        this.templateRows[index] = row;
+        templateList.appendChild(row);
+      });
     });
 
     const rightPane = document.createElement('div');
@@ -745,12 +772,12 @@ export class AiSelector {
     return { label, controls, picker };
   }
 
-  private createPromptTemplateRow(templateLabel: string, index: number): HTMLElement {
+  private createPromptTemplateRow(template: PromptTemplate, index: number): HTMLElement {
     const row = document.createElement('div');
     row.dataset.skTemplateIndex = String(index);
     row.style.cssText = `
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       padding: 8px;
       border-radius: 4px;
@@ -768,7 +795,9 @@ export class AiSelector {
     checkbox.style.cssText = `
       width: 16px;
       height: 16px;
+      margin-top: 2px;
       cursor: pointer;
+      flex-shrink: 0;
       accent-color: ${this.config.theme.colors.accentFg};
     `;
     checkbox.addEventListener('click', e => e.stopPropagation());
@@ -782,17 +811,65 @@ export class AiSelector {
       this.setActivePrompt(index, true, false);
     });
 
+    const textCol = document.createElement('div');
+    textCol.style.cssText = `flex: 1; min-width: 0;`;
+
+    const titleRow = document.createElement('div');
+    titleRow.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    `;
+
     const label = document.createElement('span');
-    label.textContent = templateLabel;
+    label.textContent = template.label;
     label.style.cssText = `
       font-size: 13px;
+      font-weight: 600;
       line-height: 1.35;
       color: ${this.config.theme.colors.fg};
       user-select: none;
     `;
 
+    const tierBadge = document.createElement('span');
+    tierBadge.textContent = template.tier;
+    const tierColor =
+      template.category === 'experimental'
+        ? this.config.theme.colors.infoFg
+        : template.tier === 'short'
+          ? this.config.theme.colors.accentFg
+          : this.config.theme.colors.mainFg;
+    tierBadge.style.cssText = `
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid ${this.config.theme.colors.border};
+      color: ${tierColor};
+      user-select: none;
+    `;
+
+    titleRow.appendChild(label);
+    titleRow.appendChild(tierBadge);
+
+    const description = document.createElement('div');
+    description.textContent = template.description;
+    description.style.cssText = `
+      font-size: 11px;
+      line-height: 1.3;
+      color: ${this.config.theme.colors.mainFg};
+      margin-top: 2px;
+      user-select: none;
+    `;
+
+    textCol.appendChild(titleRow);
+    textCol.appendChild(description);
+
     row.appendChild(checkbox);
-    row.appendChild(label);
+    row.appendChild(textCol);
     return row;
   }
 
