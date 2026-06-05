@@ -57,6 +57,7 @@ export class AiSelector {
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
 
     const title = this.createTitle();
+    const footerHints = this.createFooterHints();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
     const { label: promptLabel, controls: promptControls, picker: promptPicker } = this.createPromptPicker();
     const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
@@ -67,6 +68,7 @@ export class AiSelector {
 
     [
       title,
+      footerHints,
       queryLabel,
       queryInput,
       promptLabel,
@@ -152,9 +154,26 @@ export class AiSelector {
       event.sk_suppressed = true;
       event.sk_stopPropagation = true;
 
-      if (e.key === 'Tab') return;
-
       const target = e.target as HTMLElement | null;
+
+      if (e.key === 'Tab') {
+        const templateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
+        if (templateIndex !== null && !e.shiftKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.promptPreviewInput?.focus();
+          return;
+        }
+        if (e.shiftKey && target === this.promptPreviewInput) {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = this.activePromptIndex ?? 0;
+          const checkbox = document.getElementById(`sk-template-${idx}`) as HTMLInputElement | null;
+          checkbox?.focus();
+          return;
+        }
+        return;
+      }
       if (target?.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
         e.stopPropagation();
@@ -181,18 +200,11 @@ export class AiSelector {
         if (this.queryInput) this.lastQuery = this.queryInput.value;
         this.close();
       } else if (e.key === 'Enter') {
-        const promptTemplateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
-        if (promptTemplateIndex !== null) {
-          e.preventDefault();
-          this.setActivePrompt(promptTemplateIndex, true, true);
-          return;
-        }
-
         const isTextArea = target?.tagName === 'TEXTAREA';
-        if (!isTextArea || !e.shiftKey) {
-          e.preventDefault();
-          this.handleSubmit();
-        }
+        if (isTextArea && e.shiftKey) return;
+
+        e.preventDefault();
+        this.handleSubmit();
       }
     };
 
@@ -543,12 +555,25 @@ export class AiSelector {
     const title = document.createElement('h2');
     title.textContent = 'Multi-AI Search';
     title.style.cssText = `
-      margin: 0 0 16px 0;
+      margin: 0 0 8px 0;
       color: ${this.config.theme.colors.accentFg};
       font-size: 20px;
       font-weight: 600;
     `;
     return title;
+  }
+
+  private createFooterHints(): HTMLElement {
+    const hints = document.createElement('p');
+    hints.textContent =
+      'Enter: send · Shift+Enter: newline · Tab: next · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
+    hints.style.cssText = `
+      margin: 0 0 16px 0;
+      color: ${this.config.theme.colors.infoFg};
+      font-size: 12px;
+      line-height: 1.4;
+    `;
+    return hints;
   }
 
   private createQueryInput(initialQuery: string): { label: HTMLElement; input: HTMLTextAreaElement } {
