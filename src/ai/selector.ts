@@ -327,21 +327,18 @@ export class AiSelector {
 
     this.persistPreviewInput();
     const selectedPrompts = this.getSelectedPromptTexts();
-    if (selectedPrompts.length === 0) {
-      alert('Please select at least one prompt template');
-      return;
-    }
+    const promptsToSend = selectedPrompts.length > 0 ? selectedPrompts : [''];
 
-    const tabCount = selectedUrls.length * selectedPrompts.length;
+    const tabCount = selectedUrls.length * promptsToSend.length;
     if (tabCount > TAB_WARNING_THRESHOLD) {
-      const message = `This will open ${tabCount} tabs (${selectedUrls.length} services x ${selectedPrompts.length} prompts). Continue?`;
+      const message = `This will open ${tabCount} tabs (${selectedUrls.length} services x ${promptsToSend.length} prompts). Continue?`;
       if (!window.confirm(message)) return;
     }
 
     this.lastQuery = this.queryInput.value;
 
     selectedUrls.forEach(url => {
-      selectedPrompts.forEach(promptTemplate => {
+      promptsToSend.forEach(promptTemplate => {
         api.tabOpenLink(url + encodeURIComponent(formatCombinedQuery(query, promptTemplate)));
       });
     });
@@ -351,14 +348,6 @@ export class AiSelector {
   private initializePromptState(): void {
     this.promptDrafts = PROMPT_TEMPLATES.map(template => template.value);
     this.selectedPromptIndexes.clear();
-
-    PROMPT_TEMPLATES.forEach((template, index) => {
-      if (template.default) this.selectedPromptIndexes.add(index);
-    });
-
-    if (this.selectedPromptIndexes.size === 0 && PROMPT_TEMPLATES.length > 0) {
-      this.selectedPromptIndexes.add(0);
-    }
 
     if (PROMPT_TEMPLATES.length === 0) {
       this.activePromptIndex = null;

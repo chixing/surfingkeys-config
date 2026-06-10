@@ -12,7 +12,6 @@ export interface PromptTemplate {
   description: string;
   tier: PromptTier;
   tags?: string[];
-  default?: boolean;
 }
 
 export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
@@ -65,14 +64,6 @@ export function templateSearchHaystack(template: PromptTemplate): string {
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   // --- meta ---
-  {
-    label: 'Custom',
-    value: '',
-    category: 'meta',
-    description: 'Send only your query (no extra instructions)',
-    tier: 'short',
-    default: true,
-  },
   {
     label: 'TL;DR',
     value: `Open with a one-paragraph story hook (what happened and why it matters), then a tight TL;DR in prose or at most 5 bullets.`,
