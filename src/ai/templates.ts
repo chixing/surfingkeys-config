@@ -273,6 +273,89 @@ Cap total length ~500-700 words. Primary sources first.`,
     tier: 'long',
     tags: ['web', 'narrative'],
   },
+  {
+    label: 'User Reviews + Sentiment',
+    value: `Role
+Act as a product research analyst doing evidence-based customer and competitor research.
+
+Goal
+Analyze real user reviews, community discussion, and expert/user commentary for the product, company, app, service, or tool implied in the source. Then compare that sentiment with its top competitors.
+
+Rules
+- Use web browsing when available; if not, state that upfront and separate source-based inference from verified claims.
+- Prefer primary review/community sources when possible: official app stores, G2, Capterra, Trustpilot, Reddit, Hacker News, GitHub issues, forums, YouTube comments, support/community boards, and recent social discussion.
+- Include source links for important claims and date-sensitive facts.
+- Do not average vibes. Explain the distribution: who loves it, who hates it, who is lukewarm, and why.
+- Distinguish user sentiment from your own product judgment.
+
+Output
+1) Executive Read
+   - Open with a concise narrative summary of overall sentiment, review volume/recency if visible, and the biggest pattern.
+2) Sentiment Breakdown
+   - Positive themes: what users repeatedly praise, with concrete examples.
+   - Negative themes: recurring complaints, friction, reliability issues, pricing objections, missing features, support problems.
+   - Neutral/mixed themes: trade-offs users accept or disagree on.
+   - Segment differences: beginners vs power users, small teams vs enterprises, developers vs non-technical users, or other relevant groups.
+3) Evidence Table
+   - Source, date/recency, user segment if known, sentiment, specific claim, confidence.
+4) Top Competitor Comparison
+   - Identify 3-5 top competitors and explain why each is a competitor.
+   - Compare review sentiment across pricing, onboarding, core workflow, feature depth, reliability/performance, integrations/ecosystem, support, and trust/security.
+   - Call out where competitors clearly win, where this product wins, and where evidence is weak.
+5) Buyer/User Implications
+   - Best-fit users and worst-fit users.
+   - Main risks before adopting.
+   - Questions to ask or tests to run before choosing.
+
+Be concrete and evidence-driven. Use a comparison table where it improves scanability, but lead each major section with prose.`,
+    category: 'research',
+    description: 'User sentiment with competitor comparison',
+    tier: 'long',
+    tags: ['web', 'reviews', 'sentiment', 'competitors'],
+  },
+  {
+    label: 'Exact Use Cases',
+    value: `Role
+Act as a product strategist and domain expert translating a product, technology, company, article, or idea into concrete real-world usage.
+
+Goal
+Produce the most specific, practical set of use cases possible for the subject implied in the source. Avoid generic categories; give exact scenarios, actors, workflows, inputs, outputs, constraints, and success criteria.
+
+Rules
+- If the source is vague, infer likely use cases but label assumptions clearly.
+- Use web browsing when available for product capabilities, customer examples, documentation, and case studies; cite links for factual claims.
+- Prefer detailed examples over abstract taxonomy.
+- Cover both obvious and non-obvious uses, including edge cases and cases where the subject is a bad fit.
+
+Output
+1) Quick Orientation
+   - In prose, explain what the subject is, who it is for, and what job it appears to do.
+2) Use Case Inventory
+   For each use case, include:
+   - Use case name
+   - User/persona and context
+   - Triggering situation or pain
+   - Exact workflow step by step
+   - Required inputs/data/integrations
+   - Expected output or decision
+   - Why this approach is better than the old way or alternative
+   - Limits, risks, or failure modes
+   - Success metric
+   - Concrete example with realistic details
+3) Prioritization
+   - Rank use cases by practical value, ease of adoption, frequency, and differentiation.
+   - Identify quick wins vs advanced/enterprise-only uses.
+4) Competitor/Alternative Fit
+   - Briefly note which use cases competitors or conventional workflows may handle better.
+5) Implementation Examples
+   - Provide 3-5 fully worked examples with sample inputs and outputs. Make them specific enough that a user could copy the pattern and apply it immediately.
+
+Be as detailed as possible while staying grounded. Do not stop at "marketing automation", "analytics", or "productivity"; describe the exact campaign, query, report, handoff, decision, or operation.`,
+    category: 'research',
+    description: 'Concrete use cases and worked examples',
+    tier: 'long',
+    tags: ['web', 'examples', 'use-cases'],
+  },
 
   // --- code ---
   {
