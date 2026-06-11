@@ -67,25 +67,21 @@ export class AiSelector {
     const dialog = this.createDialog();
     const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
 
-    const title = this.createTitle();
     const footerHints = this.createFooterHints();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: promptLabel, controls: promptControls, picker: promptPicker } = this.createPromptPicker();
-    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
+    const { controls: promptControls, picker: promptPicker } = this.createPromptPicker();
+    const { container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
     const serviceSelectButtons = this.createServiceSelectButtons();
     const buttonsContainer = this.createButtons();
 
     this.queryInput = queryInput;
 
     [
-      title,
       footerHints,
       queryLabel,
       queryInput,
-      promptLabel,
       promptPicker,
       promptControls,
-      servicesLabel,
       servicesContainer,
       serviceSelectButtons,
       buttonsContainer,
@@ -627,18 +623,6 @@ export class AiSelector {
     return dialog;
   }
 
-  private createTitle(): HTMLElement {
-    const title = document.createElement('h2');
-    title.textContent = 'Multi-AI Search';
-    title.style.cssText = `
-      margin: 0 0 8px 0;
-      color: ${this.config.theme.colors.accentFg};
-      font-size: 20px;
-      font-weight: 600;
-    `;
-    return title;
-  }
-
   private createFooterHints(): HTMLElement {
     const hints = document.createElement('p');
     hints.textContent =
@@ -654,7 +638,7 @@ export class AiSelector {
 
   private createQueryInput(initialQuery: string): { label: HTMLElement; input: HTMLTextAreaElement } {
     const label = document.createElement('label');
-    label.textContent = 'Search Query:';
+    label.textContent = 'URL:';
     label.style.cssText = `
       display: block;
       margin-bottom: 8px;
@@ -708,16 +692,7 @@ export class AiSelector {
     return { label, input };
   }
 
-  private createPromptPicker(): { label: HTMLElement; controls: HTMLElement; picker: HTMLElement } {
-    const label = document.createElement('label');
-    label.textContent = 'Prompt Templates:';
-    label.style.cssText = `
-      display: block;
-      margin-bottom: 8px;
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 14px;
-    `;
-
+  private createPromptPicker(): { controls: HTMLElement; picker: HTMLElement } {
     const controls = this.createPromptSelectButtons();
 
     const picker = document.createElement('div');
@@ -734,14 +709,6 @@ export class AiSelector {
       flex-direction: column;
       min-height: 360px;
       gap: 8px;
-    `;
-
-    const leftTitle = document.createElement('div');
-    leftTitle.textContent = 'Templates';
-    leftTitle.style.cssText = `
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 13px;
-      font-weight: 600;
     `;
 
     const filterInput = document.createElement('input');
@@ -844,7 +811,6 @@ export class AiSelector {
     });
     this.promptPreviewInput = input;
 
-    leftPane.appendChild(leftTitle);
     leftPane.appendChild(filterInput);
     leftPane.appendChild(templateList);
 
@@ -861,7 +827,7 @@ export class AiSelector {
       this.updatePromptRowStyles();
     }
 
-    return { label, controls, picker };
+    return { controls, picker };
   }
 
   private createPromptTemplateRow(template: PromptTemplate, index: number): HTMLElement {
@@ -1008,16 +974,7 @@ export class AiSelector {
     return container;
   }
 
-  private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): { label: HTMLElement; container: HTMLElement } {
-    const label = document.createElement('label');
-    label.textContent = 'Select AI Services:';
-    label.style.cssText = `
-      display: block;
-      margin-bottom: 8px;
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 14px;
-    `;
-
+  private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): { container: HTMLElement } {
     const container = document.createElement('div');
     container.id = 'sk-services-container';
     container.style.cssText = `
@@ -1037,7 +994,7 @@ export class AiSelector {
       container.appendChild(checkboxWrapper);
     });
 
-    return { label, container };
+    return { container };
   }
 
   private createServiceSelectButtons(): HTMLElement {
