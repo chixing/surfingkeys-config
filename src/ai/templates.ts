@@ -2,7 +2,14 @@
  * Prompt templates for the Multi-AI dialog.
  */
 
-export type PromptCategory = 'meta' | 'article' | 'research' | 'code' | 'utility' | 'experimental';
+export type PromptCategory =
+  | 'quick'
+  | 'explain'
+  | 'research'
+  | 'decision'
+  | 'code'
+  | 'writing'
+  | 'experimental';
 export type PromptTier = 'short' | 'long';
 
 export interface PromptTemplate {
@@ -15,20 +22,22 @@ export interface PromptTemplate {
 }
 
 export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
-  meta: 'Quick',
-  article: 'Article',
+  quick: 'Quick',
+  explain: 'Explain',
   research: 'Research',
+  decision: 'Decision',
   code: 'Code',
-  utility: 'Utility',
+  writing: 'Writing',
   experimental: 'Experimental',
 };
 
 export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
-  'meta',
-  'article',
+  'quick',
+  'explain',
   'research',
+  'decision',
   'code',
-  'utility',
+  'writing',
   'experimental',
 ];
 
@@ -63,11 +72,11 @@ export function templateSearchHaystack(template: PromptTemplate): string {
 }
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
-  // --- meta ---
+  // --- quick ---
   {
     label: 'TL;DR',
     value: `Give the answer first. Then explain why it matters and what to do next. Keep it under 200 words unless the source is complex. Use at most 5 bullets.`,
-    category: 'meta',
+    category: 'quick',
     description: 'Fast answer with next step',
     tier: 'short',
     tags: ['summary'],
@@ -75,7 +84,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
     label: 'Detailed Summary',
     value: `Tell the story of the source in clear sections with headers: setup, core argument, evidence, gaps, and open questions. Use prose in each section; avoid bare bullet dumps.`,
-    category: 'meta',
+    category: 'quick',
     description: 'Structured summary as narrative',
     tier: 'short',
     tags: ['summary'],
@@ -83,7 +92,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
     label: 'Claim Audit',
     value: `Audit only the claims present in the source. Do not browse unless explicitly asked. Walk through claims in order: what was claimed, what evidence the source gives, what is unsupported or ambiguous, and what would be needed to verify it. End with "what still needs verification."`,
-    category: 'meta',
+    category: 'quick',
     description: 'Source-only claim review',
     tier: 'short',
     tags: ['skeptical'],
@@ -91,7 +100,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
     label: 'Web Fact-Check',
     value: `Fact-check the source using current web research when available. Identify the central claims, verify them against primary or high-quality sources, include source links and dates for time-sensitive facts, and clearly mark each claim as supported, contradicted, partly supported, or unresolved. End with confidence and what would change the conclusion.`,
-    category: 'meta',
+    category: 'research',
     description: 'Claims verified with sources',
     tier: 'long',
     tags: ['web', 'skeptical'],
@@ -99,7 +108,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
     label: 'Explain Simply',
     value: `Explain like a patient senior engineer teaching a smart newcomer: short story setup, then simple explanation under 300 words. One analogy only if it clarifies. Define jargon inline.`,
-    category: 'meta',
+    category: 'explain',
     description: 'Beginner-friendly story explainer',
     tier: 'short',
   },
@@ -111,20 +120,20 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
 - Dates/deadlines mentioned
 - Open questions and blockers
 - "If you only do three things" line`,
-    category: 'meta',
+    category: 'writing',
     description: 'Context plus action checklist',
     tier: 'short',
   },
   {
     label: 'Hostile Critic',
     value: `The source is the argument to attack. In direct prose (not polite filler): how the argument could collapse (three specific failure modes), two unsupported assumptions, and one serious counter-argument not addressed.`,
-    category: 'meta',
+    category: 'decision',
     description: 'Stress-test an argument',
     tier: 'short',
     tags: ['skeptical'],
   },
 
-  // --- article ---
+  // --- explain ---
   {
     label: 'Senior Staff Engineer Narrative',
     value: `Role
@@ -155,7 +164,7 @@ Cover These Sections
    - Explain where this approach fits relative to industry norms.
    - Discuss implied technical debt and future-proofing concerns.
    - Describe ripple effects on the surrounding stack`,
-    category: 'article',
+    category: 'explain',
     description: 'Technical narrative with integrated glossary',
     tier: 'long',
     tags: ['architecture', 'narrative'],
@@ -180,7 +189,7 @@ Cover in prose
 4) Vocabulary defined inline on first use (rigorous, minimal metaphor)
 
 Tone: direct, patient, like a great lecture — not a slide outline.`,
-    category: 'article',
+    category: 'explain',
     description: 'Context-first narrative explainer',
     tier: 'long',
     tags: ['narrative'],
@@ -198,7 +207,7 @@ ${NARRATIVE_SPINE}
 In prose, cover the journey of a request through the system: components, sync/async boundaries, trust boundaries, data and control flow, idempotency/retries/backpressure, scaling and observability.
 
 After the narrative, add a compact text diagram (indentation + arrows). Label explicit assumptions where the source is silent.`,
-    category: 'article',
+    category: 'code',
     description: 'System walkthrough as story + diagram',
     tier: 'long',
     tags: ['architecture', 'narrative'],
@@ -221,7 +230,7 @@ In prose, weave together
 - Long-term maintenance and migration story
 
 Use a short comparison table only if it sharpens the story; lead with narrative.`,
-    category: 'article',
+    category: 'explain',
     description: 'Industry fit as narrative comparison',
     tier: 'long',
     tags: ['narrative'],
@@ -244,7 +253,7 @@ In prose, cover
 - A pragmatic closing: POC-worthy or not, and questions for a deep-dive
 
 Tone: neutral, evidence-driven; no marketing voice.`,
-    category: 'article',
+    category: 'research',
     description: 'Hype vs proof as narrative',
     tier: 'long',
     tags: ['skeptical', 'narrative'],
@@ -484,7 +493,7 @@ Focus on real production failure modes, not aesthetic preferences.`,
     tags: ['architecture', 'skeptical'],
   },
 
-  // --- utility ---
+  // --- decision ---
   {
     label: 'Decision Memo',
     value: `Turn the source into a concise decision memo.
@@ -504,7 +513,7 @@ Output
    - The smallest concrete action to move forward.
 
 Keep it direct and useful for someone who has to approve or execute the decision.`,
-    category: 'utility',
+    category: 'decision',
     description: 'Recommendation with rationale',
     tier: 'long',
     tags: ['decision'],
@@ -528,7 +537,7 @@ Output
    - The next actions someone can start immediately.
 
 Prefer specific tasks and sequencing over generic project-management language.`,
-    category: 'utility',
+    category: 'decision',
     description: 'Phased execution plan',
     tier: 'long',
     tags: ['planning'],
@@ -549,7 +558,7 @@ Output
 9) Open Questions
 
 Mark inferred requirements clearly. Keep wording implementation-neutral unless the source already commits to a technical approach.`,
-    category: 'utility',
+    category: 'decision',
     description: 'Requirements and acceptance criteria',
     tier: 'long',
     tags: ['spec', 'requirements'],
@@ -559,7 +568,7 @@ Mark inferred requirements clearly. Keep wording implementation-neutral unless t
     value: `The source compares two options (label A and B; infer from headings or "vs" if unclear).
 
 Tell the story of why both exist, then walk through each dimension in prose (goal, complexity, performance, ops burden, risk). End with a one-paragraph recommendation for a small team vs a large org.`,
-    category: 'utility',
+    category: 'decision',
     description: 'Comparison as narrative',
     tier: 'short',
     tags: ['narrative'],
@@ -567,7 +576,7 @@ Tell the story of why both exist, then walk through each dimension in prose (goa
   {
     label: 'Steelman + Verdict',
     value: `For the position in the source: first steelman in full prose (strongest good-faith case). Then a short narrative of key weaknesses, your verdict (support/oppose/conditional) with conditions, and what would change your mind.`,
-    category: 'utility',
+    category: 'decision',
     description: 'Steelman story, then judgment',
     tier: 'short',
     tags: ['narrative'],
@@ -575,14 +584,14 @@ Tell the story of why both exist, then walk through each dimension in prose (goa
   {
     label: 'Email / Reply',
     value: `Draft a professional reply to the source thread. Lead with the answer in the first sentence, keep the body concise, use bullets only for action items if needed, match tone to audience (manager/peer/customer/public). Output only the draft.`,
-    category: 'utility',
+    category: 'writing',
     description: 'Reply draft',
     tier: 'short',
   },
   {
     label: 'Translate + Tone',
     value: `Translate the source to the language implied in the user query (default English). Preserve code, URLs, numbers, and technical terms. Professional direct tone unless the source is casual. After translation, at most 2 lines of term notes for ambiguous words.`,
-    category: 'utility',
+    category: 'writing',
     description: 'Translate preserving jargon',
     tier: 'short',
   },
