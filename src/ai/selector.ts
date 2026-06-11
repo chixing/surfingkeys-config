@@ -615,7 +615,7 @@ export class AiSelector {
       border-radius: 8px;
       padding: 24px;
       width: min(1120px, 96vw);
-      max-height: 88vh;
+      max-height: 94vh;
       overflow-y: auto;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
       color: ${this.config.theme.colors.fg};
@@ -628,7 +628,7 @@ export class AiSelector {
     hints.textContent =
       'Enter: send · Shift+Enter: newline · Filter: search templates · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
     hints.style.cssText = `
-      margin: 0 0 16px 0;
+      margin: 0 0 10px 0;
       color: ${this.config.theme.colors.infoFg};
       font-size: 12px;
       line-height: 1.4;
@@ -683,7 +683,7 @@ export class AiSelector {
       color: ${this.config.theme.colors.fg};
       font-family: ${this.config.theme.font};
       font-size: ${this.config.theme.fontSize};
-      margin-bottom: 14px;
+      margin-bottom: 10px;
       resize: vertical;
       box-sizing: border-box;
     `;
@@ -707,7 +707,7 @@ export class AiSelector {
     leftPane.style.cssText = `
       display: flex;
       flex-direction: column;
-      min-height: 360px;
+      min-height: 500px;
       gap: 8px;
     `;
 
@@ -733,7 +733,7 @@ export class AiSelector {
 
     const templateList = document.createElement('div');
     templateList.style.cssText = `
-      max-height: 360px;
+      max-height: 500px;
       overflow-y: auto;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
@@ -776,7 +776,7 @@ export class AiSelector {
     rightPane.style.cssText = `
       display: flex;
       flex-direction: column;
-      min-height: 360px;
+      min-height: 500px;
       gap: 8px;
     `;
 
@@ -793,7 +793,7 @@ export class AiSelector {
     input.placeholder = 'Template preview / editor...';
     input.style.cssText = `
       width: 100%;
-      min-height: 300px;
+      min-height: 440px;
       padding: 12px;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
@@ -1002,7 +1002,7 @@ export class AiSelector {
     container.style.cssText = `
       display: flex;
       gap: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 12px;
       justify-content: flex-start;
     `;
 
