@@ -489,7 +489,7 @@ export class AiSelector {
       if (!row) return;
 
       const match = !q || templateSearchHaystack(template).includes(q);
-      row.style.display = match ? '' : 'none';
+      row.style.display = match ? 'flex' : 'none';
       if (match) categoryHasVisible.set(template.category, true);
     });
 
