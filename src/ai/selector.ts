@@ -32,6 +32,7 @@ export class AiSelector {
   private clipboardText: string | null = null;
   private clipboardIndicator: HTMLElement | null = null;
   private templateRows: HTMLElement[] = [];
+  private templateRenderOrder: number[] = [];
   private templateFilterInput: HTMLInputElement | null = null;
   private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
   private promptDrafts: string[] = [];
@@ -447,23 +448,28 @@ export class AiSelector {
   }
 
   private findFirstVisibleTemplateIndex(): number | null {
-    for (let i = 0; i < PROMPT_TEMPLATES.length; i++) {
-      if (this.isTemplateRowVisible(i)) return i;
+    for (const index of this.templateRenderOrder) {
+      if (this.isTemplateRowVisible(index)) return index;
     }
     return null;
   }
 
   private findLastVisibleTemplateIndex(): number | null {
-    for (let i = PROMPT_TEMPLATES.length - 1; i >= 0; i--) {
-      if (this.isTemplateRowVisible(i)) return i;
+    for (let i = this.templateRenderOrder.length - 1; i >= 0; i--) {
+      const index = this.templateRenderOrder[i];
+      if (this.isTemplateRowVisible(index)) return index;
     }
     return null;
   }
 
   private findAdjacentVisibleTemplateIndex(from: number, delta: number): number | null {
-    let i = from + delta;
-    while (i >= 0 && i < PROMPT_TEMPLATES.length) {
-      if (this.isTemplateRowVisible(i)) return i;
+    let i = this.templateRenderOrder.indexOf(from);
+    if (i < 0) return null;
+
+    i += delta;
+    while (i >= 0 && i < this.templateRenderOrder.length) {
+      const index = this.templateRenderOrder[i];
+      if (this.isTemplateRowVisible(index)) return index;
       i += delta;
     }
     return null;
@@ -771,6 +777,7 @@ export class AiSelector {
     `;
 
     this.templateRows = new Array(PROMPT_TEMPLATES.length);
+    this.templateRenderOrder = [];
     this.templateCategoryHeadings.clear();
     PROMPT_CATEGORY_ORDER.forEach(category => {
       const indexes = PROMPT_TEMPLATES.map((t, i) => (t.category === category ? i : -1)).filter(i => i >= 0);
@@ -793,6 +800,7 @@ export class AiSelector {
       indexes.forEach(index => {
         const row = this.createPromptTemplateRow(PROMPT_TEMPLATES[index], index);
         this.templateRows[index] = row;
+        this.templateRenderOrder.push(index);
         templateList.appendChild(row);
       });
     });
