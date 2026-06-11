@@ -612,7 +612,7 @@ export class AiSelector {
       border: 2px solid ${this.config.theme.colors.border};
       border-radius: 8px;
       padding: 24px;
-      width: min(920px, 92vw);
+      width: min(1120px, 96vw);
       max-height: 88vh;
       overflow-y: auto;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
@@ -682,18 +682,18 @@ export class AiSelector {
     const input = document.createElement('textarea');
     input.id = 'sk-ai-query-input';
     input.value = initialQuery;
-    input.rows = 4;
+    input.rows = 2;
     input.style.cssText = `
       width: 100%;
-      min-height: 110px;
-      padding: 12px;
+      min-height: 58px;
+      padding: 8px 10px;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
       border-radius: 4px;
       color: ${this.config.theme.colors.fg};
       font-family: ${this.config.theme.font};
       font-size: ${this.config.theme.fontSize};
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       resize: vertical;
       box-sizing: border-box;
     `;
@@ -717,7 +717,7 @@ export class AiSelector {
     const picker = document.createElement('div');
     picker.style.cssText = `
       display: grid;
-      grid-template-columns: minmax(220px, 38%) 1fr;
+      grid-template-columns: minmax(220px, 28%) 1fr;
       gap: 12px;
       margin-bottom: 8px;
     `;
@@ -726,7 +726,7 @@ export class AiSelector {
     leftPane.style.cssText = `
       display: flex;
       flex-direction: column;
-      min-height: 280px;
+      min-height: 360px;
       gap: 8px;
     `;
 
@@ -760,7 +760,7 @@ export class AiSelector {
 
     const templateList = document.createElement('div');
     templateList.style.cssText = `
-      max-height: 280px;
+      max-height: 360px;
       overflow-y: auto;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
@@ -801,7 +801,7 @@ export class AiSelector {
     rightPane.style.cssText = `
       display: flex;
       flex-direction: column;
-      min-height: 280px;
+      min-height: 360px;
       gap: 8px;
     `;
 
@@ -818,7 +818,7 @@ export class AiSelector {
     input.placeholder = 'Template preview / editor...';
     input.style.cssText = `
       width: 100%;
-      min-height: 220px;
+      min-height: 300px;
       padding: 12px;
       background: ${this.config.theme.colors.bgDark};
       border: 1px solid ${this.config.theme.colors.border};
@@ -861,12 +861,12 @@ export class AiSelector {
     row.dataset.skTemplateIndex = String(index);
     row.style.cssText = `
       display: flex;
-      align-items: flex-start;
-      gap: 6px;
-      padding: 4px 6px;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
       border-radius: 4px;
       border: 1px solid ${this.config.theme.colors.border};
-      margin-bottom: 3px;
+      margin-bottom: 4px;
       cursor: pointer;
       transition: all 0.15s ease;
     `;
@@ -879,7 +879,7 @@ export class AiSelector {
     checkbox.style.cssText = `
       width: 14px;
       height: 14px;
-      margin-top: 1px;
+      margin: 0;
       cursor: pointer;
       flex-shrink: 0;
       accent-color: ${this.config.theme.colors.accentFg};
@@ -896,7 +896,12 @@ export class AiSelector {
     });
 
     const textCol = document.createElement('div');
-    textCol.style.cssText = `flex: 1; min-width: 0;`;
+    textCol.style.cssText = `
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+    `;
 
     const label = document.createElement('span');
     label.textContent = template.label;
@@ -906,20 +911,13 @@ export class AiSelector {
       line-height: 1.25;
       color: ${this.config.theme.colors.fg};
       user-select: none;
-    `;
-
-    const description = document.createElement('div');
-    description.textContent = template.description;
-    description.style.cssText = `
-      font-size: 10px;
-      line-height: 1.2;
-      color: ${this.config.theme.colors.mainFg};
-      margin-top: 1px;
-      user-select: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block;
     `;
 
     textCol.appendChild(label);
-    textCol.appendChild(description);
 
     row.appendChild(checkbox);
     row.appendChild(textCol);
@@ -1016,10 +1014,10 @@ export class AiSelector {
     container.id = 'sk-services-container';
     container.style.cssText = `
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 6px;
       margin-bottom: 8px;
-      padding: 16px;
+      padding: 8px;
       background: ${this.config.theme.colors.bgDark};
       border-radius: 4px;
       border: 1px solid ${this.config.theme.colors.border};
@@ -1109,7 +1107,8 @@ export class AiSelector {
       display: flex;
       align-items: center;
       cursor: pointer;
-      padding: 6px;
+      min-width: 0;
+      padding: 4px 6px;
       border-radius: 4px;
       transition: background 0.2s;
     `;
@@ -1125,10 +1124,11 @@ export class AiSelector {
     checkbox.checked = isChecked;
     checkbox.id = `sk-ai-${index}`;
     checkbox.style.cssText = `
-      margin-right: 10px;
-      width: 18px;
-      height: 18px;
+      margin: 0 6px 0 0;
+      width: 14px;
+      height: 14px;
       cursor: pointer;
+      flex-shrink: 0;
       accent-color: ${this.config.theme.colors.accentFg};
     `;
 
@@ -1136,8 +1136,12 @@ export class AiSelector {
     label.textContent = service.name;
     label.style.cssText = `
       color: ${this.config.theme.colors.fg};
-      font-size: 15px;
+      font-size: 13px;
       cursor: pointer;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     `;
 
     wrapper.appendChild(checkbox);

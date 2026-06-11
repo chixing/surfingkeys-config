@@ -66,9 +66,9 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   // --- meta ---
   {
     label: 'TL;DR',
-    value: `Open with a one-paragraph story hook (what happened and why it matters), then a tight TL;DR in prose or at most 5 bullets.`,
+    value: `Give the answer first. Then explain why it matters and what to do next. Keep it under 200 words unless the source is complex. Use at most 5 bullets.`,
     category: 'meta',
-    description: 'Fast skim with narrative hook',
+    description: 'Fast answer with next step',
     tier: 'short',
     tags: ['summary'],
   },
@@ -81,12 +81,20 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     tags: ['summary'],
   },
   {
-    label: 'Fact-Check',
-    value: `In prose, walk through the main claims in the order they appear. For each: what was claimed, whether it holds, and sources or why uncertain. End with a short "what still needs verification" paragraph.`,
+    label: 'Claim Audit',
+    value: `Audit only the claims present in the source. Do not browse unless explicitly asked. Walk through claims in order: what was claimed, what evidence the source gives, what is unsupported or ambiguous, and what would be needed to verify it. End with "what still needs verification."`,
     category: 'meta',
-    description: 'Claims reviewed as a narrative',
+    description: 'Source-only claim review',
     tier: 'short',
     tags: ['skeptical'],
+  },
+  {
+    label: 'Web Fact-Check',
+    value: `Fact-check the source using current web research when available. Identify the central claims, verify them against primary or high-quality sources, include source links and dates for time-sensitive facts, and clearly mark each claim as supported, contradicted, partly supported, or unresolved. End with confidence and what would change the conclusion.`,
+    category: 'meta',
+    description: 'Claims verified with sources',
+    tier: 'long',
+    tags: ['web', 'skeptical'],
   },
   {
     label: 'Explain Simply',
@@ -331,7 +339,7 @@ Output
 1) Quick Orientation
    - In prose, explain what the subject is, who it is for, and what job it appears to do.
 2) Use Case Inventory
-   For each use case, include:
+   Cover the top 8 use cases unless the source demands exhaustive coverage. For each use case, include:
    - Use case name
    - User/persona and context
    - Triggering situation or pain
@@ -355,6 +363,35 @@ Be as detailed as possible while staying grounded. Do not stop at "marketing aut
     description: 'Concrete use cases and worked examples',
     tier: 'long',
     tags: ['web', 'examples', 'use-cases'],
+  },
+  {
+    label: 'Compare Products',
+    value: `Role
+Product evaluator comparing tools, vendors, or services.
+
+Task
+Compare the products implied by the source for a real buyer/user decision.
+
+Rules
+- Use web browsing when available for current pricing, packaging, docs, reviews, and recent changes.
+- Prefer primary sources for features/pricing/security claims.
+- Separate verified facts from inference.
+
+Output
+1) Executive Verdict
+   - Who should choose each product and why.
+2) Buyer Context
+   - Assumed user, team size, workflow, budget sensitivity, and risk tolerance.
+3) Comparison Table
+   - ICP, core workflow, pricing model, onboarding, integrations, reliability/performance, security/trust, lock-in, support, and ecosystem.
+4) Narrative Trade-Offs
+   - Where each product wins, where it fails, and what compromises the buyer accepts.
+5) Decision Guidance
+   - Best fit, worst fit, migration concerns, proof-of-concept tests, and questions to ask sales/support.`,
+    category: 'research',
+    description: 'Product/vendor decision comparison',
+    tier: 'long',
+    tags: ['web', 'competitors', 'decision'],
   },
 
   // --- code ---
@@ -380,22 +417,143 @@ Balance readability with technical depth — memorable, not textbook dry.`,
 Senior engineer reviewing a change described in the source.
 
 Task
-Review as narrative + clear verdict.
+Review the change for bugs, regressions, missing tests, and design risk.
 
-Open with a prose paragraph: what changed, what problem it solves, and the reviewer's mental model of risk.
+Output Requirements
+- Findings first, ordered by severity.
+- For each finding, include file/line/symbol references when present, the concrete risk, and a suggested fix.
+- Prioritize correctness, security/data safety, edge cases, API/design compatibility, observability, and test gaps.
+- Do not spend space praising the change.
 
-${NARRATIVE_SPINE}
-
-Then in prose sections (not bullet rubrics): correctness and edge cases, API/design, security/data, tests/observability. Reference lines or symbols when present.
-
-Close with verdict (Approve / Approve with nits / Request changes) and the top three must-fix items woven into a short closing paragraph.`,
+After findings, add: Open Questions, Test Gaps, and Verdict (Approve / Approve with nits / Request changes). If there are no findings, say that clearly and name any residual risk.`,
     category: 'code',
-    description: 'PR review as narrative',
+    description: 'Findings-first code review',
     tier: 'long',
-    tags: ['narrative'],
+    tags: ['review'],
+  },
+  {
+    label: 'Debug This',
+    value: `Role
+Senior engineer debugging a production or development issue.
+
+Task
+Analyze the error, log, stack trace, broken behavior, or failing test in the source.
+
+Output
+1) Immediate Read
+   - What is most likely happening, in plain language.
+2) Likely Causes
+   - Rank causes by probability. For each: evidence for, evidence against, and what would confirm it.
+3) Fast Checks
+   - Exact commands, logs, breakpoints, queries, or inspections to run next.
+4) Minimal Fix
+   - Smallest likely change and why it addresses the root cause.
+5) Prevention
+   - Test, guardrail, logging, alert, or design improvement that would prevent recurrence.
+
+Be concrete. Do not give generic debugging advice when the source contains specific evidence.`,
+    category: 'code',
+    description: 'Rank causes and fixes',
+    tier: 'long',
+    tags: ['debug', 'troubleshooting'],
+  },
+  {
+    label: 'Architecture Critique',
+    value: `Role
+Principal engineer stress-testing an architecture.
+
+Task
+Critique the system, design, proposal, or article in the source.
+
+Output
+1) System Read
+   - Short narrative of the architecture and its likely goals.
+2) Major Risks
+   - Scaling, consistency, coupling, failure modes, security/trust boundaries, data lifecycle, cost, migration, and operations.
+3) Missing Details
+   - What the design does not specify but production would require.
+4) Safer Alternatives
+   - Simpler or more conventional paths, with trade-offs.
+5) Recommendation
+   - Proceed, revise, prototype, or reject. Include the first validation test that would reduce uncertainty most.
+
+Focus on real production failure modes, not aesthetic preferences.`,
+    category: 'code',
+    description: 'Production design stress test',
+    tier: 'long',
+    tags: ['architecture', 'skeptical'],
   },
 
   // --- utility ---
+  {
+    label: 'Decision Memo',
+    value: `Turn the source into a concise decision memo.
+
+Output
+1) Decision
+   - State the recommended decision in the first paragraph.
+2) Context
+   - What problem is being solved, who is affected, and what constraints matter.
+3) Options
+   - Compare viable options, including doing nothing.
+4) Rationale
+   - Why the recommendation wins on impact, cost, risk, reversibility, and timing.
+5) Risks
+   - Failure modes, assumptions, and what would change the decision.
+6) Next Step
+   - The smallest concrete action to move forward.
+
+Keep it direct and useful for someone who has to approve or execute the decision.`,
+    category: 'utility',
+    description: 'Recommendation with rationale',
+    tier: 'long',
+    tags: ['decision'],
+  },
+  {
+    label: 'Implementation Plan',
+    value: `Turn the source into an execution plan.
+
+Output
+1) Goal
+   - What success looks like and how it will be measured.
+2) Scope
+   - In scope, out of scope, assumptions, and dependencies.
+3) Plan
+   - Phases or milestones with concrete tasks.
+4) Risks
+   - Technical, product, operational, and coordination risks with mitigations.
+5) Validation
+   - Tests, review points, rollout criteria, and rollback plan.
+6) First Three Tasks
+   - The next actions someone can start immediately.
+
+Prefer specific tasks and sequencing over generic project-management language.`,
+    category: 'utility',
+    description: 'Phased execution plan',
+    tier: 'long',
+    tags: ['planning'],
+  },
+  {
+    label: 'Spec From Source',
+    value: `Extract a working spec from the source.
+
+Output
+1) Problem Statement
+2) Goals and Non-Goals
+3) Users / Actors
+4) Functional Requirements
+5) Non-Functional Requirements
+6) User Stories or Workflows
+7) Acceptance Criteria
+8) Edge Cases and Error States
+9) Open Questions
+
+Mark inferred requirements clearly. Keep wording implementation-neutral unless the source already commits to a technical approach.`,
+    category: 'utility',
+    description: 'Requirements and acceptance criteria',
+    tier: 'long',
+    tags: ['spec', 'requirements'],
+  },
   {
     label: 'Compare A vs B',
     value: `The source compares two options (label A and B; infer from headings or "vs" if unclear).
