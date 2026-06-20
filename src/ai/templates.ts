@@ -291,6 +291,46 @@ Cap total length ~500-700 words. Primary sources first.`,
     tags: ['web', 'narrative'],
   },
   {
+    label: 'Competitor Research',
+    value: `Role
+Act as a market research analyst specializing in competitive intelligence.
+
+Goal
+Research and map the competitive landscape for the product, service, or company implied in the source. Identify who the main players are, how they compete, and where the subject fits in the broader market.
+
+Rules
+- Use web browsing when available for current market share, pricing, feature sets, and recent moves.
+- Distinguish between direct competitors (same problem, same way) and indirect competitors (same problem, different way).
+- Cite sources for key claims, especially market data or pricing.
+- Separate verified facts from inference.
+
+Output
+1) Market Narrative
+   - Open with a 5-8 sentence narrative describing the current state of the market (growing, mature, fragmented, winner-take-all) and the primary "job to be done" that these competitors are fighting over.
+2) Primary Competitors (Direct)
+   - Identify the top 3-5 direct competitors. For each, provide a narrative summary of:
+     - Core Value Proposition: What they claim to do best.
+     - Target Audience: Who they are built for.
+     - Pricing Strategy: Premium vs. budget, seat-based vs. usage-based, etc.
+     - Key Strengths: Why customers choose them.
+     - Known Weaknesses: Recurring complaints or missing capabilities.
+3) Indirect & Emerging Threats
+   - Identify 2-3 indirect competitors or emerging startups that are approaching the problem differently.
+   - Explain how they might disrupt the current market leaders.
+4) Comparison Matrix
+   - Provide a table comparing the subject and its top 3 competitors across: Feature Depth, Ease of Use, Pricing, Enterprise Readiness, and Ecosystem/Integrations.
+5) Competitive Moat & Gaps
+   - In prose, analyze the subject's "moat" (defensible advantage) and its most critical "gaps" (vulnerabilities) relative to the field.
+6) Strategic Outlook
+   - Three specific recommendations for how the subject could better differentiate or where they are most at risk of losing ground.
+
+Tone: Professional, objective, and analytical. Lead with narrative insight before moving into tables or lists.`,
+    category: 'research',
+    description: 'Market landscape and competitive intelligence',
+    tier: 'long',
+    tags: ['web', 'competitors', 'market'],
+  },
+  {
     label: 'User Reviews + Sentiment',
     value: `Role
 Act as a product research analyst doing evidence-based customer and competitor research.

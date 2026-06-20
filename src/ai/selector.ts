@@ -144,6 +144,25 @@ export class AiSelector {
     }
   }
 
+  searchImmediately(query: string, selectedServices: AIServiceName[]): boolean {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return false;
+
+    const selectedUrls = this.services
+      .filter(service => selectedServices.includes(service.name))
+      .map(service => service.url);
+    if (selectedUrls.length === 0) return false;
+
+    this.lastQuery = trimmedQuery;
+    selectedUrls.forEach(url => {
+      api.RUNTIME('openLink', {
+        tab: { tabbed: true, active: false },
+        url: url + encodeURIComponent(formatCombinedQuery(trimmedQuery, '')),
+      });
+    });
+    return true;
+  }
+
   // ===========================================================================
   // SurfingKeys Integration
   // ===========================================================================

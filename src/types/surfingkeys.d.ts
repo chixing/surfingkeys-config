@@ -95,6 +95,8 @@ export interface SurfingKeysAPI {
 
   removeSearchAlias(alias: string, searchUrl?: string, onlyThisSite?: boolean): void;
 
+  RUNTIME(action: string, args?: Record<string, any>, callback?: (response: any) => void): void;
+
   // Tabs
   tabOpenLink(url: string, target?: string): void;
 
