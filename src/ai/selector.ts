@@ -38,6 +38,7 @@ export class AiSelector {
   private promptDrafts: string[] = [];
   private selectedPromptIndexes = new Set<number>();
   private activePromptIndex: number | null = null;
+  private activePromptTouchedByUser: boolean = false;
   private keyHandler: ((e: KeyboardEvent) => void) | null = null;
   private focusHandler: ((e: FocusEvent) => void) | null = null;
   private blurHandler: ((e: FocusEvent) => void) | null = null;
@@ -343,7 +344,7 @@ export class AiSelector {
 
     this.persistPreviewInput();
     const selectedPrompts = this.getSelectedPromptTexts();
-    const promptsToSend = selectedPrompts.length > 0 ? selectedPrompts : [''];
+    const promptsToSend = selectedPrompts.length > 0 ? selectedPrompts : [this.getActivePromptText()];
 
     const tabCount = selectedUrls.length * promptsToSend.length;
     if (tabCount > TAB_WARNING_THRESHOLD) {
@@ -364,6 +365,7 @@ export class AiSelector {
   private initializePromptState(): void {
     this.promptDrafts = PROMPT_TEMPLATES.map(template => template.value);
     this.selectedPromptIndexes.clear();
+    this.activePromptTouchedByUser = false;
 
     if (PROMPT_TEMPLATES.length === 0) {
       this.activePromptIndex = null;
@@ -379,13 +381,19 @@ export class AiSelector {
     this.promptDrafts[this.activePromptIndex] = this.promptPreviewInput.value;
   }
 
-  private setActivePrompt(index: number, persistCurrent: boolean = true, focusPreview: boolean = true): void {
+  private setActivePrompt(
+    index: number,
+    persistCurrent: boolean = true,
+    focusPreview: boolean = true,
+    markTouched: boolean = true
+  ): void {
     if (index < 0 || index >= this.promptDrafts.length) return;
 
     if (persistCurrent) {
       this.persistPreviewInput();
     }
     this.activePromptIndex = index;
+    if (markTouched) this.activePromptTouchedByUser = true;
 
     if (this.promptPreviewInput) {
       this.promptPreviewInput.value = this.promptDrafts[index] || '';
@@ -451,6 +459,11 @@ export class AiSelector {
     });
 
     return promptTexts;
+  }
+
+  private getActivePromptText(): string {
+    if (!this.activePromptTouchedByUser || this.activePromptIndex === null) return '';
+    return (this.promptDrafts[this.activePromptIndex] || '').trim();
   }
 
   // ===========================================================================
@@ -840,7 +853,7 @@ export class AiSelector {
     picker.appendChild(rightPane);
 
     if (this.activePromptIndex !== null) {
-      this.setActivePrompt(this.activePromptIndex, false);
+      this.setActivePrompt(this.activePromptIndex, false, true, false);
     } else {
       this.updatePromptPreviewTitle();
       this.updatePromptRowStyles();
