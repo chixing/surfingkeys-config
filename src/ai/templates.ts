@@ -113,6 +113,24 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     tier: 'short',
   },
   {
+    label: 'ELI5 Section-by-Section',
+    value: `Analyze the source and format the response exactly as follows.
+
+1) High-Level Summary
+   - Concise, high-level overview of the main point of the entire piece.
+2) Section-by-Section ELI5
+   - Break down the content section by section using plain, simple language (Explain Like I'm 5 style).
+
+Constraints
+- Do not use analogies. Explain concepts directly and simply.
+- Do not cover all sections at once. Give only the first 2-3 sections, then stop so the reader can absorb them before continuing.
+- End with a follow-up suggestion prompting the reader to say "continue" for the next sections.`,
+    category: 'explain',
+    description: 'Plain-language breakdown, section by section',
+    tier: 'short',
+    tags: ['eli5', 'incremental'],
+  },
+  {
     label: 'Action Items',
     value: `Brief narrative of what the source is about and what decision it implies, then a concise checklist:
 - Decisions made or implied
