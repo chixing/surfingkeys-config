@@ -26,6 +26,7 @@ export class AiSelector {
   private config: Config;
   private lastQuery: string | null = null;
   private overlay: HTMLElement | null = null;
+  private styleEl: HTMLStyleElement | null = null;
   private queryInput: HTMLTextAreaElement | null = null;
   private promptPreviewInput: HTMLTextAreaElement | null = null;
   private promptPreviewTitle: HTMLElement | null = null;
@@ -33,6 +34,8 @@ export class AiSelector {
   private clipboardIndicator: HTMLElement | null = null;
   private templateRows: HTMLElement[] = [];
   private templateRenderOrder: number[] = [];
+  private templateCheckboxes: HTMLInputElement[] = [];
+  private serviceCheckboxes: HTMLInputElement[] = [];
   private templateFilterInput: HTMLInputElement | null = null;
   private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
   private promptDrafts: string[] = [];
@@ -117,12 +120,15 @@ export class AiSelector {
       this.overlay.parentNode.removeChild(this.overlay);
     }
     this.overlay = null;
+    this.styleEl = null;
     this.queryInput = null;
     this.promptPreviewInput = null;
     this.promptPreviewTitle = null;
     this.clipboardText = null;
     this.clipboardIndicator = null;
     this.templateRows = [];
+    this.templateCheckboxes = [];
+    this.serviceCheckboxes = [];
     this.templateFilterInput = null;
     this.templateCategoryHeadings.clear();
     this.promptDrafts = [];
@@ -197,8 +203,7 @@ export class AiSelector {
           e.preventDefault();
           e.stopPropagation();
           const idx = this.activePromptIndex ?? 0;
-          const checkbox = document.getElementById(`sk-template-${idx}`) as HTMLInputElement | null;
-          checkbox?.focus();
+          this.templateCheckboxes[idx]?.focus();
           return;
         }
         return;
@@ -236,8 +241,7 @@ export class AiSelector {
           e.preventDefault();
           const first = this.findFirstVisibleTemplateIndex();
           if (first !== null) {
-            const checkbox = document.getElementById(`sk-template-${first}`) as HTMLInputElement | null;
-            checkbox?.focus();
+            this.templateCheckboxes[first]?.focus();
             this.setActivePrompt(first, true, false);
           }
           return;
@@ -326,15 +330,15 @@ export class AiSelector {
     const query = this.queryInput.value.trim();
     if (!query) {
       this.queryInput.focus();
-      this.queryInput.style.borderColor = '#ff6b6b';
+      this.queryInput.classList.add('sk-ai-invalid');
       setTimeout(() => {
-        if (this.queryInput) this.queryInput.style.borderColor = this.config.theme.colors.border;
+        this.queryInput?.classList.remove('sk-ai-invalid');
       }, 1000);
       return;
     }
 
     const selectedUrls = this.services
-      .filter((_, index) => (document.getElementById(`sk-ai-${index}`) as HTMLInputElement | null)?.checked)
+      .filter((_, index) => this.serviceCheckboxes[index]?.checked)
       .map(service => service.url);
 
     if (selectedUrls.length === 0) {
@@ -424,17 +428,8 @@ export class AiSelector {
       const row = this.templateRows[index];
       if (!row) return;
 
-      const isActive = this.activePromptIndex === index;
-      const isSelected = this.selectedPromptIndexes.has(index);
-      row.style.borderColor = isActive ? this.config.theme.colors.mainFg : this.config.theme.colors.border;
-      row.style.background = isActive ? this.config.theme.colors.border : 'transparent';
-
-      const title = row.querySelector('span');
-      if (title) {
-        (title as HTMLElement).style.color = isSelected
-          ? this.config.theme.colors.accentFg
-          : this.config.theme.colors.fg;
-      }
+      row.classList.toggle('is-active', this.activePromptIndex === index);
+      row.classList.toggle('is-selected', this.selectedPromptIndexes.has(index));
     });
   }
 
@@ -504,7 +499,7 @@ export class AiSelector {
   }
 
   private focusTemplateIndex(index: number): void {
-    const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
+    const checkbox = this.templateCheckboxes[index];
     if (checkbox) {
       checkbox.focus();
       checkbox.scrollIntoView({ block: 'nearest' });
@@ -568,7 +563,7 @@ export class AiSelector {
 
     if (nextIndex < 0 || nextIndex >= this.services.length) return true;
 
-    const next = document.getElementById(`sk-ai-${nextIndex}`) as HTMLInputElement | null;
+    const next = this.serviceCheckboxes[nextIndex];
     if (next) {
       next.focus();
       next.scrollIntoView({ block: 'nearest' });
@@ -620,105 +615,176 @@ export class AiSelector {
   // DOM Creation
   // ===========================================================================
 
+  private createStyleElement(): HTMLStyleElement {
+    const style = document.createElement('style');
+    // All rules are scoped under #sk-ai-selector-overlay so page CSS cannot bleed
+    // in; theme values flow through --sk-* custom properties set on the overlay.
+    style.textContent = `
+      #sk-ai-selector-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.7); z-index: 2147483647;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--sk-font);
+      }
+      #sk-ai-selector-overlay .sk-ai-dialog {
+        background: var(--sk-bg); border: 2px solid var(--sk-border);
+        border-radius: 8px; padding: 24px; width: min(1120px, 96vw);
+        max-height: 94vh; overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); color: var(--sk-fg);
+      }
+      #sk-ai-selector-overlay .sk-ai-hints {
+        margin: 0 0 10px 0; color: var(--sk-info-fg); font-size: 12px; line-height: 1.4;
+      }
+      #sk-ai-selector-overlay .sk-ai-query-label {
+        display: block; margin-bottom: 8px; color: var(--sk-main-fg); font-size: 14px;
+      }
+      #sk-ai-selector-overlay .sk-ai-clip-indicator {
+        display: none; align-items: center; justify-content: center;
+        margin-left: 10px; padding: 2px 10px; border-radius: 999px;
+        border: 1px solid var(--sk-border); background: var(--sk-bg-dark);
+        color: var(--sk-info-fg); font-family: var(--sk-font); font-size: 12px;
+        font-weight: 600; letter-spacing: 0.02em; user-select: none; vertical-align: middle;
+      }
+      #sk-ai-selector-overlay .sk-ai-query {
+        width: 100%; min-height: 58px; padding: 8px 10px;
+        background: var(--sk-bg-dark); border: 1px solid var(--sk-border);
+        border-radius: 4px; color: var(--sk-fg); font-family: var(--sk-font);
+        font-size: var(--sk-font-size); margin-bottom: 10px; resize: vertical;
+        box-sizing: border-box;
+      }
+      #sk-ai-selector-overlay .sk-ai-query.sk-ai-invalid { border-color: #ff6b6b; }
+      #sk-ai-selector-overlay .sk-ai-picker {
+        display: grid; grid-template-columns: minmax(220px, 28%) 1fr;
+        gap: 12px; margin-bottom: 8px;
+      }
+      #sk-ai-selector-overlay .sk-ai-pane { display: flex; flex-direction: column; min-height: 500px; gap: 8px; }
+      #sk-ai-selector-overlay .sk-ai-filter {
+        width: 100%; padding: 8px 10px; background: var(--sk-bg);
+        border: 1px solid var(--sk-border); border-radius: 4px; color: var(--sk-fg);
+        font-family: var(--sk-font); font-size: 13px; box-sizing: border-box;
+      }
+      #sk-ai-selector-overlay .sk-ai-template-list {
+        max-height: 500px; overflow-y: auto; background: var(--sk-bg-dark);
+        border: 1px solid var(--sk-border); border-radius: 4px; padding: 8px;
+        flex: 1; box-sizing: border-box;
+      }
+      #sk-ai-selector-overlay .sk-ai-cat-heading {
+        color: var(--sk-info-fg); font-size: 11px; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; margin: 10px 0 6px 0;
+      }
+      #sk-ai-selector-overlay .sk-ai-row {
+        display: flex; align-items: center; gap: 8px; padding: 5px 8px;
+        border-radius: 4px; border: 1px solid var(--sk-border); background: transparent;
+        margin-bottom: 4px; cursor: pointer; transition: all 0.15s ease;
+      }
+      #sk-ai-selector-overlay .sk-ai-row.is-active { border-color: var(--sk-main-fg); background: var(--sk-border); }
+      #sk-ai-selector-overlay .sk-ai-check {
+        width: 14px; height: 14px; margin: 0; cursor: pointer;
+        flex-shrink: 0; accent-color: var(--sk-accent-fg);
+      }
+      #sk-ai-selector-overlay .sk-ai-row-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+      #sk-ai-selector-overlay .sk-ai-row-label {
+        font-size: 12px; font-weight: 600; line-height: 1.25; color: var(--sk-fg);
+        user-select: none; overflow: hidden; text-overflow: ellipsis;
+        white-space: nowrap; display: block;
+      }
+      #sk-ai-selector-overlay .sk-ai-row.is-selected .sk-ai-row-label { color: var(--sk-accent-fg); }
+      #sk-ai-selector-overlay .sk-ai-preview-title { color: var(--sk-main-fg); font-size: 13px; font-weight: 600; }
+      #sk-ai-selector-overlay .sk-ai-preview {
+        width: 100%; min-height: 440px; padding: 12px; background: var(--sk-bg-dark);
+        border: 1px solid var(--sk-border); border-radius: 4px; color: var(--sk-fg);
+        font-family: var(--sk-font); font-size: var(--sk-font-size); resize: vertical;
+        box-sizing: border-box; flex: 1;
+      }
+      #sk-ai-selector-overlay .sk-ai-btn-row { display: flex; gap: 8px; justify-content: flex-start; }
+      #sk-ai-selector-overlay .sk-ai-btn-row--prompts { margin-bottom: 20px; }
+      #sk-ai-selector-overlay .sk-ai-btn-row--services { margin-bottom: 12px; }
+      #sk-ai-selector-overlay .sk-ai-services {
+        display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px; margin-bottom: 8px; padding: 8px; background: var(--sk-bg-dark);
+        border-radius: 4px; border: 1px solid var(--sk-border);
+      }
+      #sk-ai-selector-overlay .sk-ai-service {
+        display: flex; align-items: center; gap: 6px; cursor: pointer; min-width: 0;
+        padding: 4px 6px; border-radius: 4px; background: transparent; transition: background 0.2s;
+      }
+      #sk-ai-selector-overlay .sk-ai-service:hover { background: var(--sk-border); }
+      #sk-ai-selector-overlay .sk-ai-service-label {
+        color: var(--sk-fg); font-size: 13px; cursor: pointer; min-width: 0;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      #sk-ai-selector-overlay .sk-ai-actions { display: flex; gap: 12px; justify-content: flex-end; }
+      #sk-ai-selector-overlay .sk-ai-btn {
+        background: var(--sk-bg-dark); border: 1px solid var(--sk-border);
+        border-radius: 4px; font-family: var(--sk-font); cursor: pointer; transition: all 0.2s;
+      }
+      #sk-ai-selector-overlay .sk-ai-btn:hover { background: var(--sk-border); }
+      #sk-ai-selector-overlay .sk-ai-btn--sm { padding: 4px 12px; font-size: 12px; }
+      #sk-ai-selector-overlay .sk-ai-btn--lg { padding: 10px 24px; font-size: 14px; }
+      #sk-ai-selector-overlay .sk-ai-btn--accent { color: var(--sk-accent-fg); }
+      #sk-ai-selector-overlay .sk-ai-btn--info { color: var(--sk-info-fg); }
+      #sk-ai-selector-overlay .sk-ai-btn--plain { color: var(--sk-fg); }
+      #sk-ai-selector-overlay .sk-ai-btn--primary {
+        background: var(--sk-accent-fg); border-color: var(--sk-accent-fg);
+        color: var(--sk-bg-dark); font-weight: 600;
+      }
+      #sk-ai-selector-overlay .sk-ai-btn--primary:hover { background: var(--sk-main-fg); border-color: var(--sk-main-fg); }
+    `;
+    return style;
+  }
+
   private createOverlay(): HTMLElement {
     const overlay = document.createElement('div');
     overlay.id = 'sk-ai-selector-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 2147483647;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: ${this.config.theme.font};
-    `;
+
+    const colors = this.config.theme.colors;
+    overlay.style.setProperty('--sk-font', this.config.theme.font);
+    overlay.style.setProperty('--sk-font-size', this.config.theme.fontSize);
+    overlay.style.setProperty('--sk-bg', colors.bg);
+    overlay.style.setProperty('--sk-bg-dark', colors.bgDark);
+    overlay.style.setProperty('--sk-border', colors.border);
+    overlay.style.setProperty('--sk-fg', colors.fg);
+    overlay.style.setProperty('--sk-main-fg', colors.mainFg);
+    overlay.style.setProperty('--sk-accent-fg', colors.accentFg);
+    overlay.style.setProperty('--sk-info-fg', colors.infoFg);
+
+    this.styleEl = this.createStyleElement();
+    overlay.appendChild(this.styleEl);
+
     return overlay;
   }
 
   private createDialog(): HTMLElement {
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: ${this.config.theme.colors.bg};
-      border: 2px solid ${this.config.theme.colors.border};
-      border-radius: 8px;
-      padding: 24px;
-      width: min(1120px, 96vw);
-      max-height: 94vh;
-      overflow-y: auto;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      color: ${this.config.theme.colors.fg};
-    `;
+    dialog.className = 'sk-ai-dialog';
     return dialog;
   }
 
   private createFooterHints(): HTMLElement {
     const hints = document.createElement('p');
+    hints.className = 'sk-ai-hints';
     hints.textContent =
       'Enter: send · Shift+Enter: newline · Filter: search templates · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
-    hints.style.cssText = `
-      margin: 0 0 10px 0;
-      color: ${this.config.theme.colors.infoFg};
-      font-size: 12px;
-      line-height: 1.4;
-    `;
     return hints;
   }
 
   private createQueryInput(initialQuery: string): { label: HTMLElement; input: HTMLTextAreaElement } {
     const label = document.createElement('label');
-    label.textContent = 'URL:';
-    label.style.cssText = `
-      display: block;
-      margin-bottom: 8px;
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 14px;
-    `;
+    label.className = 'sk-ai-query-label';
+    label.textContent = 'Query:';
 
     const clipboardIndicator = document.createElement('span');
+    clipboardIndicator.className = 'sk-ai-clip-indicator';
     clipboardIndicator.textContent = 'Clipboard different';
     clipboardIndicator.title = 'Clipboard differs from query';
-    clipboardIndicator.style.cssText = `
-      display: none;
-      align-items: center;
-      justify-content: center;
-      margin-left: 10px;
-      padding: 2px 10px;
-      border-radius: 999px;
-      border: 1px solid ${this.config.theme.colors.border};
-      background: ${this.config.theme.colors.bgDark};
-      color: ${this.config.theme.colors.infoFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.02em;
-      user-select: none;
-      vertical-align: middle;
-    `;
     this.clipboardIndicator = clipboardIndicator;
     label.appendChild(clipboardIndicator);
 
     const input = document.createElement('textarea');
     input.id = 'sk-ai-query-input';
+    input.className = 'sk-ai-query';
     input.value = initialQuery;
     input.rows = 2;
-    input.style.cssText = `
-      width: 100%;
-      min-height: 58px;
-      padding: 8px 10px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: ${this.config.theme.fontSize};
-      margin-bottom: 10px;
-      resize: vertical;
-      box-sizing: border-box;
-    `;
     input.addEventListener('input', () => this.updateClipboardIndicator());
 
     return { label, input };
@@ -728,54 +794,26 @@ export class AiSelector {
     const controls = this.createPromptSelectButtons();
 
     const picker = document.createElement('div');
-    picker.style.cssText = `
-      display: grid;
-      grid-template-columns: minmax(220px, 28%) 1fr;
-      gap: 12px;
-      margin-bottom: 8px;
-    `;
+    picker.className = 'sk-ai-picker';
 
     const leftPane = document.createElement('div');
-    leftPane.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      min-height: 500px;
-      gap: 8px;
-    `;
+    leftPane.className = 'sk-ai-pane';
 
     const filterInput = document.createElement('input');
     filterInput.type = 'search';
     filterInput.id = 'sk-template-filter';
+    filterInput.className = 'sk-ai-filter';
     filterInput.placeholder = 'Filter templates…';
     filterInput.autocomplete = 'off';
     filterInput.spellcheck = false;
-    filterInput.style.cssText = `
-      width: 100%;
-      padding: 8px 10px;
-      background: ${this.config.theme.colors.bg};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: 13px;
-      box-sizing: border-box;
-    `;
     filterInput.addEventListener('input', () => this.applyTemplateFilter(filterInput.value));
     this.templateFilterInput = filterInput;
 
     const templateList = document.createElement('div');
-    templateList.style.cssText = `
-      max-height: 500px;
-      overflow-y: auto;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      padding: 8px;
-      flex: 1;
-      box-sizing: border-box;
-    `;
+    templateList.className = 'sk-ai-template-list';
 
     this.templateRows = new Array(PROMPT_TEMPLATES.length);
+    this.templateCheckboxes = new Array(PROMPT_TEMPLATES.length);
     this.templateRenderOrder = [];
     this.templateCategoryHeadings.clear();
     PROMPT_CATEGORY_ORDER.forEach(category => {
@@ -783,16 +821,9 @@ export class AiSelector {
       if (indexes.length === 0) return;
 
       const heading = document.createElement('div');
+      heading.className = 'sk-ai-cat-heading';
       heading.textContent = PROMPT_CATEGORY_LABELS[category];
       heading.dataset.skCategoryHeading = category;
-      heading.style.cssText = `
-        color: ${this.config.theme.colors.infoFg};
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        margin: 10px 0 6px 0;
-      `;
       this.templateCategoryHeadings.set(category, heading);
       templateList.appendChild(heading);
 
@@ -805,38 +836,16 @@ export class AiSelector {
     });
 
     const rightPane = document.createElement('div');
-    rightPane.style.cssText = `
-      display: flex;
-      flex-direction: column;
-      min-height: 500px;
-      gap: 8px;
-    `;
+    rightPane.className = 'sk-ai-pane';
 
     const previewTitle = document.createElement('div');
-    previewTitle.style.cssText = `
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 13px;
-      font-weight: 600;
-    `;
+    previewTitle.className = 'sk-ai-preview-title';
     this.promptPreviewTitle = previewTitle;
 
     const input = document.createElement('textarea');
+    input.className = 'sk-ai-preview';
     input.rows = 12;
     input.placeholder = 'Template preview / editor...';
-    input.style.cssText = `
-      width: 100%;
-      min-height: 440px;
-      padding: 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: ${this.config.theme.fontSize};
-      resize: vertical;
-      box-sizing: border-box;
-      flex: 1;
-    `;
     input.addEventListener('input', () => {
       if (this.activePromptIndex === null) return;
       this.promptDrafts[this.activePromptIndex] = input.value;
@@ -864,32 +873,15 @@ export class AiSelector {
 
   private createPromptTemplateRow(template: PromptTemplate, index: number): HTMLElement {
     const row = document.createElement('div');
+    row.className = 'sk-ai-row';
     row.dataset.skTemplateIndex = String(index);
-    row.style.cssText = `
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 5px 8px;
-      border-radius: 4px;
-      border: 1px solid ${this.config.theme.colors.border};
-      margin-bottom: 4px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    `;
     row.onclick = () => this.setActivePrompt(index);
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.id = `sk-template-${index}`;
+    checkbox.className = 'sk-ai-check';
     checkbox.checked = this.selectedPromptIndexes.has(index);
-    checkbox.style.cssText = `
-      width: 14px;
-      height: 14px;
-      margin: 0;
-      cursor: pointer;
-      flex-shrink: 0;
-      accent-color: ${this.config.theme.colors.accentFg};
-    `;
     checkbox.addEventListener('click', e => e.stopPropagation());
     checkbox.addEventListener('focus', () => this.setActivePrompt(index, true, false));
     checkbox.addEventListener('change', () => {
@@ -900,28 +892,14 @@ export class AiSelector {
       }
       this.setActivePrompt(index, true, false);
     });
+    this.templateCheckboxes[index] = checkbox;
 
     const textCol = document.createElement('div');
-    textCol.style.cssText = `
-      flex: 1;
-      min-width: 0;
-      white-space: nowrap;
-      overflow: hidden;
-    `;
+    textCol.className = 'sk-ai-row-text';
 
     const label = document.createElement('span');
+    label.className = 'sk-ai-row-label';
     label.textContent = template.label;
-    label.style.cssText = `
-      font-size: 12px;
-      font-weight: 600;
-      line-height: 1.25;
-      color: ${this.config.theme.colors.fg};
-      user-select: none;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      display: block;
-    `;
 
     textCol.appendChild(label);
 
@@ -932,37 +910,16 @@ export class AiSelector {
 
   private createPromptSelectButtons(): HTMLElement {
     const container = document.createElement('div');
-    container.style.cssText = `
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-      justify-content: flex-start;
-    `;
+    container.className = 'sk-ai-btn-row sk-ai-btn-row--prompts';
 
     const selectAllBtn = document.createElement('button');
+    selectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--accent';
     selectAllBtn.textContent = 'Select All Prompts';
     selectAllBtn.type = 'button';
-    selectAllBtn.style.cssText = `
-      padding: 4px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.accentFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    selectAllBtn.onmouseenter = () => {
-      selectAllBtn.style.background = this.config.theme.colors.border;
-    };
-    selectAllBtn.onmouseleave = () => {
-      selectAllBtn.style.background = this.config.theme.colors.bgDark;
-    };
     selectAllBtn.onclick = () => {
       PROMPT_TEMPLATES.forEach((_, index) => {
         this.selectedPromptIndexes.add(index);
-        const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
+        const checkbox = this.templateCheckboxes[index];
         if (checkbox) checkbox.checked = true;
       });
       if (this.activePromptIndex === null && PROMPT_TEMPLATES.length > 0) {
@@ -973,29 +930,13 @@ export class AiSelector {
     };
 
     const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--info';
     unselectAllBtn.textContent = 'Unselect All Prompts';
     unselectAllBtn.type = 'button';
-    unselectAllBtn.style.cssText = `
-      padding: 4px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.infoFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    unselectAllBtn.onmouseenter = () => {
-      unselectAllBtn.style.background = this.config.theme.colors.border;
-    };
-    unselectAllBtn.onmouseleave = () => {
-      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
-    };
     unselectAllBtn.onclick = () => {
       this.selectedPromptIndexes.clear();
       PROMPT_TEMPLATES.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-template-${index}`) as HTMLInputElement | null;
+        const checkbox = this.templateCheckboxes[index];
         if (checkbox) checkbox.checked = false;
       });
       this.updatePromptRowStyles();
@@ -1009,17 +950,9 @@ export class AiSelector {
   private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): { container: HTMLElement } {
     const container = document.createElement('div');
     container.id = 'sk-services-container';
-    container.style.cssText = `
-      display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
-      gap: 6px;
-      margin-bottom: 8px;
-      padding: 8px;
-      background: ${this.config.theme.colors.bgDark};
-      border-radius: 4px;
-      border: 1px solid ${this.config.theme.colors.border};
-    `;
+    container.className = 'sk-ai-services';
 
+    this.serviceCheckboxes = new Array(this.services.length);
     this.services.forEach((service, index) => {
       const isChecked = selectedServices ? selectedServices.includes(service.name) : service.checked;
       const checkboxWrapper = this.createCheckbox(service, index, isChecked);
@@ -1031,63 +964,26 @@ export class AiSelector {
 
   private createServiceSelectButtons(): HTMLElement {
     const container = document.createElement('div');
-    container.style.cssText = `
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-      justify-content: flex-start;
-    `;
+    container.className = 'sk-ai-btn-row sk-ai-btn-row--services';
 
     const selectAllBtn = document.createElement('button');
+    selectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--accent';
     selectAllBtn.textContent = 'Select All';
     selectAllBtn.type = 'button';
-    selectAllBtn.style.cssText = `
-      padding: 4px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.accentFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    selectAllBtn.onmouseenter = () => {
-      selectAllBtn.style.background = this.config.theme.colors.border;
-    };
-    selectAllBtn.onmouseleave = () => {
-      selectAllBtn.style.background = this.config.theme.colors.bgDark;
-    };
     selectAllBtn.onclick = () => {
       this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`) as HTMLInputElement | null;
+        const checkbox = this.serviceCheckboxes[index];
         if (checkbox) checkbox.checked = true;
       });
     };
 
     const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--info';
     unselectAllBtn.textContent = 'Unselect All';
     unselectAllBtn.type = 'button';
-    unselectAllBtn.style.cssText = `
-      padding: 4px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.infoFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    unselectAllBtn.onmouseenter = () => {
-      unselectAllBtn.style.background = this.config.theme.colors.border;
-    };
-    unselectAllBtn.onmouseleave = () => {
-      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
-    };
     unselectAllBtn.onclick = () => {
       this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`) as HTMLInputElement | null;
+        const checkbox = this.serviceCheckboxes[index];
         if (checkbox) checkbox.checked = false;
       });
     };
@@ -1099,47 +995,19 @@ export class AiSelector {
 
   private createCheckbox(service: AIService, index: number, isChecked: boolean = true): HTMLElement {
     const wrapper = document.createElement('label');
+    wrapper.className = 'sk-ai-service';
     wrapper.dataset.skServiceIndex = String(index);
-    wrapper.style.cssText = `
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      min-width: 0;
-      padding: 4px 6px;
-      border-radius: 4px;
-      transition: background 0.2s;
-    `;
-    wrapper.onmouseenter = () => {
-      wrapper.style.background = this.config.theme.colors.border;
-    };
-    wrapper.onmouseleave = () => {
-      wrapper.style.background = 'transparent';
-    };
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = isChecked;
     checkbox.id = `sk-ai-${index}`;
-    checkbox.style.cssText = `
-      margin: 0 6px 0 0;
-      width: 14px;
-      height: 14px;
-      cursor: pointer;
-      flex-shrink: 0;
-      accent-color: ${this.config.theme.colors.accentFg};
-    `;
+    checkbox.className = 'sk-ai-check';
+    this.serviceCheckboxes[index] = checkbox;
 
     const label = document.createElement('span');
+    label.className = 'sk-ai-service-label';
     label.textContent = service.name;
-    label.style.cssText = `
-      color: ${this.config.theme.colors.fg};
-      font-size: 13px;
-      cursor: pointer;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    `;
 
     wrapper.appendChild(checkbox);
     wrapper.appendChild(label);
@@ -1148,11 +1016,7 @@ export class AiSelector {
 
   private createButtons(): HTMLElement {
     const container = document.createElement('div');
-    container.style.cssText = `
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    `;
+    container.className = 'sk-ai-actions';
 
     const cancelBtn = this.createCancelButton();
     const submitBtn = this.createSubmitButton();
@@ -1164,24 +1028,8 @@ export class AiSelector {
 
   private createCancelButton(): HTMLElement {
     const btn = document.createElement('button');
+    btn.className = 'sk-ai-btn sk-ai-btn--lg sk-ai-btn--plain';
     btn.textContent = 'Cancel';
-    btn.style.cssText = `
-      padding: 10px 24px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    btn.onmouseenter = () => {
-      btn.style.background = this.config.theme.colors.border;
-    };
-    btn.onmouseleave = () => {
-      btn.style.background = this.config.theme.colors.bgDark;
-    };
     btn.onclick = () => {
       if (this.queryInput) this.lastQuery = this.queryInput.value;
       this.close();
@@ -1191,27 +1039,8 @@ export class AiSelector {
 
   private createSubmitButton(): HTMLElement {
     const btn = document.createElement('button');
+    btn.className = 'sk-ai-btn sk-ai-btn--lg sk-ai-btn--primary';
     btn.textContent = 'Open Selected AIs';
-    btn.style.cssText = `
-      padding: 10px 24px;
-      background: ${this.config.theme.colors.accentFg};
-      border: 1px solid ${this.config.theme.colors.accentFg};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.bgDark};
-      font-family: ${this.config.theme.font};
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    btn.onmouseenter = () => {
-      btn.style.background = this.config.theme.colors.mainFg;
-      btn.style.borderColor = this.config.theme.colors.mainFg;
-    };
-    btn.onmouseleave = () => {
-      btn.style.background = this.config.theme.colors.accentFg;
-      btn.style.borderColor = this.config.theme.colors.accentFg;
-    };
     btn.onclick = () => this.handleSubmit();
     return btn;
   }
