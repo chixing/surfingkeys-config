@@ -108,5 +108,14 @@ export function applyTheme(config: Config): void {
   .ace_cursor { color: var(--fg) !important; }
   .normal-mode .ace_cursor { background-color: var(--fg) !important; border: var(--fg) !important; opacity: 0.7 !important; }
   .ace_marker-layer .ace_selection { background: var(--select) !important; }
+
+  /* ACE autocomplete popup */
+  .ace_editor.ace_autocomplete { background: var(--bg-dark) !important; color: var(--fg) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; box-shadow: 0 8px 24px rgba(1, 4, 9, 0.85) !important; }
+  .ace_editor.ace_autocomplete .ace_text-layer { color: var(--fg) !important; }
+  .ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line { background: var(--select) !important; }
+  .ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover { background: var(--select) !important; border: none !important; }
+  .ace_editor.ace_autocomplete .ace_completion-highlight { color: var(--accent-fg) !important; text-shadow: none !important; }
+  .ace_editor.ace_autocomplete .ace_completion-meta { color: var(--main-fg) !important; }
+  .ace_tooltip { background: var(--bg-dark) !important; color: var(--fg) !important; border: 1px solid var(--border) !important; border-radius: 6px !important; }
   `;
 }
