@@ -71,11 +71,12 @@ export function applyTheme(config: Config): void {
   .sk_theme .url { color: var(--main-fg); }
   .sk_theme .annotation { color: var(--main-fg); }
   .sk_theme .omnibar_highlight { color: var(--accent-fg); font-weight: 600; }
-  .sk_theme .omnibar_timestamp { color: var(--info-fg); }
+  .sk_theme .omnibar_timestamp { color: var(--main-fg); }
   .sk_theme .omnibar_visitcount { color: var(--main-fg); }
   .sk_theme .omnibar_folder { color: var(--accent-fg); }
 
-  .sk_theme #sk_omnibarSearchResult ul li { padding: 0.5em 0.6em; border-left: 2px solid transparent; border-bottom: 1px solid var(--bg-dark); }
+  .sk_theme #sk_omnibarSearchResult ul li { background: var(--bg); padding: 0.5em 0.6em; border-left: 2px solid transparent; border-bottom: 1px solid var(--bg-dark); }
+  .sk_theme #sk_omnibarSearchResult ul li:nth-child(odd) { background: var(--bg); }
   .sk_theme #sk_omnibarSearchResult ul li.focused { background: var(--select); border-left-color: var(--accent-fg); }
   .sk_theme #sk_omnibarSearchResult { max-height: 80vh !important; }
 
