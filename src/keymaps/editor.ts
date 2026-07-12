@@ -7,15 +7,16 @@
  * eats the final Enter, and the editor is stranded at ':' without saving.
  * keyToEx mappings run the ex command directly, no command-line replay.
  *
- * 'q' itself is mapped to save-and-quit so the stock Ctrl-Enter insert-mode
- * replay (which we cannot override; show() re-installs it on every open)
- * terminates in a save when its stray 'q' lands in normal mode.
+ * The 'q<CR>' sequence makes that replay terminate in a save: its stray 'q'
+ * partial-matches macro recording (q<register>) and waits, then the trailing
+ * '<CR>' completes our mapping instead of being swallowed as an invalid
+ * register. Interactive recording (q + letter) is untouched.
  */
 export function registerEditorMappings(): void {
   api.addVimMapKey(
     { keys: '<CR>', type: 'keyToEx', exArgs: { input: 'wq' }, context: 'normal' },
     { keys: '<C-CR>', type: 'keyToEx', exArgs: { input: 'wq' }, context: 'normal' },
-    { keys: 'q', type: 'keyToEx', exArgs: { input: 'wq' }, context: 'normal' },
+    { keys: 'q<CR>', type: 'keyToEx', exArgs: { input: 'wq' }, context: 'normal' },
     { keys: 'Q', type: 'keyToEx', exArgs: { input: 'q' }, context: 'normal' },
   );
 }
