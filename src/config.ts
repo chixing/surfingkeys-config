@@ -38,14 +38,14 @@ export const CONFIG: Config = {
     font: "'Monaco', 'Consolas', 'Courier New', monospace",
     fontSize: "16px",
     colors: {
-      fg: "#cdd6f4",
-      bg: "#1e1e2e",
-      bgDark: "#181825",
-      border: "#313244",
-      mainFg: "#89b4fa",
-      accentFg: "#a6e3a1",
-      infoFg: "#cba6f7",
-      select: "#45475a"
+      fg: "#c9d1d9",
+      bg: "#0d1117",
+      bgDark: "#010409",
+      border: "#30363d",
+      mainFg: "#8b949e",
+      accentFg: "#58a6ff",
+      infoFg: "#a371f7",
+      select: "#264f78"
     }
   }
 };
