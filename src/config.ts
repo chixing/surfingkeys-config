@@ -51,12 +51,14 @@ export const CONFIG: Config = {
 };
 
 // Apply basic settings to SurfingKeys
-Object.assign(settings, {
-  scrollStepSize: CONFIG.scrollStep,
-  hintAlign: CONFIG.hintAlign,
-  omnibarMaxResults: CONFIG.omnibarMaxResults,
-  historyMUOrder: CONFIG.historyMUOrder,
-});
+export function applySettings(): void {
+  Object.assign(settings, {
+    scrollStepSize: CONFIG.scrollStep,
+    hintAlign: CONFIG.hintAlign,
+    omnibarMaxResults: CONFIG.omnibarMaxResults,
+    historyMUOrder: CONFIG.historyMUOrder,
+  });
+}
 
 export const AI_SERVICES = {
   CHATGPT: 'ChatGPT',

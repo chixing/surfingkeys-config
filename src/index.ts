@@ -2,7 +2,7 @@
  * SurfingKeys Configuration - Main Entry Point
  */
 
-import { CONFIG } from './config';
+import { CONFIG, applySettings } from './config';
 import { AiSelector } from './ai/selector';
 import * as utils from './utils';
 import { registerKeyMappings } from './keymaps/register';
@@ -16,6 +16,7 @@ import { applyTheme } from './theme/apply';
 
 const aiSelector = new AiSelector(CONFIG);
 
+applySettings();
 registerKeyMappings(aiSelector);
 initializeSiteAutomations(CONFIG);
 registerSearchEngines();
