@@ -1,13 +1,16 @@
 import { AI_SERVICES } from '../config';
 import type { AIServiceName } from '../config';
-import { AiSelector } from '../ai/selector';
+import type { AiSelector } from '../ai/selector';
 import { isZenBrowser } from '../utils';
 import { installUrlHistoryTracker, openBackInNewTab } from './backInNewTab';
 import { registerEditorMappings } from './editor';
 import { copyImageToClipboard } from './copyImage';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
-  navigator.clipboard.readText().then(text => aiSelector.updateQuery(text)).catch(() => {});
+  navigator.clipboard
+    .readText()
+    .then((text) => aiSelector.updateQuery(text))
+    .catch(() => {});
 }
 
 function createAiShortcut(aiSelector: AiSelector, services?: AIServiceName[]): () => void {
@@ -80,8 +83,16 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   api.mapkey('aE', 'Claude Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.CLAUDE]));
   api.mapkey('ag', 'Gemini Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GEMINI]));
   api.mapkey('aG', 'Gemini Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI]));
-  api.mapkey('ap', 'Perplexity Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]));
-  api.mapkey('aP', 'Perplexity Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]));
+  api.mapkey(
+    'ap',
+    'Perplexity Search (Clipboard/Input)',
+    createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]),
+  );
+  api.mapkey(
+    'aP',
+    'Perplexity Search hinted link',
+    createAiLinkShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]),
+  );
   api.mapkey('ak', 'Grok Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GROK]));
   api.mapkey('aK', 'Grok Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GROK]));
 }

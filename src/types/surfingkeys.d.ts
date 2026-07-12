@@ -38,21 +38,21 @@ export interface SurfingKeysAPI {
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string; repeatIgnore?: boolean }
+    options?: { domain?: string; repeatIgnore?: boolean },
   ): void;
 
   imapkey(
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string }
+    options?: { domain?: string },
   ): void;
 
   vmapkey(
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string }
+    options?: { domain?: string },
   ): void;
 
   // Omnibar
@@ -66,7 +66,7 @@ export interface SurfingKeysAPI {
     create(
       cssSelector: string,
       onHintKey: (element: HTMLElement) => void,
-      options?: { multipleHits?: boolean }
+      options?: { multipleHits?: boolean },
     ): void;
     style(css: string, mode?: string): void;
   };
@@ -90,7 +90,7 @@ export interface SurfingKeysAPI {
     suggestionUrlOrType?: string,
     suggestionCallbackOrUrl?: string | ((response: any) => any),
     suggestionCallbackOrOnlyThisSite?: string | ((response: any) => any) | boolean,
-    onlyThisSite?: boolean
+    onlyThisSite?: boolean,
   ): void;
 
   removeSearchAlias(alias: string, searchUrl?: string, onlyThisSite?: boolean): void;

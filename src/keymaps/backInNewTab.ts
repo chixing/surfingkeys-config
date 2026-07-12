@@ -57,12 +57,12 @@ export function installUrlHistoryTracker(): void {
   const originalPushState = history.pushState;
   const originalReplaceState = history.replaceState;
 
-  history.pushState = function(...args: any[]): void {
+  history.pushState = function (...args: any[]): void {
     originalPushState.apply(history, args as [any, string, (string | URL | null)?]);
     recordSoon('push');
   } as History['pushState'];
 
-  history.replaceState = function(...args: any[]): void {
+  history.replaceState = function (...args: any[]): void {
     originalReplaceState.apply(history, args as [any, string, (string | URL | null)?]);
     recordSoon('replace');
   } as History['replaceState'];

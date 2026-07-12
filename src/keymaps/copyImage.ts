@@ -1,5 +1,6 @@
 function resolveImageUrl(imgElement: HTMLImageElement): string | null {
-  let imageUrl = imgElement.src || imgElement.getAttribute('data-src') || imgElement.getAttribute('data-lazy-src');
+  let imageUrl =
+    imgElement.src || imgElement.getAttribute('data-src') || imgElement.getAttribute('data-lazy-src');
   if (!imageUrl && imgElement.srcset) {
     const srcset = imgElement.srcset.split(',');
     imageUrl = srcset[0].trim().split(' ')[0];
@@ -33,16 +34,16 @@ function convertAndCopyImage(url: string): void {
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
-    drawImageToPngBlob(img, blob => copyPngToClipboard(blob, url));
+    drawImageToPngBlob(img, (blob) => copyPngToClipboard(blob, url));
   };
   img.onerror = () => {
     fetch(url)
-      .then(r => r.blob())
-      .then(blob => {
+      .then((r) => r.blob())
+      .then((blob) => {
         const blobUrl = URL.createObjectURL(blob);
         const img2 = new Image();
         img2.onload = () => {
-          drawImageToPngBlob(img2, b => {
+          drawImageToPngBlob(img2, (b) => {
             URL.revokeObjectURL(blobUrl);
             copyPngToClipboard(b, url);
           });

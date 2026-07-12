@@ -4,30 +4,24 @@
 
 import type { Config } from './config';
 
-export const isZenBrowser = (): boolean =>
-  navigator.userAgent.includes('Zen/');
+export const isZenBrowser = (): boolean => navigator.userAgent.includes('Zen/');
 
-export const delay = (ms: number): Promise<void> =>
-  new Promise(resolve => setTimeout(resolve, ms));
+export const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
-export const pressKey = (
-  element: HTMLElement,
-  key: string = 'Enter',
-  keyCode: number = 13
-): void => {
+export const pressKey = (element: HTMLElement, key: string = 'Enter', keyCode: number = 13): void => {
   const event = new KeyboardEvent('keydown', {
     bubbles: true,
     cancelable: true,
     key,
     code: key,
     keyCode,
-    which: keyCode
+    which: keyCode,
   });
   element.dispatchEvent(event);
 };
 
 export const createSuggestionItem = (html: string, props: any = {}) => {
-  const li = document.createElement("li");
+  const li = document.createElement('li');
   li.innerHTML = html;
   return { html: li.outerHTML, props };
 };
@@ -36,16 +30,23 @@ export const createURLItem = (title: string, url: string, sanitize: boolean = tr
   let t = title;
   let u = url;
   if (sanitize) {
-    t = String(t).replace(/[&<>"'`=/]/g, s => ({
-      "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;",
-      "'": "&#39;", "/": "&#x2F;", "`": "&#x60;", "=": "&#x3D;"
-    })[s] || s);
+    t = String(t).replace(
+      /[&<>"'`=/]/g,
+      (s) =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;',
+          '/': '&#x2F;',
+          '`': '&#x60;',
+          '=': '&#x3D;',
+        })[s] || s,
+    );
     u = new URL(u).toString();
   }
-  return createSuggestionItem(
-    `\n<div class="title">${t}</div>\n<div class="url">${u}</div>\n`,
-    { url: u }
-  );
+  return createSuggestionItem(`\n<div class="title">${t}</div>\n<div class="url">${u}</div>\n`, { url: u });
 };
 
 interface InjectPromptOptions {
@@ -55,13 +56,11 @@ interface InjectPromptOptions {
   dispatchEvents?: boolean;
 }
 
-export const injectPrompt = async ({
-  selector,
-  submitSelector,
-  useValue = false,
-  dispatchEvents = false
-}: InjectPromptOptions, config: Config): Promise<void> => {
-  const promptKey = "#sk_prompt=";
+export const injectPrompt = async (
+  { selector, submitSelector, useValue = false, dispatchEvents = false }: InjectPromptOptions,
+  config: Config,
+): Promise<void> => {
+  const promptKey = '#sk_prompt=';
   if (!window.location.hash.startsWith(promptKey)) return;
 
   const promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
@@ -86,9 +85,10 @@ export const injectPrompt = async ({
   await delay(config.delayMs);
 
   if (submitSelector) {
-    const btn = typeof submitSelector === 'function'
-      ? submitSelector()
-      : document.querySelector<HTMLElement>(submitSelector);
+    const btn =
+      typeof submitSelector === 'function'
+        ? submitSelector()
+        : document.querySelector<HTMLElement>(submitSelector);
     if (btn) {
       btn.click();
     } else {

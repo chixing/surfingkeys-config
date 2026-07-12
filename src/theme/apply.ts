@@ -13,7 +13,8 @@ export function applyTheme(config: Config): void {
     box-shadow: 0 3px 6px rgba(1, 4, 9, 0.85) !important;
   `);
 
-  api.Hints.style(`
+  api.Hints.style(
+    `
     border: solid 1px ${config.theme.colors.border} !important;
     border-radius: 6px !important;
     padding: 2px 4px !important;
@@ -22,7 +23,9 @@ export function applyTheme(config: Config): void {
     font-size: 11pt !important;
     font-weight: 600 !important;
     box-shadow: 0 3px 6px rgba(1, 4, 9, 0.85) !important;
-  `, 'text');
+  `,
+    'text',
+  );
 
   api.Visual.style('marks', `background-color: ${config.theme.colors.accentFg}66;`);
   api.Visual.style('cursor', `background-color: ${config.theme.colors.accentFg};`);

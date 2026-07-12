@@ -70,7 +70,7 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
             key: 'Enter',
             code: 'Enter',
             keyCode: 13,
-            which: 13
+            which: 13,
           };
           el.focus();
           el.dispatchEvent(new KeyboardEvent('keydown', eventInit));
@@ -92,30 +92,42 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
           }
           await utils.delay(150);
         }
-      }
+      },
     },
     {
       host: 'gemini.google.com',
-      run: () => utils.injectPrompt({
-        selector: 'div[contenteditable="true"][role="textbox"]'
-      }, config)
+      run: () =>
+        utils.injectPrompt(
+          {
+            selector: 'div[contenteditable="true"][role="textbox"]',
+          },
+          config,
+        ),
     },
     {
       host: 'claude.ai',
-      run: () => utils.injectPrompt({
-        selector: 'div[contenteditable="true"]',
-        submitSelector: findSendButton
-      }, config)
+      run: () =>
+        utils.injectPrompt(
+          {
+            selector: 'div[contenteditable="true"]',
+            submitSelector: findSendButton,
+          },
+          config,
+        ),
     },
     {
       host: 'www.doubao.com',
-      run: () => utils.injectPrompt({
-        selector: 'textarea[placeholder], div[contenteditable="true"]',
-        useValue: true,
-        dispatchEvents: true,
-        submitSelector: findSendButton
-      }, config)
-    }
+      run: () =>
+        utils.injectPrompt(
+          {
+            selector: 'textarea[placeholder], div[contenteditable="true"]',
+            useValue: true,
+            dispatchEvents: true,
+            submitSelector: findSendButton,
+          },
+          config,
+        ),
+    },
   ];
 }
 
@@ -124,7 +136,7 @@ export function initializeSiteAutomations(config: Config): void {
 
   const runSiteAutomations = () => {
     const currentHost = window.location.hostname;
-    siteAutomations.forEach(site => {
+    siteAutomations.forEach((site) => {
       if (currentHost.includes(site.host)) {
         site.run();
       }

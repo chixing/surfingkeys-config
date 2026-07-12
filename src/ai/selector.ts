@@ -89,7 +89,9 @@ export class AiSelector {
       servicesContainer,
       serviceSelectButtons,
       buttonsContainer,
-    ].forEach(el => dialog.appendChild(el));
+    ].forEach((el) => {
+      dialog.appendChild(el);
+    });
     this.overlay.appendChild(dialog);
 
     this.markAsSurfingKeys(this.overlay);
@@ -140,7 +142,8 @@ export class AiSelector {
     this.clipboardText = text;
     this.updateClipboardIndicator();
 
-    const input = this.queryInput ?? (document.getElementById('sk-ai-query-input') as HTMLTextAreaElement | null);
+    const input =
+      this.queryInput ?? (document.getElementById('sk-ai-query-input') as HTMLTextAreaElement | null);
     if (!input) return;
 
     if (!this.lastQuery) {
@@ -156,12 +159,12 @@ export class AiSelector {
     if (!trimmedQuery) return false;
 
     const selectedUrls = this.services
-      .filter(service => selectedServices.includes(service.name))
-      .map(service => service.url);
+      .filter((service) => selectedServices.includes(service.name))
+      .map((service) => service.url);
     if (selectedUrls.length === 0) return false;
 
     this.lastQuery = trimmedQuery;
-    selectedUrls.forEach(url => {
+    selectedUrls.forEach((url) => {
       api.RUNTIME('openLink', {
         tab: { tabbed: true, active: false },
         url: url + encodeURIComponent(formatCombinedQuery(trimmedQuery, '')),
@@ -176,7 +179,7 @@ export class AiSelector {
 
   private markAsSurfingKeys(element: HTMLElement): void {
     (element as any).fromSurfingKeys = true;
-    element.querySelectorAll('*').forEach(child => {
+    element.querySelectorAll('*').forEach((child) => {
       (child as any).fromSurfingKeys = true;
     });
   }
@@ -339,7 +342,7 @@ export class AiSelector {
 
     const selectedUrls = this.services
       .filter((_, index) => this.serviceCheckboxes[index]?.checked)
-      .map(service => service.url);
+      .map((service) => service.url);
 
     if (selectedUrls.length === 0) {
       alert('Please select at least one AI service');
@@ -358,8 +361,8 @@ export class AiSelector {
 
     this.lastQuery = this.queryInput.value;
 
-    selectedUrls.forEach(url => {
-      promptsToSend.forEach(promptTemplate => {
+    selectedUrls.forEach((url) => {
+      promptsToSend.forEach((promptTemplate) => {
         api.tabOpenLink(url + encodeURIComponent(formatCombinedQuery(query, promptTemplate)));
       });
     });
@@ -367,7 +370,7 @@ export class AiSelector {
   }
 
   private initializePromptState(): void {
-    this.promptDrafts = PROMPT_TEMPLATES.map(template => template.value);
+    this.promptDrafts = PROMPT_TEMPLATES.map((template) => template.value);
     this.selectedPromptIndexes.clear();
     this.activePromptTouchedByUser = false;
 
@@ -389,7 +392,7 @@ export class AiSelector {
     index: number,
     persistCurrent: boolean = true,
     focusPreview: boolean = true,
-    markTouched: boolean = true
+    markTouched: boolean = true,
   ): void {
     if (index < 0 || index >= this.promptDrafts.length) return;
 
@@ -446,7 +449,7 @@ export class AiSelector {
     const uniquePrompts = new Set<string>();
     const promptTexts: string[] = [];
 
-    selectedIndexes.forEach(index => {
+    selectedIndexes.forEach((index) => {
       const promptText = (this.promptDrafts[index] || '').trim();
       if (uniquePrompts.has(promptText)) return;
       uniquePrompts.add(promptText);
@@ -816,8 +819,10 @@ export class AiSelector {
     this.templateCheckboxes = new Array(PROMPT_TEMPLATES.length);
     this.templateRenderOrder = [];
     this.templateCategoryHeadings.clear();
-    PROMPT_CATEGORY_ORDER.forEach(category => {
-      const indexes = PROMPT_TEMPLATES.map((t, i) => (t.category === category ? i : -1)).filter(i => i >= 0);
+    PROMPT_CATEGORY_ORDER.forEach((category) => {
+      const indexes = PROMPT_TEMPLATES.map((t, i) => (t.category === category ? i : -1)).filter(
+        (i) => i >= 0,
+      );
       if (indexes.length === 0) return;
 
       const heading = document.createElement('div');
@@ -827,7 +832,7 @@ export class AiSelector {
       this.templateCategoryHeadings.set(category, heading);
       templateList.appendChild(heading);
 
-      indexes.forEach(index => {
+      indexes.forEach((index) => {
         const row = this.createPromptTemplateRow(PROMPT_TEMPLATES[index], index);
         this.templateRows[index] = row;
         this.templateRenderOrder.push(index);
@@ -882,7 +887,7 @@ export class AiSelector {
     checkbox.id = `sk-template-${index}`;
     checkbox.className = 'sk-ai-check';
     checkbox.checked = this.selectedPromptIndexes.has(index);
-    checkbox.addEventListener('click', e => e.stopPropagation());
+    checkbox.addEventListener('click', (e) => e.stopPropagation());
     checkbox.addEventListener('focus', () => this.setActivePrompt(index, true, false));
     checkbox.addEventListener('change', () => {
       if (checkbox.checked) {
@@ -947,7 +952,9 @@ export class AiSelector {
     return container;
   }
 
-  private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): { container: HTMLElement } {
+  private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): {
+    container: HTMLElement;
+  } {
     const container = document.createElement('div');
     container.id = 'sk-services-container';
     container.className = 'sk-ai-services';

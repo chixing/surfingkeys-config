@@ -17,7 +17,7 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
     alias: 'a',
     search: 'https://www.amazon.com/s?k=',
     compl: 'https://completion.amazon.com/search/complete?method=completion&mkt=1&search-alias=aps&q=',
-    callback: (response: CompletionResponse) => JSON.parse(response.text)[1]
+    callback: (response: CompletionResponse) => JSON.parse(response.text)[1],
   },
   yelp: {
     alias: 'p',
@@ -28,16 +28,17 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
       return res
         .flatMap((r: any) => r.suggestions.map((s: any) => s.query))
         .filter((v: any, i: number, a: any[]) => a.indexOf(v) === i);
-    }
+    },
   },
   github: {
     alias: 't',
     search: 'https://github.com/search?q=',
     compl: 'https://api.github.com/search/repositories?sort=stars&order=desc&q=',
-    callback: (response: CompletionResponse) => JSON.parse(response.text).items.map((s: any) => {
-      const prefix = s.stargazers_count ? `[*${s.stargazers_count}] ` : '';
-      return utils.createURLItem(prefix + s.full_name, s.html_url);
-    })
+    callback: (response: CompletionResponse) =>
+      JSON.parse(response.text).items.map((s: any) => {
+        const prefix = s.stargazers_count ? `[*${s.stargazers_count}] ` : '';
+        return utils.createURLItem(prefix + s.full_name, s.html_url);
+      }),
   },
   libhunt: { alias: 'l', search: 'https://www.libhunt.com/search?query=' },
   yandex: { alias: 'n', search: 'https://yandex.com/search/?text=' },

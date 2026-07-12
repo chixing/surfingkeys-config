@@ -30,24 +30,24 @@ export interface Config {
 
 export const CONFIG: Config = {
   scrollStep: 120,
-  hintAlign: "left",
+  hintAlign: 'left',
   omnibarMaxResults: 20,
   historyMUOrder: false,
   delayMs: 1500,
   theme: {
     font: "'Monaco', 'Consolas', 'Courier New', monospace",
-    fontSize: "16px",
+    fontSize: '16px',
     colors: {
-      fg: "#e6edf3",
-      bg: "#0d1117",
-      bgDark: "#161b22",
-      border: "#30363d",
-      mainFg: "#8b949e",
-      accentFg: "#58a6ff",
-      infoFg: "#a371f7",
-      select: "#1f6feb66"
-    }
-  }
+      fg: '#e6edf3',
+      bg: '#0d1117',
+      bgDark: '#161b22',
+      border: '#30363d',
+      mainFg: '#8b949e',
+      accentFg: '#58a6ff',
+      infoFg: '#a371f7',
+      select: '#1f6feb66',
+    },
+  },
 };
 
 // Apply basic settings to SurfingKeys
@@ -66,7 +66,7 @@ export const AI_SERVICES = {
   CLAUDE: 'Claude',
   GEMINI: 'Gemini',
   PERPLEXITY: 'Perplexity',
-  GROK: 'Grok'
+  GROK: 'Grok',
 } as const;
 
-export type AIServiceName = typeof AI_SERVICES[keyof typeof AI_SERVICES];
+export type AIServiceName = (typeof AI_SERVICES)[keyof typeof AI_SERVICES];
