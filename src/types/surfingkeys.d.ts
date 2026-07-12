@@ -103,6 +103,7 @@ export interface SurfingKeysAPI {
   // Other utilities
   getBrowserName(): string;
   aceVimMap(lhs: string, rhs: string, ctx?: string): void;
+  addVimMapKey(...maps: Record<string, unknown>[]): void;
 
   // Pass-through mode
   passThrough(timeout?: number): void;

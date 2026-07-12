@@ -1,12 +1,15 @@
 /**
  * ACE editor (Ctrl-i) vim mappings.
  *
- * Defaults are unintuitive: Enter in normal mode runs :wq, Esc does nothing,
- * and Ctrl-Enter only saves from insert mode. Make it consistent:
- * submit with Enter/Ctrl-Enter, cancel with Esc, jk to leave insert mode.
+ * Stock Surfingkeys maps Enter/Ctrl-Enter by replaying ':wq<CR>' through the
+ * ex command line, which can strand the editor at a bare ':' prompt. keyToEx
+ * mappings run the ex command directly, no command-line replay involved.
  */
 export function registerEditorMappings(): void {
   api.aceVimMap('jk', '<Esc>', 'insert');
-  api.aceVimMap('<C-CR>', ':wq<CR>', 'normal');
-  api.aceVimMap('<Esc>', ':q<CR>', 'normal');
+  api.addVimMapKey(
+    { keys: '<CR>', type: 'keyToEx', exArgs: { input: 'wq' }, context: 'normal' },
+    { keys: '<C-CR>', type: 'keyToEx', exArgs: { input: 'wq' }, context: 'normal' },
+    { keys: 'Q', type: 'keyToEx', exArgs: { input: 'q' }, context: 'normal' },
+  );
 }
