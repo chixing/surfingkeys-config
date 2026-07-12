@@ -2,25 +2,30 @@ import type { Config } from '../config';
 
 export function applyTheme(config: Config): void {
   api.Hints.style(`
-    border: solid 2px ${config.theme.colors.border} !important;
+    border: solid 1px ${config.theme.colors.border} !important;
+    border-radius: 6px !important;
+    padding: 2px 4px !important;
     color: ${config.theme.colors.accentFg} !important;
     background: initial !important;
     background-color: ${config.theme.colors.bgDark} !important;
     font-size: 11pt !important;
-    font-weight: lighter !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 6px rgba(1, 4, 9, 0.85) !important;
   `);
 
   api.Hints.style(`
-    border: solid 2px ${config.theme.colors.border} !important;
-    padding: 1px !important;
+    border: solid 1px ${config.theme.colors.border} !important;
+    border-radius: 6px !important;
+    padding: 2px 4px !important;
     color: ${config.theme.colors.fg} !important;
     background: ${config.theme.colors.bgDark} !important;
     font-size: 11pt !important;
-    font-weight: lighter !important;
+    font-weight: 600 !important;
+    box-shadow: 0 3px 6px rgba(1, 4, 9, 0.85) !important;
   `, 'text');
 
-  api.Visual.style('marks', `background-color: ${config.theme.colors.accentFg}99;`);
-  api.Visual.style('cursor', `background-color: ${config.theme.colors.mainFg};`);
+  api.Visual.style('marks', `background-color: ${config.theme.colors.accentFg}66;`);
+  api.Visual.style('cursor', `background-color: ${config.theme.colors.accentFg};`);
 
   settings.theme = `
   :root {
@@ -54,25 +59,24 @@ export function applyTheme(config: Config): void {
   #sk_hints .begin { color: var(--accent-fg) !important; }
 
   /* Tabs */
-  #sk_tabs .sk_tab { background: var(--bg-dark); border: 1px solid var(--border); }
+  #sk_tabs .sk_tab { background: var(--bg-dark); border: 1px solid var(--border); border-radius: 6px; }
   #sk_tabs .sk_tab_title { color: var(--fg); }
   #sk_tabs .sk_tab_url { color: var(--main-fg); }
-  #sk_tabs .sk_tab_hint { background: var(--bg); border: 1px solid var(--border); color: var(--accent-fg); }
+  #sk_tabs .sk_tab_hint { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--accent-fg); }
 
   .sk_theme #sk_frame { background: var(--bg); opacity: 0.2; color: var(--accent-fg); }
 
   /* Omnibar */
-  .sk_theme .title { color: var(--accent-fg); }
+  .sk_theme .title { color: var(--fg); }
   .sk_theme .url { color: var(--main-fg); }
-  .sk_theme .annotation { color: var(--accent-fg); }
-  .sk_theme .omnibar_highlight { color: var(--accent-fg); }
+  .sk_theme .annotation { color: var(--main-fg); }
+  .sk_theme .omnibar_highlight { color: var(--accent-fg); font-weight: 600; }
   .sk_theme .omnibar_timestamp { color: var(--info-fg); }
-  .sk_theme .omnibar_visitcount { color: var(--accent-fg); }
-  .sk_theme .omnibar_folder { color: var(--main-fg); }
+  .sk_theme .omnibar_visitcount { color: var(--main-fg); }
+  .sk_theme .omnibar_folder { color: var(--accent-fg); }
 
-  .sk_theme #sk_omnibarSearchResult ul li:nth-child(odd) { background: var(--bg-dark); }
-  .sk_theme #sk_omnibarSearchResult ul li.focused { background: var(--border); }
-  .sk_theme #sk_omnibarSearchResult ul li { padding: 0.4em; }
+  .sk_theme #sk_omnibarSearchResult ul li { padding: 0.5em 0.6em; border-left: 2px solid transparent; border-bottom: 1px solid var(--bg-dark); }
+  .sk_theme #sk_omnibarSearchResult ul li.focused { background: var(--select); border-left-color: var(--accent-fg); }
   .sk_theme #sk_omnibarSearchResult { max-height: 80vh !important; }
 
   .sk_theme #sk_omnibarSearchArea { border-top-color: var(--border); border-bottom-color: var(--border); padding-bottom: 0.5rem; }
@@ -80,7 +84,7 @@ export function applyTheme(config: Config): void {
   .sk_theme .separator { color: var(--accent-fg); }
 
   /* Popup */
-  #sk_banner { font-family: var(--font); font-size: var(--font-size); font-weight: var(--font-weight); background: var(--bg); border-color: var(--border); color: var(--fg); opacity: 0.9; }
+  #sk_banner { font-family: var(--font); font-size: var(--font-size); font-weight: var(--font-weight); background: var(--bg); border: 1px solid var(--border); border-radius: 0 0 6px 6px; color: var(--fg); opacity: 0.97; }
   #sk_keystroke { background-color: var(--bg); }
   .sk_theme kbd .candidates { color: var(--info-fg); }
   .sk_theme span.annotation { color: var(--accent-fg); }
@@ -90,8 +94,8 @@ export function applyTheme(config: Config): void {
   #sk_bubble div.sk_arrow div:nth-of-type(2) { border-top-color: var(--bg) !important; border-bottom-color: var(--bg) !important; }
 
   /* Search */
-  #sk_status, #sk_find { font-size: var(--font-size); border-color: var(--border); }
-  .sk_theme kbd { background: var(--bg-dark); border-color: var(--border); box-shadow: none; color: var(--fg); }
+  #sk_status, #sk_find { font-size: var(--font-size); border: 1px solid var(--border); border-radius: 6px; }
+  .sk_theme kbd { background: var(--bg-dark); border: 1px solid var(--border); border-bottom-width: 3px; border-radius: 6px; box-shadow: none; color: var(--fg); padding: 1px 5px; }
   .sk_theme .feature_name span { color: var(--main-fg); }
 
   /* ACE Editor */
