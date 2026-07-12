@@ -6,6 +6,15 @@ interface SiteAutomation {
   run: () => void | Promise<void>;
 }
 
+function findSendButton(): HTMLElement | null {
+  return (
+    (document.querySelector('button[type="submit"]') as HTMLElement | null) ||
+    (document.querySelector('button.send-button') as HTMLElement | null) ||
+    (document.querySelector('button[aria-label*="send" i]') as HTMLElement | null) ||
+    (document.querySelector('button svg[class*="send"]')?.closest('button') as HTMLElement | null)
+  );
+}
+
 function createSiteAutomations(config: Config): SiteAutomation[] {
   return [
     {
@@ -95,11 +104,7 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
       host: 'claude.ai',
       run: () => utils.injectPrompt({
         selector: 'div[contenteditable="true"]',
-        submitSelector: () =>
-          (document.querySelector('button[type="submit"]') as HTMLElement | null) ||
-          (document.querySelector('button.send-button') as HTMLElement | null) ||
-          (document.querySelector('button[aria-label*="send" i]') as HTMLElement | null) ||
-          (document.querySelector('button svg[class*="send"]')?.closest('button') as HTMLElement | null)
+        submitSelector: findSendButton
       }, config)
     },
     {
@@ -108,11 +113,7 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
         selector: 'textarea[placeholder], div[contenteditable="true"]',
         useValue: true,
         dispatchEvents: true,
-        submitSelector: () =>
-          (document.querySelector('button[type="submit"]') as HTMLElement | null) ||
-          (document.querySelector('button.send-button') as HTMLElement | null) ||
-          (document.querySelector('button[aria-label*="send" i]') as HTMLElement | null) ||
-          (document.querySelector('button svg[class*="send"]')?.closest('button') as HTMLElement | null)
+        submitSelector: findSendButton
       }, config)
     }
   ];
