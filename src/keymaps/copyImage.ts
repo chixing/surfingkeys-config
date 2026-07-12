@@ -19,18 +19,21 @@ async function copyPngToClipboard(blob: Blob | null, fallbackUrl: string): Promi
   }
 }
 
+function drawImageToPngBlob(img: HTMLImageElement, cb: (blob: Blob | null) => void): void {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.drawImage(img, 0, 0);
+  canvas.toBlob(cb, 'image/png');
+}
+
 function convertAndCopyImage(url: string): void {
   const img = new Image();
   img.crossOrigin = 'anonymous';
   img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(blob => copyPngToClipboard(blob, url), 'image/png');
-    }
+    drawImageToPngBlob(img, blob => copyPngToClipboard(blob, url));
   };
   img.onerror = () => {
     fetch(url)
@@ -39,17 +42,10 @@ function convertAndCopyImage(url: string): void {
         const blobUrl = URL.createObjectURL(blob);
         const img2 = new Image();
         img2.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img2.width;
-          canvas.height = img2.height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img2, 0, 0);
-            canvas.toBlob(b => {
-              URL.revokeObjectURL(blobUrl);
-              copyPngToClipboard(b, url);
-            }, 'image/png');
-          }
+          drawImageToPngBlob(img2, b => {
+            URL.revokeObjectURL(blobUrl);
+            copyPngToClipboard(b, url);
+          });
         };
         img2.src = blobUrl;
       })
