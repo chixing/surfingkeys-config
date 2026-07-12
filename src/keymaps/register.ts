@@ -3,6 +3,7 @@ import type { AIServiceName } from '../config';
 import { AiSelector } from '../ai/selector';
 import { isZenBrowser } from '../utils';
 import { installUrlHistoryTracker, openBackInNewTab } from './backInNewTab';
+import { registerEditorMappings } from './editor';
 import { copyImageToClipboard } from './copyImage';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
@@ -32,6 +33,7 @@ function createAiLinkShortcut(aiSelector: AiSelector, services: AIServiceName[])
 }
 export function registerKeyMappings(aiSelector: AiSelector): void {
   installUrlHistoryTracker();
+  registerEditorMappings();
 
   // Zen Browser fix: use native Ctrl-w instead of SurfingKeys closeTab
   if (isZenBrowser()) {
