@@ -13,11 +13,37 @@ function readClipboardAndUpdate(aiSelector: AiSelector): void {
     .catch(() => {});
 }
 
+function getSelectedText(): string {
+  const activeElement = document.activeElement;
+  if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+    const start = activeElement.selectionStart;
+    const end = activeElement.selectionEnd;
+    if (start !== null && end !== null && start !== end) {
+      return activeElement.value.slice(start, end).trim();
+    }
+  }
+
+  return window.getSelection()?.toString().trim() ?? '';
+}
+
 function createAiShortcut(aiSelector: AiSelector, services?: AIServiceName[]): () => void {
   return () => {
-    aiSelector.show('', services ?? null);
-    readClipboardAndUpdate(aiSelector);
+    const selectedText = getSelectedText();
+    aiSelector.show(selectedText, services ?? null);
+    if (!selectedText) {
+      readClipboardAndUpdate(aiSelector);
+    }
   };
+}
+
+function registerAiDialogShortcut(
+  keys: string,
+  annotation: string,
+  aiSelector: AiSelector,
+  services?: AIServiceName[],
+): void {
+  api.mapkey(keys, annotation, createAiShortcut(aiSelector, services));
+  api.vmapkey(keys, annotation, createAiShortcut(aiSelector, services));
 }
 
 function createAiLinkShortcut(aiSelector: AiSelector, services: AIServiceName[]): () => void {
@@ -74,25 +100,31 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink('chrome://extensions/shortcuts'));
 
   // AI search shortcuts
-  api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', createAiShortcut(aiSelector));
-  api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.CHATGPT]));
+  registerAiDialogShortcut('aa', 'Multi-AI Search (Selection/Clipboard/Input)', aiSelector);
+  registerAiDialogShortcut('ac', 'ChatGPT Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.CHATGPT,
+  ]);
   api.mapkey('aC', 'ChatGPT Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.CHATGPT]));
-  api.mapkey('ad', 'Doubao Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.DOUBAO]));
+  registerAiDialogShortcut('ad', 'Doubao Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.DOUBAO,
+  ]);
   api.mapkey('aD', 'Doubao Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.DOUBAO]));
-  api.mapkey('ae', 'Claude Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.CLAUDE]));
+  registerAiDialogShortcut('ae', 'Claude Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.CLAUDE,
+  ]);
   api.mapkey('aE', 'Claude Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.CLAUDE]));
-  api.mapkey('ag', 'Gemini Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GEMINI]));
+  registerAiDialogShortcut('ag', 'Gemini Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.GEMINI,
+  ]);
   api.mapkey('aG', 'Gemini Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI]));
-  api.mapkey(
-    'ap',
-    'Perplexity Search (Clipboard/Input)',
-    createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]),
-  );
+  registerAiDialogShortcut('ap', 'Perplexity Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.PERPLEXITY,
+  ]);
   api.mapkey(
     'aP',
     'Perplexity Search hinted link',
     createAiLinkShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]),
   );
-  api.mapkey('ak', 'Grok Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GROK]));
+  registerAiDialogShortcut('ak', 'Grok Search (Selection/Clipboard/Input)', aiSelector, [AI_SERVICES.GROK]);
   api.mapkey('aK', 'Grok Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GROK]));
 }

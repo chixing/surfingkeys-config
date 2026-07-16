@@ -69,7 +69,7 @@ export class AiSelector {
 
     this.overlay = this.createOverlay();
     const dialog = this.createDialog();
-    const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
+    const queryText = initialQuery || this.lastQuery || '';
 
     const footerHints = this.createFooterHints();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
