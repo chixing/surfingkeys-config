@@ -154,7 +154,7 @@ export class AiSelector {
     }
   }
 
-  searchImmediately(query: string, selectedServices: AIServiceName[]): boolean {
+  searchImmediately(query: string, selectedServices: AIServiceName[], promptTemplate: string = ''): boolean {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return false;
 
@@ -167,7 +167,7 @@ export class AiSelector {
     selectedUrls.forEach((url) => {
       api.RUNTIME('openLink', {
         tab: { tabbed: true, active: false },
-        url: url + encodeURIComponent(formatCombinedQuery(trimmedQuery, '')),
+        url: url + encodeURIComponent(formatCombinedQuery(trimmedQuery, promptTemplate)),
       });
     });
     return true;

@@ -46,7 +46,11 @@ function registerAiDialogShortcut(
   api.vmapkey(keys, annotation, createAiShortcut(aiSelector, services));
 }
 
-function createAiLinkShortcut(aiSelector: AiSelector, services: AIServiceName[]): () => void {
+function createAiLinkShortcut(
+  aiSelector: AiSelector,
+  services: AIServiceName[],
+  promptTemplate: string = '',
+): () => void {
   return () => {
     api.Hints.create('a[href]', (element: HTMLElement) => {
       const href = (element as HTMLAnchorElement).href;
@@ -54,7 +58,7 @@ function createAiLinkShortcut(aiSelector: AiSelector, services: AIServiceName[])
         api.Front.showBanner('Could not find link URL', 'error');
         return;
       }
-      if (!aiSelector.searchImmediately(href, services)) {
+      if (!aiSelector.searchImmediately(href, services, promptTemplate)) {
         api.Front.showBanner('Could not search link', 'error');
       }
     });
@@ -116,7 +120,11 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   registerAiDialogShortcut('ag', 'Gemini Search (Selection/Clipboard/Input)', aiSelector, [
     AI_SERVICES.GEMINI,
   ]);
-  api.mapkey('aG', 'Gemini Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI]));
+  api.mapkey(
+    'aG',
+    'Gemini Search hinted link',
+    createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI], 'Provide a detailed summary. Leave nothing out.'),
+  );
   registerAiDialogShortcut('ap', 'Perplexity Search (Selection/Clipboard/Input)', aiSelector, [
     AI_SERVICES.PERPLEXITY,
   ]);

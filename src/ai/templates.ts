@@ -2,14 +2,7 @@
  * Prompt templates for the Multi-AI dialog.
  */
 
-export type PromptCategory =
-  | 'quick'
-  | 'explain'
-  | 'research'
-  | 'decision'
-  | 'code'
-  | 'writing'
-  | 'experimental';
+export type PromptCategory = 'quick' | 'explain' | 'research' | 'decision';
 export type PromptTier = 'short' | 'long';
 
 export interface PromptTemplate {
@@ -26,20 +19,9 @@ export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
   explain: 'Explain',
   research: 'Research',
   decision: 'Decision',
-  code: 'Code',
-  writing: 'Writing',
-  experimental: 'Experimental',
 };
 
-export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
-  'quick',
-  'explain',
-  'research',
-  'decision',
-  'code',
-  'writing',
-  'experimental',
-];
+export const PROMPT_CATEGORY_ORDER: PromptCategory[] = ['quick', 'explain', 'research', 'decision'];
 
 /** Shared voice for long-form templates (anchored on Senior Staff Engineer Narrative). */
 const NARRATIVE_SPINE = `Narrative requirements
@@ -83,7 +65,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   },
   {
     label: 'Detailed Summary',
-    value: `Tell the story of the source in clear sections with headers: setup, core argument, evidence, gaps, and open questions. Use prose in each section; avoid bare bullet dumps.`,
+    value: `Provide a detailed summary of the source in clear sections with headers: setup, core argument, evidence, gaps, and open questions. Be extremely thorough and leave nothing out.`,
     category: 'quick',
     description: 'Structured summary as narrative',
     tier: 'short',
@@ -129,18 +111,6 @@ Constraints
     description: 'Plain-language breakdown, section by section',
     tier: 'short',
     tags: ['eli5', 'incremental'],
-  },
-  {
-    label: 'Action Items',
-    value: `Brief narrative of what the source is about and what decision it implies, then a concise checklist:
-- Decisions made or implied
-- Action items (owner if known, else Unassigned)
-- Dates/deadlines mentioned
-- Open questions and blockers
-- "If you only do three things" line`,
-    category: 'writing',
-    description: 'Context plus action checklist',
-    tier: 'short',
   },
   {
     label: 'Hostile Critic',
@@ -211,24 +181,6 @@ Tone: direct, patient, like a great lecture — not a slide outline.`,
     description: 'Context-first narrative explainer',
     tier: 'long',
     tags: ['narrative'],
-  },
-  {
-    label: 'Article · Design Doc',
-    value: `Role
-Principal Engineer onboarding a teammate to a system described in the source.
-
-Task
-Reverse-engineer the system as a narrative design walkthrough, then crystallize structure.
-
-${NARRATIVE_SPINE}
-
-In prose, cover the journey of a request through the system: components, sync/async boundaries, trust boundaries, data and control flow, idempotency/retries/backpressure, scaling and observability.
-
-After the narrative, add a compact text diagram (indentation + arrows). Label explicit assumptions where the source is silent.`,
-    category: 'code',
-    description: 'System walkthrough as story + diagram',
-    tier: 'long',
-    tags: ['architecture', 'narrative'],
   },
   {
     label: 'Industry Comparison',
@@ -460,177 +412,60 @@ Output
     tier: 'long',
     tags: ['web', 'competitors', 'decision'],
   },
-
-  // --- code ---
   {
-    label: 'README · Project',
-    value: `Write a README.md that tells the story of the project.
+    label: 'Directional Analyst',
+    value: `You are a short-term directional analyst. Give me an educated guess on the
+direction of {TICKER} for the NEXT trading session — up or down — as a single
+probability. No risk disclaimers, no "this isn't advice," no hedging paragraphs.
+Lead with the call and the number, then justify it.
 
-If the source is not a repo/codebase, say what is missing and narrate what can be inferred.
+Today's date is [auto-detect / current]. Use web search for everything below —
+do not answer from memory, prices and news change daily.
 
-${NARRATIVE_SPINE}
+STEP 1 — Resolve the instrument
+- Confirm exactly what {TICKER} is (stock, ETF, sector proxy) and what it tracks.
+- If it's a thinly-quoted physical/spot thing, map it to the most tradeable proxy
+  for a next-day bet and say so.
 
-Cover as engaging prose (headers OK): why the project exists, how architecture evolved, how pieces connect, tech choices as decisions-not-catalogs, trade-offs, and lessons learned (bugs, pitfalls, practices) as stories where possible.
+STEP 2 — Pull current data (search each)
+- Last price, today's day range, and where it closed within that range
+  (at highs / mid / at lows).
+- After-hours and/or pre-market print vs the close (positive or negative carry).
+- 52-week range and distance to the high.
+- Technical signal (moving-avg buy/sell), volume vs 3-month average.
 
-Balance readability with technical depth — memorable, not textbook dry.`,
-    category: 'code',
-    description: 'README as project story',
+STEP 3 — Context that drives a 1-day move
+- Sector/index tape: the relevant index or ETF (e.g. SOX/SMH for chips) — last
+  session % move and pre-market direction. A high-beta name follows its sector.
+- Market regime: VIX level/direction, risk-on vs risk-off, broad index momentum.
+- Recent momentum: last 3-5 sessions, any active rally/selloff narrative.
+
+STEP 4 — Catalysts & calendar
+- Upcoming earnings date, ex-dividend, lockups, index add/drop.
+- Economic data due tomorrow or this week (PMI, jobs, CPI, Fed) and holiday/
+  shortened-week effects.
+- Options flow (unusual activity, call/put lean) on {TICKER} or close peers.
+- Fresh analyst actions, lawsuits, regulatory/supply news, sentiment from desks.
+
+STEP 5 — Synthesize
+- For a single-session call, weight near-term tape + price action + flow MORE than
+  slow-moving fundamentals; note fundamentals only if they're moving now.
+- Build a compact bull/bear ledger of the actual signals you found.
+- Resolve to ONE probability of an up day (e.g. "Up — 60%").
+
+OUTPUT FORMAT
+1. First line: "Up — XX%" or "Down — XX%".
+2. "What pushes it up:" 3-6 bullets, each citing the concrete data point.
+3. "What caps it:" 2-5 bullets.
+4. One-line net conclusion.
+Keep it tight. No generic risk language.`,
+    category: 'research',
+    description: 'Next-session stock direction call',
     tier: 'long',
-    tags: ['narrative'],
-  },
-  {
-    label: 'Code / PR Review',
-    value: `Role
-Senior engineer reviewing a change described in the source.
-
-Task
-Review the change for bugs, regressions, missing tests, and design risk.
-
-Output Requirements
-- Findings first, ordered by severity.
-- For each finding, include file/line/symbol references when present, the concrete risk, and a suggested fix.
-- Prioritize correctness, security/data safety, edge cases, API/design compatibility, observability, and test gaps.
-- Do not spend space praising the change.
-
-After findings, add: Open Questions, Test Gaps, and Verdict (Approve / Approve with nits / Request changes). If there are no findings, say that clearly and name any residual risk.`,
-    category: 'code',
-    description: 'Findings-first code review',
-    tier: 'long',
-    tags: ['review'],
-  },
-  {
-    label: 'Debug This',
-    value: `Role
-Senior engineer debugging a production or development issue.
-
-Task
-Analyze the error, log, stack trace, broken behavior, or failing test in the source.
-
-Output
-1) Immediate Read
-   - What is most likely happening, in plain language.
-2) Likely Causes
-   - Rank causes by probability. For each: evidence for, evidence against, and what would confirm it.
-3) Fast Checks
-   - Exact commands, logs, breakpoints, queries, or inspections to run next.
-4) Minimal Fix
-   - Smallest likely change and why it addresses the root cause.
-5) Prevention
-   - Test, guardrail, logging, alert, or design improvement that would prevent recurrence.
-
-Be concrete. Do not give generic debugging advice when the source contains specific evidence.`,
-    category: 'code',
-    description: 'Rank causes and fixes',
-    tier: 'long',
-    tags: ['debug', 'troubleshooting'],
-  },
-  {
-    label: 'Architecture Critique',
-    value: `Role
-Principal engineer stress-testing an architecture.
-
-Task
-Critique the system, design, proposal, or article in the source.
-
-Output
-1) System Read
-   - Short narrative of the architecture and its likely goals.
-2) Major Risks
-   - Scaling, consistency, coupling, failure modes, security/trust boundaries, data lifecycle, cost, migration, and operations.
-3) Missing Details
-   - What the design does not specify but production would require.
-4) Safer Alternatives
-   - Simpler or more conventional paths, with trade-offs.
-5) Recommendation
-   - Proceed, revise, prototype, or reject. Include the first validation test that would reduce uncertainty most.
-
-Focus on real production failure modes, not aesthetic preferences.`,
-    category: 'code',
-    description: 'Production design stress test',
-    tier: 'long',
-    tags: ['architecture', 'skeptical'],
+    tags: ['stocks', 'trading', 'web'],
   },
 
   // --- decision ---
-  {
-    label: 'Decision Memo',
-    value: `Turn the source into a concise decision memo.
-
-Output
-1) Decision
-   - State the recommended decision in the first paragraph.
-2) Context
-   - What problem is being solved, who is affected, and what constraints matter.
-3) Options
-   - Compare viable options, including doing nothing.
-4) Rationale
-   - Why the recommendation wins on impact, cost, risk, reversibility, and timing.
-5) Risks
-   - Failure modes, assumptions, and what would change the decision.
-6) Next Step
-   - The smallest concrete action to move forward.
-
-Keep it direct and useful for someone who has to approve or execute the decision.`,
-    category: 'decision',
-    description: 'Recommendation with rationale',
-    tier: 'long',
-    tags: ['decision'],
-  },
-  {
-    label: 'Implementation Plan',
-    value: `Turn the source into an execution plan.
-
-Output
-1) Goal
-   - What success looks like and how it will be measured.
-2) Scope
-   - In scope, out of scope, assumptions, and dependencies.
-3) Plan
-   - Phases or milestones with concrete tasks.
-4) Risks
-   - Technical, product, operational, and coordination risks with mitigations.
-5) Validation
-   - Tests, review points, rollout criteria, and rollback plan.
-6) First Three Tasks
-   - The next actions someone can start immediately.
-
-Prefer specific tasks and sequencing over generic project-management language.`,
-    category: 'decision',
-    description: 'Phased execution plan',
-    tier: 'long',
-    tags: ['planning'],
-  },
-  {
-    label: 'Spec From Source',
-    value: `Extract a working spec from the source.
-
-Output
-1) Problem Statement
-2) Goals and Non-Goals
-3) Users / Actors
-4) Functional Requirements
-5) Non-Functional Requirements
-6) User Stories or Workflows
-7) Acceptance Criteria
-8) Edge Cases and Error States
-9) Open Questions
-
-Mark inferred requirements clearly. Keep wording implementation-neutral unless the source already commits to a technical approach.`,
-    category: 'decision',
-    description: 'Requirements and acceptance criteria',
-    tier: 'long',
-    tags: ['spec', 'requirements'],
-  },
-  {
-    label: 'Compare A vs B',
-    value: `The source compares two options (label A and B; infer from headings or "vs" if unclear).
-
-Tell the story of why both exist, then walk through each dimension in prose (goal, complexity, performance, ops burden, risk). End with a one-paragraph recommendation for a small team vs a large org.`,
-    category: 'decision',
-    description: 'Comparison as narrative',
-    tier: 'short',
-    tags: ['narrative'],
-  },
   {
     label: 'Steelman + Verdict',
     value: `For the position in the source: first steelman in full prose (strongest good-faith case). Then a short narrative of key weaknesses, your verdict (support/oppose/conditional) with conditions, and what would change your mind.`,
@@ -638,37 +473,5 @@ Tell the story of why both exist, then walk through each dimension in prose (goa
     description: 'Steelman story, then judgment',
     tier: 'short',
     tags: ['narrative'],
-  },
-  {
-    label: 'Email / Reply',
-    value: `Draft a professional reply to the source thread. Lead with the answer in the first sentence, keep the body concise, use bullets only for action items if needed, match tone to audience (manager/peer/customer/public). Output only the draft.`,
-    category: 'writing',
-    description: 'Reply draft',
-    tier: 'short',
-  },
-  {
-    label: 'Translate + Tone',
-    value: `Translate the source to the language implied in the user query (default English). Preserve code, URLs, numbers, and technical terms. Professional direct tone unless the source is casual. After translation, at most 2 lines of term notes for ambiguous words.`,
-    category: 'writing',
-    description: 'Translate preserving jargon',
-    tier: 'short',
-  },
-
-  // --- experimental ---
-  {
-    label: 'Verbalized Sampling',
-    value: `Use verbalized sampling to increase diversity and avoid repetitive answers.
-
-For the request in --- SOURCE ---:
-1) Generate 5-8 meaningfully different response variants.
-2) Assign each variant a probability (<15% each).
-3) Per variant: one-sentence rationale for the probability + full response in distinct style/length.
-4) Number variants; avoid repeated structure.
-
-Do not reveal hidden chain-of-thought. Keep rationales concise.`,
-    category: 'experimental',
-    description: 'Multiple diverse variants (experimental)',
-    tier: 'long',
-    tags: ['experimental'],
   },
 ];

@@ -18,6 +18,23 @@ function findSendButton(): HTMLElement | null {
 function createSiteAutomations(config: Config): SiteAutomation[] {
   return [
     {
+      host: 'grok.com',
+      run: async () => {
+        if (!new URLSearchParams(window.location.search).has('q')) return;
+
+        for (let i = 0; i < 60; i++) {
+          const sendButton = Array.from(document.querySelectorAll('button')).find(
+            (button) => button.textContent?.trim() === 'Send',
+          );
+          if (sendButton) {
+            sendButton.click();
+            return;
+          }
+          await utils.delay(150);
+        }
+      },
+    },
+    {
       host: 'chatgpt.com',
       run: async () => {
         const params = new URLSearchParams(window.location.search);
