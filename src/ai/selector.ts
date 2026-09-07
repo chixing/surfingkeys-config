@@ -10,6 +10,7 @@ import {
   PROMPT_CATEGORY_ORDER,
   PROMPT_TEMPLATES,
   templateSearchHaystack,
+  type PageContext,
   type PromptCategory,
   type PromptTemplate,
 } from './templates';
@@ -22,6 +23,22 @@ interface AIService {
 
 const TAB_WARNING_THRESHOLD = 12;
 
+/** Page the dialog was opened on, or null on pages an AI cannot fetch anyway. */
+function capturePageContext(): PageContext | null {
+  const url = window.location.href;
+  if (!/^https?:/i.test(url)) return null;
+  return { url, title: document.title.trim() };
+}
+
+/** Host shown on the page-context toggle, falling back to the raw URL. */
+function pageContextHost(page: PageContext): string {
+  try {
+    return new URL(page.url).host;
+  } catch {
+    return page.url;
+  }
+}
+
 export class AiSelector {
   private config: Config;
   private lastQuery: string | null = null;
@@ -32,6 +49,8 @@ export class AiSelector {
   private promptPreviewTitle: HTMLElement | null = null;
   private clipboardText: string | null = null;
   private clipboardIndicator: HTMLElement | null = null;
+  private pageContext: PageContext | null = null;
+  private pageContextToggle: HTMLInputElement | null = null;
   private templateRows: HTMLElement[] = [];
   private templateRenderOrder: number[] = [];
   private templateCheckboxes: HTMLInputElement[] = [];
@@ -66,6 +85,9 @@ export class AiSelector {
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
     this.initializePromptState();
     this.clipboardText = null;
+    // Only a selection made on this page implies the page is the context. A restored
+    // last query or clipboard text can come from anywhere, so it gets no PAGE block.
+    this.pageContext = initialQuery ? capturePageContext() : null;
 
     this.overlay = this.createOverlay();
     const dialog = this.createDialog();
@@ -124,6 +146,8 @@ export class AiSelector {
     this.overlay = null;
     this.styleEl = null;
     this.queryInput = null;
+    this.pageContext = null;
+    this.pageContextToggle = null;
     this.promptPreviewInput = null;
     this.promptPreviewTitle = null;
     this.clipboardText = null;
@@ -360,10 +384,11 @@ export class AiSelector {
     }
 
     this.lastQuery = this.queryInput.value;
+    const page = this.getActivePageContext();
 
     selectedUrls.forEach((url) => {
       promptsToSend.forEach((promptTemplate) => {
-        api.tabOpenLink(url + encodeURIComponent(formatCombinedQuery(query, promptTemplate)));
+        api.tabOpenLink(url + encodeURIComponent(formatCombinedQuery(query, promptTemplate, page)));
       });
     });
     this.close();
@@ -648,6 +673,14 @@ export class AiSelector {
         color: var(--sk-info-fg); font-family: var(--sk-font); font-size: 12px;
         font-weight: 600; letter-spacing: 0.02em; user-select: none; vertical-align: middle;
       }
+      #sk-ai-selector-overlay .sk-ai-page-context {
+        display: inline-flex; align-items: center; gap: 6px;
+        margin-left: 10px; padding: 2px 10px; border-radius: 999px;
+        border: 1px solid var(--sk-border); background: var(--sk-bg-dark);
+        color: var(--sk-fg); font-family: var(--sk-font); font-size: 12px;
+        cursor: pointer; user-select: none; vertical-align: middle;
+        max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
       #sk-ai-selector-overlay .sk-ai-query {
         width: 100%; min-height: 58px; padding: 8px 10px;
         background: var(--sk-bg-dark); border: 1px solid var(--sk-border);
@@ -783,6 +816,10 @@ export class AiSelector {
     this.clipboardIndicator = clipboardIndicator;
     label.appendChild(clipboardIndicator);
 
+    if (this.pageContext) {
+      label.appendChild(this.createPageContextToggle(this.pageContext));
+    }
+
     const input = document.createElement('textarea');
     input.id = 'sk-ai-query-input';
     input.className = 'sk-ai-query';
@@ -791,6 +828,32 @@ export class AiSelector {
     input.addEventListener('input', () => this.updateClipboardIndicator());
 
     return { label, input };
+  }
+
+  private createPageContextToggle(page: PageContext): HTMLElement {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'sk-ai-page-context';
+    wrapper.title = `Send the page URL and title alongside the selection\n${page.url}`;
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'sk-ai-check';
+    checkbox.checked = true;
+    this.pageContextToggle = checkbox;
+
+    const text = document.createElement('span');
+    text.textContent = `Page: ${pageContextHost(page)}`;
+
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(text);
+    return wrapper;
+  }
+
+  /** Page context to send, honouring the dialog toggle. */
+  private getActivePageContext(): PageContext | null {
+    if (!this.pageContext) return null;
+    if (this.pageContextToggle && !this.pageContextToggle.checked) return null;
+    return this.pageContext;
   }
 
   private createPromptPicker(): { controls: HTMLElement; picker: HTMLElement } {
