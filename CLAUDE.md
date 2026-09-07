@@ -11,7 +11,7 @@ configuration. `src/` is bundled by **tsup** into a single minified IIFE at
 - `dist/surfingkeys.js` is published to a GitHub gist (`82767d49380294ad7b298554e2c0e59b`)
   via `npm run deploy` (`gh gist edit ...`).
 - CI (`.github/workflows/deploy.yml`) runs deploy on every push to `main`, so
-  **pushing to main = deploying**. Type-check runs in CI before deploy.
+  **pushing to main = deploying**. Lint and type-check run in CI before deploy.
 
 ## Commands
 
