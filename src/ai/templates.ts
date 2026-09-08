@@ -2,7 +2,7 @@
  * Prompt templates for the Multi-AI dialog.
  */
 
-import { FABRIC_PATTERNS } from './fabric-index';
+import type { FabricPattern } from './fabric';
 
 export type PromptCategory = 'quick' | 'explain' | 'code' | 'research' | 'decision' | 'write' | 'fabric';
 export type PromptTier = 'short' | 'long';
@@ -98,7 +98,7 @@ export function templateSearchHaystack(template: PromptTemplate): string {
     .toLowerCase();
 }
 
-export const PROMPT_TEMPLATES: PromptTemplate[] = [
+const CURATED_PROMPT_TEMPLATES: PromptTemplate[] = [
   // --- quick ---
   {
     label: 'TL;DR',
@@ -676,21 +676,28 @@ Output the translation first, then up to five notes on idioms, puns, cultural re
   },
 ];
 
-PROMPT_TEMPLATES.push(
-  ...FABRIC_PATTERNS.map(
-    ({ name, description }): PromptTemplate => ({
-      label: name,
-      description,
-      category: 'fabric',
-      tier: 'long',
-      value: '',
-      fabricPattern: name,
-      tags: ['fabric', ...name.split('_')],
-    }),
-  ),
-);
+/** Each dialog owns its catalog so refreshes cannot shift another dialog's indexes. */
+export function createPromptTemplates(patterns: FabricPattern[]): PromptTemplate[] {
+  return [
+    ...CURATED_PROMPT_TEMPLATES,
+    ...patterns.map(
+      ({ name, description }): PromptTemplate => ({
+        label: name,
+        description,
+        category: 'fabric',
+        tier: 'long',
+        value: '',
+        fabricPattern: name,
+        tags: ['fabric', ...name.split('_')],
+      }),
+    ),
+  ];
+}
 
 /** Look up a template's prompt text by label (empty string if the label is unknown). */
 export function promptValueByLabel(label: string): string {
-  return PROMPT_TEMPLATES.find((template) => template.label === label)?.value ?? '';
+  const template = CURATED_PROMPT_TEMPLATES.find((template) => template.label === label);
+  if (!template) return '';
+  if (!template.value.trim()) throw new Error(`Curated prompt has no text: ${label}`);
+  return template.value;
 }

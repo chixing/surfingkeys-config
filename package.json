@@ -5,7 +5,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "fetch-fabric": "npx tsx scripts/fetch-fabric-index.ts && biome format --write src/ai/fabric-index.ts",
     "build": "tsup",
     "watch": "tsup --watch",
     "type-check": "tsc --noEmit",

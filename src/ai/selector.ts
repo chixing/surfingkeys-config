@@ -4,12 +4,12 @@
 
 import type { Config, AIServiceName } from '../config';
 import { AI_SERVICES } from '../config';
-import { fetchFabricPattern } from './fabric';
+import { fetchFabricPattern, readFabricIndex, refreshFabricIndex } from './fabric';
 import {
   formatCombinedQuery,
   PROMPT_CATEGORY_LABELS,
   PROMPT_CATEGORY_ORDER,
-  PROMPT_TEMPLATES,
+  createPromptTemplates,
   templateSearchHaystack,
   type PageContext,
   type PromptCategory,
@@ -53,6 +53,9 @@ export class AiSelector {
   private pageContext: PageContext | null = null;
   private pageContextToggle: HTMLInputElement | null = null;
   private templateRows: HTMLElement[] = [];
+  private templates: PromptTemplate[] = [];
+  private templateList: HTMLElement | null = null;
+  private templateListTouched = false;
   private templateRenderOrder: number[] = [];
   private templateCheckboxes: HTMLInputElement[] = [];
   private serviceCheckboxes: HTMLInputElement[] = [];
@@ -88,6 +91,9 @@ export class AiSelector {
   // ===========================================================================
 
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
+    const cached = readFabricIndex();
+    this.templates = createPromptTemplates(cached);
+    this.templateListTouched = false;
     this.initializePromptState();
     this.clipboardText = null;
     // Only a selection made on this page implies the page is the context. A restored
@@ -129,6 +135,26 @@ export class AiSelector {
     this.setupFocusHandler();
     this.setupInitialFocus(queryInput);
     this.setupOverlayClickHandler();
+    const overlay = this.overlay;
+    void refreshFabricIndex().then((patterns) => {
+      if (
+        !patterns ||
+        this.overlay !== overlay ||
+        !this.templateList ||
+        this.templateListTouched ||
+        this.submitting ||
+        JSON.stringify(patterns) === JSON.stringify(cached)
+      )
+        return;
+      // No template interaction has begun, so only empty Fabric drafts are replaced.
+      // Curated indexes, preview edits, filter input and focus remain intact.
+      this.templates = createPromptTemplates(patterns);
+      this.promptDrafts.length = this.templates.length;
+      this.templates.forEach((template, index) => {
+        if (template.fabricPattern) this.promptDrafts[index] = '';
+      });
+      this.renderTemplateRows(this.templateList);
+    });
   }
 
   close(): void {
@@ -158,6 +184,7 @@ export class AiSelector {
     this.clipboardText = null;
     this.clipboardIndicator = null;
     this.templateRows = [];
+    this.templateList = null;
     this.templateCheckboxes = [];
     this.serviceCheckboxes = [];
     this.templateFilterInput = null;
@@ -421,7 +448,7 @@ export class AiSelector {
   }
 
   private initializePromptState(): void {
-    this.promptDrafts = PROMPT_TEMPLATES.map((template) => template.value);
+    this.promptDrafts = this.templates.map((template) => template.value);
     this.fabricLoads = new Map();
     this.fabricErrors = new Map();
     this.fabricExpanded = false;
@@ -429,7 +456,7 @@ export class AiSelector {
     this.selectedPromptIndexes.clear();
     this.activePromptTouchedByUser = false;
 
-    if (PROMPT_TEMPLATES.length === 0) {
+    if (this.templates.length === 0) {
       this.activePromptIndex = null;
       return;
     }
@@ -456,12 +483,15 @@ export class AiSelector {
       this.persistPreviewInput();
     }
     this.activePromptIndex = index;
-    if (markTouched) this.activePromptTouchedByUser = true;
+    if (markTouched) {
+      this.activePromptTouchedByUser = true;
+      this.templateListTouched = true;
+    }
 
     if (this.promptPreviewInput) {
       this.promptPreviewInput.disabled = false;
       this.promptPreviewInput.value = this.promptDrafts[index] || '';
-      if (PROMPT_TEMPLATES[index].fabricPattern && !this.promptDrafts[index]) {
+      if (this.templates[index].fabricPattern && !this.promptDrafts[index]) {
         const preview = this.promptPreviewInput;
         const drafts = this.promptDrafts;
         preview.disabled = true;
@@ -496,12 +526,12 @@ export class AiSelector {
       return;
     }
 
-    const activeTemplate = PROMPT_TEMPLATES[this.activePromptIndex];
+    const activeTemplate = this.templates[this.activePromptIndex];
     this.promptPreviewTitle.textContent = `Preview / Edit: ${activeTemplate?.label || 'Custom'}`;
   }
 
   private updatePromptRowStyles(): void {
-    PROMPT_TEMPLATES.forEach((_, index) => {
+    this.templates.forEach((_, index) => {
       const row = this.templateRows[index];
       if (!row) return;
 
@@ -512,14 +542,14 @@ export class AiSelector {
 
   private getSelectedPromptIndexesInOrder(): number[] {
     const selectedIndexes: number[] = [];
-    PROMPT_TEMPLATES.forEach((_, index) => {
+    this.templates.forEach((_, index) => {
       if (this.selectedPromptIndexes.has(index)) selectedIndexes.push(index);
     });
     return selectedIndexes;
   }
 
   private async resolveFabricDraft(index: number): Promise<void> {
-    const name = PROMPT_TEMPLATES[index].fabricPattern;
+    const name = this.templates[index].fabricPattern;
     if (!name || this.promptDrafts[index]) return;
     const error = this.fabricErrors.get(index);
     if (error) throw new Error(error);
@@ -594,7 +624,7 @@ export class AiSelector {
     const q = raw.trim().toLowerCase();
     const categoryHasVisible = new Map<PromptCategory, boolean>();
 
-    PROMPT_TEMPLATES.forEach((template, index) => {
+    this.templates.forEach((template, index) => {
       const row = this.templateRows[index];
       if (!row) return;
 
@@ -938,40 +968,14 @@ export class AiSelector {
 
     const templateList = document.createElement('div');
     templateList.className = 'sk-ai-template-list';
-
-    this.templateRows = new Array(PROMPT_TEMPLATES.length);
-    this.templateCheckboxes = new Array(PROMPT_TEMPLATES.length);
-    this.templateRenderOrder = [];
-    this.templateCategoryHeadings.clear();
-    PROMPT_CATEGORY_ORDER.forEach((category) => {
-      const indexes = PROMPT_TEMPLATES.map((t, i) => (t.category === category ? i : -1)).filter(
-        (i) => i >= 0,
-      );
-      if (indexes.length === 0) return;
-
-      const heading = document.createElement('div');
-      heading.className = 'sk-ai-cat-heading';
-      heading.textContent = PROMPT_CATEGORY_LABELS[category];
-      heading.dataset.skCategoryHeading = category;
-      if (category === 'fabric') {
-        heading.setAttribute('role', 'button');
-        heading.tabIndex = 0;
-        heading.style.cursor = 'pointer';
-        heading.onclick = () => {
-          this.fabricExpanded = !this.fabricExpanded;
-          this.applyTemplateFilter(filterInput.value);
-        };
-      }
-      this.templateCategoryHeadings.set(category, heading);
-      templateList.appendChild(heading);
-
-      indexes.forEach((index) => {
-        const row = this.createPromptTemplateRow(PROMPT_TEMPLATES[index], index);
-        this.templateRows[index] = row;
-        this.templateRenderOrder.push(index);
-        templateList.appendChild(row);
+    this.templateList = templateList;
+    for (const event of ['pointerdown', 'focusin', 'keydown']) {
+      templateList.addEventListener(event, () => {
+        this.templateListTouched = true;
       });
-    });
+    }
+
+    this.renderTemplateRows(templateList);
 
     const rightPane = document.createElement('div');
     rightPane.className = 'sk-ai-pane';
@@ -1008,6 +1012,45 @@ export class AiSelector {
 
     this.applyTemplateFilter('');
     return { controls, picker };
+  }
+
+  private renderTemplateRows(templateList: HTMLElement): void {
+    templateList.replaceChildren();
+    this.templateRows = new Array(this.templates.length);
+    this.templateCheckboxes = new Array(this.templates.length);
+    this.templateRenderOrder = [];
+    this.templateCategoryHeadings.clear();
+    PROMPT_CATEGORY_ORDER.forEach((category) => {
+      const indexes = this.templates.map((t, i) => (t.category === category ? i : -1)).filter((i) => i >= 0);
+      if (indexes.length === 0) return;
+
+      const heading = document.createElement('div');
+      heading.className = 'sk-ai-cat-heading';
+      heading.textContent = PROMPT_CATEGORY_LABELS[category];
+      heading.dataset.skCategoryHeading = category;
+      if (category === 'fabric') {
+        heading.setAttribute('role', 'button');
+        heading.tabIndex = 0;
+        heading.style.cursor = 'pointer';
+        heading.onclick = () => {
+          this.fabricExpanded = !this.fabricExpanded;
+          this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
+        };
+      }
+      this.templateCategoryHeadings.set(category, heading);
+      templateList.appendChild(heading);
+
+      indexes.forEach((index) => {
+        const row = this.createPromptTemplateRow(this.templates[index], index);
+        this.templateRows[index] = row;
+        this.templateRenderOrder.push(index);
+        templateList.appendChild(row);
+      });
+    });
+
+    this.markAsSurfingKeys(templateList);
+    this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
+    this.updatePromptRowStyles();
   }
 
   private createPromptTemplateRow(template: PromptTemplate, index: number): HTMLElement {
@@ -1056,12 +1099,13 @@ export class AiSelector {
     selectAllBtn.textContent = 'Select All Prompts';
     selectAllBtn.type = 'button';
     selectAllBtn.onclick = () => {
-      PROMPT_TEMPLATES.forEach((_, index) => {
+      this.templateListTouched = true;
+      this.templates.forEach((_, index) => {
         this.selectedPromptIndexes.add(index);
         const checkbox = this.templateCheckboxes[index];
         if (checkbox) checkbox.checked = true;
       });
-      if (this.activePromptIndex === null && PROMPT_TEMPLATES.length > 0) {
+      if (this.activePromptIndex === null && this.templates.length > 0) {
         this.setActivePrompt(0);
         return;
       }
@@ -1073,8 +1117,9 @@ export class AiSelector {
     unselectAllBtn.textContent = 'Unselect All Prompts';
     unselectAllBtn.type = 'button';
     unselectAllBtn.onclick = () => {
+      this.templateListTouched = true;
       this.selectedPromptIndexes.clear();
-      PROMPT_TEMPLATES.forEach((_, index) => {
+      this.templates.forEach((_, index) => {
         const checkbox = this.templateCheckboxes[index];
         if (checkbox) checkbox.checked = false;
       });
