@@ -288,6 +288,17 @@ export class AiSelector {
 
       e.stopPropagation();
 
+      if (target === this.templateFilterInput && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+        e.preventDefault();
+        const first = this.findFirstVisibleTemplateIndex();
+        if (first !== null) {
+          this.templateCheckboxes[first]?.focus();
+          this.templateCheckboxes[first]?.scrollIntoView({ block: 'nearest' });
+          this.setActivePrompt(first, true, false);
+        }
+        return;
+      }
+
       const isTextArea = target?.tagName === 'TEXTAREA';
       if (!isTextArea && target && this.overlay?.contains(target)) {
         if (this.tryHandlePromptTemplateKeyNav(e, target)) return;
@@ -301,16 +312,6 @@ export class AiSelector {
       } else if (e.key === 'Enter') {
         const isTextArea = target?.tagName === 'TEXTAREA';
         if (isTextArea && e.shiftKey) return;
-
-        if (target === this.templateFilterInput) {
-          e.preventDefault();
-          const first = this.findFirstVisibleTemplateIndex();
-          if (first !== null) {
-            this.templateCheckboxes[first]?.focus();
-            this.setActivePrompt(first, true, false);
-          }
-          return;
-        }
 
         e.preventDefault();
         this.handleSubmit();
@@ -1194,6 +1195,13 @@ export class AiSelector {
   private createButtons(): HTMLElement {
     const container = document.createElement('div');
     container.className = 'sk-ai-actions';
+    const version = document.createElement('small');
+    version.textContent = `v${__CONFIG_VERSION__}`;
+    version.style.color = 'var(--sk-info-fg)';
+    version.style.fontSize = '11px';
+    version.style.alignSelf = 'center';
+    version.style.marginRight = 'auto';
+    container.appendChild(version);
 
     const cancelBtn = this.createCancelButton();
     const submitBtn = this.createSubmitButton();

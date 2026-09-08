@@ -4,6 +4,7 @@
  */
 
 declare global {
+  const __CONFIG_VERSION__: string;
   interface Window {
     api: SurfingKeysAPI;
     settings: SurfingKeysSettings;

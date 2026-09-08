@@ -12,6 +12,13 @@ configuration. `src/` is bundled by **tsup** into a single minified IIFE at
   via `npm run deploy` (`gh gist edit ...`).
 - CI (`.github/workflows/deploy.yml`) runs deploy on every push to `main`, so
   **pushing to main = deploying**. Lint and type-check run in CI before deploy.
+- Git is the source of truth for the version in package.json and package-lock.json.
+  Build and deploy use that exact version, shown at the bottom-left of the dialog
+  and in the bundle banner. Deploy never changes the version.
+- To release: commit your changes on `main`, then run `npm run release` with a clean
+  working tree. It runs type-check and lint, bumps the patch version in both package
+  files, commits and tags the version, then pushes to trigger CI deployment.
+  If the push fails, resolve it and retry `git push --follow-tags`; do not bump again.
 
 ## Commands
 

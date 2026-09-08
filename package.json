@@ -1,6 +1,6 @@
 {
   "name": "surfingkeys-config",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "TypeScript-based SurfingKeys configuration",
   "private": true,
   "type": "module",
@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
+    "release": "npm run type-check && npm run lint && npm version patch -m \"Release %s\" && git push --follow-tags",
     "deploy": "npm run build && gh gist edit 82767d49380294ad7b298554e2c0e59b dist/surfingkeys.js"
   },
   "devDependencies": {
