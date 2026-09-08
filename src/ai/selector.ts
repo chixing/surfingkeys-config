@@ -18,7 +18,7 @@ import {
 
 interface AIService {
   name: AIServiceName;
-  url: string;
+  buildUrl: (prompt: string) => string;
   checked: boolean;
 }
 
@@ -74,12 +74,36 @@ export class AiSelector {
   private blurHandler: ((e: FocusEvent) => void) | null = null;
 
   private services: AIService[] = [
-    { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?prompt=', checked: true },
-    { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
-    { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },
-    { name: AI_SERVICES.GEMINI, url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
-    { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
-    { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
+    {
+      name: AI_SERVICES.CHATGPT,
+      buildUrl: (p) => `https://chatgpt.com/?prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.DOUBAO,
+      buildUrl: (p) => `https://www.doubao.com/chat#sk_prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.CLAUDE,
+      buildUrl: (p) => `https://claude.ai/new#sk_prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.GEMINI,
+      buildUrl: (p) => `https://gemini.google.com/app#sk_prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.PERPLEXITY,
+      buildUrl: (p) => `https://perplexity.ai/?q=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.GROK,
+      buildUrl: (p) => `https://grok.com/?q=${encodeURIComponent(p)}`,
+      checked: true,
+    },
   ];
 
   constructor(config: Config) {
@@ -214,16 +238,15 @@ export class AiSelector {
     const trimmedQuery = query.trim();
     if (!trimmedQuery) return false;
 
-    const selectedUrls = this.services
-      .filter((service) => selectedServices.includes(service.name))
-      .map((service) => service.url);
-    if (selectedUrls.length === 0) return false;
+    const selected = this.services.filter((service) => selectedServices.includes(service.name));
+    if (selected.length === 0) return false;
 
     this.lastQuery = trimmedQuery;
-    selectedUrls.forEach((url) => {
+    const prompt = formatCombinedQuery(trimmedQuery, promptTemplate);
+    selected.forEach((service) => {
       api.RUNTIME('openLink', {
         tab: { tabbed: true, active: false },
-        url: url + encodeURIComponent(formatCombinedQuery(trimmedQuery, promptTemplate)),
+        url: service.buildUrl(prompt),
       });
     });
     return true;
@@ -403,11 +426,9 @@ export class AiSelector {
       return;
     }
 
-    const selectedUrls = this.services
-      .filter((_, index) => this.serviceCheckboxes[index]?.checked)
-      .map((service) => service.url);
+    const selectedServices = this.services.filter((_, index) => this.serviceCheckboxes[index]?.checked);
 
-    if (selectedUrls.length === 0) {
+    if (selectedServices.length === 0) {
       alert('Please select at least one AI service');
       return;
     }
@@ -432,17 +453,17 @@ export class AiSelector {
       if (this.promptDrafts === drafts) this.submitting = false;
     }
 
-    const tabCount = selectedUrls.length * promptsToSend.length;
+    const tabCount = selectedServices.length * promptsToSend.length;
     if (tabCount > TAB_WARNING_THRESHOLD) {
-      const message = `This will open ${tabCount} tabs (${selectedUrls.length} services x ${promptsToSend.length} prompts). Continue?`;
+      const message = `This will open ${tabCount} tabs (${selectedServices.length} services x ${promptsToSend.length} prompts). Continue?`;
       if (!window.confirm(message)) return;
     }
 
     this.lastQuery = this.queryInput.value;
 
-    selectedUrls.forEach((url) => {
+    selectedServices.forEach((service) => {
       promptsToSend.forEach((promptTemplate) => {
-        api.tabOpenLink(url + encodeURIComponent(formatCombinedQuery(query, promptTemplate, page)));
+        api.tabOpenLink(service.buildUrl(formatCombinedQuery(query, promptTemplate, page)));
       });
     });
     this.close();
