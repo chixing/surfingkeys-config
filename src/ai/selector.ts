@@ -4,6 +4,7 @@
 
 import type { Config, AIServiceName } from '../config';
 import { AI_SERVICES } from '../config';
+import { fetchFabricPattern } from './fabric';
 import {
   formatCombinedQuery,
   PROMPT_CATEGORY_LABELS,
@@ -58,6 +59,10 @@ export class AiSelector {
   private templateFilterInput: HTMLInputElement | null = null;
   private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
   private promptDrafts: string[] = [];
+  private fabricLoads = new Map<number, Promise<void>>();
+  private fabricErrors = new Map<number, string>();
+  private fabricExpanded = false;
+  private submitting = false;
   private selectedPromptIndexes = new Set<number>();
   private activePromptIndex: number | null = null;
   private activePromptTouchedByUser: boolean = false;
@@ -217,6 +222,12 @@ export class AiSelector {
       event.sk_stopPropagation = true;
 
       const target = e.target as HTMLElement | null;
+      if (target?.dataset.skCategoryHeading === 'fabric' && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        e.stopPropagation();
+        target.click();
+        return;
+      }
 
       if (e.key === 'Tab') {
         const templateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
@@ -352,8 +363,8 @@ export class AiSelector {
     });
   }
 
-  private handleSubmit(): void {
-    if (!this.queryInput) return;
+  private async handleSubmit(): Promise<void> {
+    if (!this.queryInput || this.submitting) return;
     const query = this.queryInput.value.trim();
     if (!query) {
       this.queryInput.focus();
@@ -374,8 +385,24 @@ export class AiSelector {
     }
 
     this.persistPreviewInput();
-    const selectedPrompts = this.getSelectedPromptTexts();
-    const promptsToSend = selectedPrompts.length > 0 ? selectedPrompts : [this.getActivePromptText()];
+    const drafts = this.promptDrafts;
+    const indexes = this.getSelectedPromptIndexesInOrder();
+    if (!indexes.length && this.activePromptTouchedByUser && this.activePromptIndex !== null) {
+      indexes.push(this.activePromptIndex);
+    }
+    const page = this.getActivePageContext();
+    this.submitting = true;
+    let promptsToSend: string[];
+    try {
+      await Promise.all(indexes.map((index) => this.resolveFabricDraft(index)));
+      if (this.promptDrafts !== drafts) return;
+      promptsToSend = indexes.length ? [...new Set(indexes.map((index) => drafts[index].trim()))] : [''];
+    } catch (error) {
+      if (this.promptDrafts === drafts) alert(error instanceof Error ? error.message : String(error));
+      return;
+    } finally {
+      if (this.promptDrafts === drafts) this.submitting = false;
+    }
 
     const tabCount = selectedUrls.length * promptsToSend.length;
     if (tabCount > TAB_WARNING_THRESHOLD) {
@@ -384,7 +411,6 @@ export class AiSelector {
     }
 
     this.lastQuery = this.queryInput.value;
-    const page = this.getActivePageContext();
 
     selectedUrls.forEach((url) => {
       promptsToSend.forEach((promptTemplate) => {
@@ -396,6 +422,10 @@ export class AiSelector {
 
   private initializePromptState(): void {
     this.promptDrafts = PROMPT_TEMPLATES.map((template) => template.value);
+    this.fabricLoads = new Map();
+    this.fabricErrors = new Map();
+    this.fabricExpanded = false;
+    this.submitting = false;
     this.selectedPromptIndexes.clear();
     this.activePromptTouchedByUser = false;
 
@@ -409,7 +439,8 @@ export class AiSelector {
   }
 
   private persistPreviewInput(): void {
-    if (this.activePromptIndex === null || !this.promptPreviewInput) return;
+    if (this.activePromptIndex === null || !this.promptPreviewInput || this.promptPreviewInput.disabled)
+      return;
     this.promptDrafts[this.activePromptIndex] = this.promptPreviewInput.value;
   }
 
@@ -428,7 +459,25 @@ export class AiSelector {
     if (markTouched) this.activePromptTouchedByUser = true;
 
     if (this.promptPreviewInput) {
+      this.promptPreviewInput.disabled = false;
       this.promptPreviewInput.value = this.promptDrafts[index] || '';
+      if (PROMPT_TEMPLATES[index].fabricPattern && !this.promptDrafts[index]) {
+        const preview = this.promptPreviewInput;
+        const drafts = this.promptDrafts;
+        preview.disabled = true;
+        preview.value = this.fabricErrors.get(index) ?? 'Loading…';
+        void this.resolveFabricDraft(index).then(
+          () => {
+            if (this.promptDrafts !== drafts || this.activePromptIndex !== index) return;
+            preview.value = drafts[index];
+            preview.disabled = false;
+          },
+          (error: Error) => {
+            if (this.promptDrafts === drafts && this.activePromptIndex === index)
+              preview.value = error.message;
+          },
+        );
+      }
       if (focusPreview) {
         this.promptPreviewInput.focus();
         this.promptPreviewInput.selectionStart = this.promptPreviewInput.value.length;
@@ -469,24 +518,30 @@ export class AiSelector {
     return selectedIndexes;
   }
 
-  private getSelectedPromptTexts(): string[] {
-    const selectedIndexes = this.getSelectedPromptIndexesInOrder();
-    const uniquePrompts = new Set<string>();
-    const promptTexts: string[] = [];
-
-    selectedIndexes.forEach((index) => {
-      const promptText = (this.promptDrafts[index] || '').trim();
-      if (uniquePrompts.has(promptText)) return;
-      uniquePrompts.add(promptText);
-      promptTexts.push(promptText);
-    });
-
-    return promptTexts;
-  }
-
-  private getActivePromptText(): string {
-    if (!this.activePromptTouchedByUser || this.activePromptIndex === null) return '';
-    return (this.promptDrafts[this.activePromptIndex] || '').trim();
+  private async resolveFabricDraft(index: number): Promise<void> {
+    const name = PROMPT_TEMPLATES[index].fabricPattern;
+    if (!name || this.promptDrafts[index]) return;
+    const error = this.fabricErrors.get(index);
+    if (error) throw new Error(error);
+    let pending = this.fabricLoads.get(index);
+    if (!pending) {
+      const drafts = this.promptDrafts;
+      const errors = this.fabricErrors;
+      const loads = this.fabricLoads;
+      pending = fetchFabricPattern(name)
+        .then(
+          (text) => {
+            drafts[index] = text;
+          },
+          (error: Error) => {
+            errors.set(index, error.message);
+            throw error;
+          },
+        )
+        .finally(() => loads.delete(index));
+      this.fabricLoads.set(index, pending);
+    }
+    await pending;
   }
 
   // ===========================================================================
@@ -544,12 +599,18 @@ export class AiSelector {
       if (!row) return;
 
       const match = !q || templateSearchHaystack(template).includes(q);
-      row.style.display = match ? 'flex' : 'none';
+      const collapsed = template.category === 'fabric' && !this.fabricExpanded && !q;
+      row.style.display = match && !collapsed ? 'flex' : 'none';
       if (match) categoryHasVisible.set(template.category, true);
     });
 
     this.templateCategoryHeadings.forEach((heading, category) => {
       heading.style.display = categoryHasVisible.get(category) ? '' : 'none';
+      if (category === 'fabric') {
+        const expanded = this.fabricExpanded || !!q;
+        heading.setAttribute('aria-expanded', String(expanded));
+        heading.textContent = `${expanded ? '▾' : '▸'} Fabric`;
+      }
     });
   }
 
@@ -892,6 +953,15 @@ export class AiSelector {
       heading.className = 'sk-ai-cat-heading';
       heading.textContent = PROMPT_CATEGORY_LABELS[category];
       heading.dataset.skCategoryHeading = category;
+      if (category === 'fabric') {
+        heading.setAttribute('role', 'button');
+        heading.tabIndex = 0;
+        heading.style.cursor = 'pointer';
+        heading.onclick = () => {
+          this.fabricExpanded = !this.fabricExpanded;
+          this.applyTemplateFilter(filterInput.value);
+        };
+      }
       this.templateCategoryHeadings.set(category, heading);
       templateList.appendChild(heading);
 
@@ -936,6 +1006,7 @@ export class AiSelector {
       this.updatePromptRowStyles();
     }
 
+    this.applyTemplateFilter('');
     return { controls, picker };
   }
 

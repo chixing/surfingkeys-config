@@ -2,7 +2,9 @@
  * Prompt templates for the Multi-AI dialog.
  */
 
-export type PromptCategory = 'quick' | 'explain' | 'code' | 'research' | 'decision' | 'write';
+import { FABRIC_PATTERNS } from './fabric-index';
+
+export type PromptCategory = 'quick' | 'explain' | 'code' | 'research' | 'decision' | 'write' | 'fabric';
 export type PromptTier = 'short' | 'long';
 
 export interface PromptTemplate {
@@ -12,6 +14,7 @@ export interface PromptTemplate {
   description: string;
   tier: PromptTier;
   tags?: string[];
+  fabricPattern?: string;
 }
 
 export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
@@ -21,6 +24,7 @@ export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
   research: 'Research',
   decision: 'Decision',
   write: 'Write',
+  fabric: 'Fabric',
 };
 
 export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
@@ -30,6 +34,7 @@ export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
   'research',
   'decision',
   'write',
+  'fabric',
 ];
 
 /**
@@ -37,7 +42,7 @@ export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
  * every selected template is sent as its own URL, so this text is paid for once
  * per request with no amortizing.
  */
-const BASE_RULES = `Rules
+export const BASE_RULES = `Rules
 - Skip preamble. If the source is a URL, read that page; if you cannot, say so in one line — never infer its content from the URL.
 - Never invent facts, quotes, numbers, or links. Label inference as inference.
 - Counts below are upper bounds. Cover fewer if the source supports fewer, and say so.`;
@@ -746,6 +751,20 @@ Output the translation first, then up to five notes on idioms, puns, cultural re
     tags: ['translation', 'chinese'],
   },
 ];
+
+PROMPT_TEMPLATES.push(
+  ...FABRIC_PATTERNS.map(
+    ({ name, description }): PromptTemplate => ({
+      label: name,
+      description,
+      category: 'fabric',
+      tier: 'long',
+      value: '',
+      fabricPattern: name,
+      tags: ['fabric', ...name.split('_')],
+    }),
+  ),
+);
 
 /** Look up a template's prompt text by label (empty string if the label is unknown). */
 export function promptValueByLabel(label: string): string {
