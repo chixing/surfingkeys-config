@@ -37,16 +37,6 @@ export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
   'fabric',
 ];
 
-/**
- * Minimal baseline. Kept short on purpose: it is prepended to most templates and
- * every selected template is sent as its own URL, so this text is paid for once
- * per request with no amortizing.
- */
-export const BASE_RULES = `Rules
-- Skip preamble. If the source is a URL, read that page; if you cannot, say so in one line — never infer its content from the URL.
-- Never invent facts, quotes, numbers, or links. Label inference as inference.
-- Counts below are upper bounds. Cover fewer if the source supports fewer, and say so.`;
-
 /** Extra rules for templates that expect live web research. */
 const WEB_RULES = `Sourcing
 - Use web browsing when available. If unavailable, say so upfront and answer from the source only.
@@ -112,9 +102,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
   // --- quick ---
   {
     label: 'TL;DR',
-    value: `${BASE_RULES}
-
-Answer first, in one or two sentences. Then why it matters, then what to do with it.
+    value: `Answer first, in one or two sentences. Then why it matters, then what to do with it.
 Under 150 words, up to 5 bullets. No section headers.`,
     category: 'quick',
     description: 'Fast answer with next step',
@@ -123,9 +111,7 @@ Under 150 words, up to 5 bullets. No section headers.`,
   },
   {
     label: 'Deep Summary',
-    value: `${BASE_RULES}
-
-Summarize the source thoroughly. Use sections that fit what it actually is — an argument, a changelog, a tutorial, a spec, a story — rather than forcing one shape.
+    value: `Summarize the source thoroughly. Use sections that fit what it actually is — an argument, a changelog, a tutorial, a spec, a story — rather than forcing one shape.
 Keep the detail needed to understand the main claims, results, numbers, and caveats. Drop repetition and filler; do not reproduce the article.
 Quote the source for anything surprising. End with what it leaves open.`,
     category: 'quick',
@@ -135,9 +121,7 @@ Quote the source for anything surprising. End with what it leaves open.`,
   },
   {
     label: 'Answer My Question',
-    value: `${BASE_RULES}
-
-The source is a page or passage plus my question about it, usually on the last line.
+    value: `The source is a page or passage plus my question about it, usually on the last line.
 Answer the question directly in the first sentence, then quote the specific parts of the source that settle it.
 If the source does not answer it, say so and give the closest thing it does say.
 If no question is present, do not guess one — ask me what I want to know and stop.
@@ -149,9 +133,7 @@ Do not summarize the whole page.`,
   },
   {
     label: 'Extract Data',
-    value: `${BASE_RULES}
-
-Pull the concrete data points out of the source: numbers, prices, dates, versions, limits, spec and model names, people, orgs, links.
+    value: `Pull the concrete data points out of the source: numbers, prices, dates, versions, limits, spec and model names, people, orgs, links.
 Default output is one table per natural group, with a "stated / derived / unknown" column.
 If my source text asks for JSON or CSV, output that instead — valid, parseable, no prose around it, with a null for anything the source does not state.
 No commentary beyond one line naming anything ambiguous.`,
@@ -162,9 +144,7 @@ No commentary beyond one line naming anything ambiguous.`,
   },
   {
     label: 'Action Items',
-    value: `${BASE_RULES}
-
-Convert the source into work I can act on.
+    value: `Convert the source into work I can act on.
 1) Decisions already made in the source, one line each.
 2) Action items: what to do, why, the first concrete step, rough effort (S/M/L), and any blocker.
 3) Things to watch, each with the trigger that should make me look again.
@@ -176,9 +156,7 @@ Order by value-to-effort. Up to 10 items. Skip anything not actionable, and say 
   },
   {
     label: 'Thread Digest',
-    value: `${BASE_RULES}
-
-The source is a discussion thread (HN, Reddit, GitHub, forum, comments). Judge only the comments visible to you, and say upfront if the thread looks truncated or partially loaded.
+    value: `The source is a discussion thread (HN, Reddit, GitHub, forum, comments). Judge only the comments visible to you, and say upfront if the thread looks truncated or partially loaded.
 
 1) What the thread is reacting to, in two sentences.
 2) Recurring views among the visible comments, roughly how common each is.
@@ -195,9 +173,7 @@ Ignore jokes and pile-ons.`,
   },
   {
     label: 'What Changed?',
-    value: `${BASE_RULES}
-
-The source is release notes, a changelog, a diff, or two versions of something.
+    value: `The source is release notes, a changelog, a diff, or two versions of something.
 
 1) The headline: what actually changed, in two sentences.
 2) Substantive changes, grouped, with the practical effect of each. Skip cosmetic and internal churn unless it changes behaviour.
@@ -213,9 +189,7 @@ If only one version is present and there is nothing to compare against, say so a
   },
   {
     label: 'Claim Audit',
-    value: `${BASE_RULES}
-
-Audit the claims in the source itself. Read the supplied URL if needed, but consult no other sources.
+    value: `Audit the claims in the source itself. Read the supplied URL if needed, but consult no other sources.
 For each significant claim in order: what is claimed, what evidence the source offers, and where it is unsupported, overstated, or ambiguous.
 Call out weasel wording, missing baselines, cherry-picked comparisons, and correlation presented as causation.
 End with the specific checks that would settle the open ones.`,
@@ -228,9 +202,7 @@ End with the specific checks that would settle the open ones.`,
   // --- explain ---
   {
     label: 'Explain Simply',
-    value: `${BASE_RULES}
-
-Explain like a patient senior engineer teaching a smart newcomer.
+    value: `Explain like a patient senior engineer teaching a smart newcomer.
 Short setup of why this exists, then the explanation in plain language, under 300 words.
 Define jargon inline. One analogy at most, only if it earns its place.
 End with the single sentence worth remembering.`,
@@ -240,9 +212,7 @@ End with the single sentence worth remembering.`,
   },
   {
     label: 'ELI5 Section-by-Section',
-    value: `${BASE_RULES}
-
-Analyze the source and format the response exactly as follows.
+    value: `Analyze the source and format the response exactly as follows.
 
 1) High-Level Summary
    - Concise overview of the main point of the entire piece.
@@ -260,9 +230,7 @@ Constraints
   },
   {
     label: 'Check My Understanding',
-    value: `${BASE_RULES}
-
-The source contains my explanation of something, or my explanation plus the material it is about.
+    value: `The source contains my explanation of something, or my explanation plus the material it is about.
 
 1) What I have right — briefly, so I know which parts to keep.
 2) What is wrong. For each: the precise misconception, why it is tempting, and the smallest correction that fixes it.
@@ -278,9 +246,7 @@ Correct the reasoning, not the wording. If my explanation is essentially right, 
   },
   {
     label: 'How It Works',
-    value: `${BASE_RULES}
-
-Explain the mechanism in the source, end to end. Assume I know general engineering but not this system.
+    value: `Explain the mechanism in the source, end to end. Assume I know general engineering but not this system.
 
 1) One-paragraph overview: what goes in, what comes out, what it guarantees.
 2) The walkthrough: follow one real request, record, or job through every stage the source describes. At each stage: what transforms, what state is touched, what can block.
@@ -303,8 +269,6 @@ Act as a Senior Staff Engineer and System Architect.
 Audience
 An engineer new to this domain but strong technically.
 
-${BASE_RULES}
-
 ${NARRATIVE_SPINE}
 
 Cover
@@ -324,9 +288,7 @@ Cover
   },
   {
     label: 'Learning Path',
-    value: `${BASE_RULES}
-
-Build a learning path for the subject of the source.
+    value: `Build a learning path for the subject of the source.
 
 1) Where this sits: a one-paragraph map of the field, and what this topic is a piece of.
 2) Prerequisites I actually need, and the commonly-listed ones I can skip.
@@ -345,9 +307,7 @@ Name real resources. If you are unsure a resource exists or is current, say so r
   // --- code ---
   {
     label: 'Explain This Code',
-    value: `${BASE_RULES}
-
-The source is code, or a page containing code.
+    value: `The source is code, or a page containing code.
 
 1) What it does, in two sentences.
 2) Block-by-block walkthrough: the purpose of each part, not a line-by-line restatement.
@@ -365,9 +325,7 @@ Use the code's own identifiers. Do not rewrite it unless asked. If the snippet i
   },
   {
     label: 'Debug This',
-    value: `${BASE_RULES}
-
-The source is an error, stack trace, failing output, or bug report.
+    value: `The source is an error, stack trace, failing output, or bug report.
 
 1) What the error actually means, in plain language — decode it, do not repeat it.
 2) Ranked causes, most likely first. For each: why it fits this specific evidence, and the one check that confirms or eliminates it.
@@ -383,9 +341,7 @@ If key context is missing (versions, config, the surrounding code), name exactly
   },
   {
     label: 'Code Review',
-    value: `${BASE_RULES}
-
-Review the code in the source as a demanding senior reviewer. Findings only — no praise, no summary of what the code does.
+    value: `Review the code in the source as a demanding senior reviewer. Findings only — no praise, no summary of what the code does.
 
 Format each finding as \`location: SEVERITY: problem\`, then one or two lines giving the trigger, the consequence, and the fix.
 Severity: BUG (wrong behaviour), SECURITY, PERF, RISK (works now, breaks later), NIT. Order by severity.
@@ -400,9 +356,7 @@ If nothing serious is wrong, reply "No changes recommended" and stop — do not 
   },
   {
     label: 'Docs to Quickstart',
-    value: `${BASE_RULES}
-
-The source is documentation or an API reference. Turn it into something I can run, using only what the page documents.
+    value: `The source is documentation or an API reference. Turn it into something I can run, using only what the page documents.
 
 1) The minimal working example: the shortest complete code for the main thing this page describes. Include install and auth steps only if the page covers them; otherwise list them as prerequisites to find elsewhere.
 2) The parameters or options that actually matter, up to 8, with documented defaults and when to change them.
@@ -421,9 +375,7 @@ Use the page's current syntax and version, and say if it looks outdated. Do not 
   // --- research ---
   {
     label: 'Web Fact-Check',
-    value: `${BASE_RULES}
-
-${WEB_RULES}
+    value: `${WEB_RULES}
 
 Fact-check the source against current research.
 Identify its central claims, verify each against primary or high-quality sources, and mark it supported, contradicted, partly supported, or unresolved — with a link and a date.
@@ -437,9 +389,7 @@ End with an overall confidence and what evidence would change it.`,
   },
   {
     label: 'Find the Real Sources',
-    value: `${BASE_RULES}
-
-${WEB_RULES}
+    value: `${WEB_RULES}
 
 Trace the source back to primary material and find the best things to read next.
 
@@ -460,8 +410,6 @@ Research analyst writing a diligence brief that reads like informed narrative, n
 
 Goal
 Research the company implied in the source (infer name and URL; if missing, say Unknown and what to verify). Assume vendor evaluation unless the source says otherwise.
-
-${BASE_RULES}
 
 ${WEB_RULES}
 
@@ -488,8 +436,6 @@ Then each section in prose, with any table kept short:
     value: `Role
 Product evaluator comparing the tools, vendors, or services implied by the source for a real buying decision.
 
-${BASE_RULES}
-
 ${WEB_RULES}
 
 Output
@@ -512,8 +458,6 @@ Product research analyst doing evidence-based customer research.
 Goal
 Analyze real user reviews and community discussion for the product, app, service, or tool implied in the source, then compare with its main competitors.
 
-${BASE_RULES}
-
 ${WEB_RULES}
 
 Prefer primary review and community sources: app stores, G2, Capterra, Trustpilot, Reddit, Hacker News, GitHub issues, forums, support boards, recent social posts.
@@ -535,8 +479,6 @@ Output
     label: 'Exact Use Cases',
     value: `Role
 Product strategist translating the product, technology, or idea in the source into concrete real-world usage.
-
-${BASE_RULES}
 
 ${WEB_RULES}
 
@@ -602,9 +544,7 @@ Keep it tight.`,
   // --- decision ---
   {
     label: 'Hostile Critic',
-    value: `${BASE_RULES}
-
-The source is the argument to attack. Direct prose, no polite framing.
+    value: `The source is the argument to attack. Direct prose, no polite framing.
 Attack the strongest version of the argument, not a caricature.
 Give the specific ways it collapses, the assumptions it rests on without support, and the serious counter-arguments it never addresses.
 Only real objections — if the argument is sound on a point, say so rather than padding the attack.
@@ -616,9 +556,7 @@ End with the single question that would most damage it.`,
   },
   {
     label: 'Steelman + Verdict',
-    value: `${BASE_RULES}
-
-For the position in the source: first steelman it in full prose — the strongest good-faith case, stronger than the source makes it.
+    value: `For the position in the source: first steelman it in full prose — the strongest good-faith case, stronger than the source makes it.
 Then the key weaknesses in narrative form.
 Then your verdict: support, oppose, or conditional — with the conditions stated.
 End with what would change your mind.`,
@@ -629,9 +567,7 @@ End with what would change your mind.`,
   },
   {
     label: 'Decide This',
-    value: `${BASE_RULES}
-
-Turn the source into a decision.
+    value: `Turn the source into a decision.
 
 1) The real decision being made, in one sentence — and whether it is the right question.
 2) The options on the table. Add doing nothing and the cheap partial version if the source has not considered them.
@@ -649,9 +585,7 @@ Commit to a recommendation. "It depends" only with the dependency named.`,
   },
   {
     label: 'Premortem',
-    value: `${BASE_RULES}
-
-It is 12 months out and the thing described in the source has failed badly. Write the postmortem of that failure.
+    value: `It is 12 months out and the thing described in the source has failed badly. Write the postmortem of that failure.
 
 1) The most plausible failure story, in a paragraph.
 2) The causes, up to 7, across technical, operational, organizational, and market. Rank them by how plausible they are given the source, and say what makes each plausible — do not attach invented probabilities.
@@ -669,9 +603,7 @@ Specific to this source. No generic project-risk boilerplate.`,
   // --- write ---
   {
     label: 'Draft a Reply',
-    value: `${BASE_RULES}
-
-${TRANSFORM_RULE}
+    value: `${TRANSFORM_RULE}
 
 The source is a message, email, comment, issue, or PR review I need to answer.
 
@@ -690,9 +622,7 @@ No corporate filler, no "I hope this finds you well". Match the register of the 
   },
   {
     label: 'Rewrite Clearly',
-    value: `${BASE_RULES}
-
-${TRANSFORM_RULE}
+    value: `${TRANSFORM_RULE}
 
 Rewrite the source to be clearer without changing what it says.
 Remove verbal filler and throat-clearing. Preserve uncertainty, qualifications, and the strength of every claim exactly — "may reduce latency" must not become "reduces latency".
@@ -705,9 +635,7 @@ Output the rewrite first. Then up to five bullets naming the biggest changes and
   },
   {
     label: 'Shorten This',
-    value: `${BASE_RULES}
-
-${TRANSFORM_RULE}
+    value: `${TRANSFORM_RULE}
 
 Cut the source to roughly half its length, ready to send as is.
 Keep: the main point, every commitment and number, the asks, and any uncertainty that changes how a reader should act.
@@ -721,9 +649,7 @@ Output the short version first. Then one line naming anything you cut that a rea
   },
   {
     label: 'Prompt Upgrade',
-    value: `${BASE_RULES}
-
-${TRANSFORM_RULE}
+    value: `${TRANSFORM_RULE}
 
 The source is a rough prompt I want to send to an AI model.
 
@@ -737,9 +663,7 @@ The source is a rough prompt I want to send to an AI model.
   },
   {
     label: 'Translate + Notes',
-    value: `${BASE_RULES}
-
-${TRANSFORM_RULE}
+    value: `${TRANSFORM_RULE}
 
 Translate the source between English and Chinese: Chinese source into English, English source into Chinese. If the text mixes both, translate it into English unless the majority of the prose is already English, in which case translate into Chinese — and state which direction you chose.
 Translate ordinary technical vocabulary using its established equivalent. Keep verbatim only what should not be translated: code, identifiers, API and product names, and terms with no settled equivalent — gloss those on first use.
