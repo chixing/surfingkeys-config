@@ -138,8 +138,6 @@ function createSiteAutomations(config: Config): SiteAutomation[] {
         utils.injectPrompt(
           {
             selector: 'textarea[placeholder], div[contenteditable="true"]',
-            useValue: true,
-            dispatchEvents: true,
             submitSelector: findSendButton,
           },
           config,

@@ -56,17 +56,44 @@ interface InjectPromptOptions {
   dispatchEvents?: boolean;
 }
 
+const PROMPT_KEY = '#sk_prompt=';
+
+function captureHashPrompt(): string | null {
+  if (typeof window === 'undefined' || !window.location?.hash?.startsWith(PROMPT_KEY)) {
+    return null;
+  }
+  const promptText = decodeURIComponent(window.location.hash.substring(PROMPT_KEY.length));
+  history.replaceState(null, '', ' ');
+  return promptText;
+}
+
+let capturedPrompt = captureHashPrompt();
+
+export const waitFor = async <T>(
+  get: () => T | null | undefined,
+  attempts = 60,
+  intervalMs = 150,
+): Promise<T | null> => {
+  for (let i = 0; i < attempts; i++) {
+    const v = get();
+    if (v) return v;
+    await delay(intervalMs);
+  }
+  return null;
+};
+
 export const injectPrompt = async (
   { selector, submitSelector, useValue = false, dispatchEvents = false }: InjectPromptOptions,
   config: Config,
 ): Promise<void> => {
-  const promptKey = '#sk_prompt=';
-  if (!window.location.hash.startsWith(promptKey)) return;
-
-  const promptText = decodeURIComponent(window.location.hash.substring(promptKey.length));
+  const promptText = capturedPrompt ?? captureHashPrompt();
+  capturedPrompt = null;
+  if (!promptText) return;
 
   await delay(config.delayMs);
-  const inputBox = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector);
+  const inputBox = await waitFor(() =>
+    document.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector),
+  );
   if (!inputBox) return;
 
   inputBox.focus();
@@ -74,6 +101,9 @@ export const injectPrompt = async (
   if (useValue) {
     inputBox.value = promptText;
   } else {
+    if (document.activeElement === inputBox) {
+      document.execCommand('selectAll');
+    }
     document.execCommand('insertText', false, promptText);
   }
 
@@ -82,22 +112,28 @@ export const injectPrompt = async (
     inputBox.dispatchEvent(new Event('change', { bubbles: true }));
   }
 
-  await delay(config.delayMs);
-
   if (submitSelector) {
-    const btn =
-      typeof submitSelector === 'function'
-        ? submitSelector()
-        : document.querySelector<HTMLElement>(submitSelector);
-    if (btn) {
-      btn.click();
+    const getSubmitButton = (): HTMLElement | null => {
+      const btn =
+        typeof submitSelector === 'function'
+          ? submitSelector()
+          : document.querySelector<HTMLElement>(submitSelector);
+      if (!btn) return null;
+      const isDisabled =
+        (btn instanceof HTMLButtonElement && btn.disabled) ||
+        btn.getAttribute('aria-disabled') === 'true' ||
+        btn.hasAttribute('disabled');
+      return isDisabled ? null : btn;
+    };
+
+    const submitBtn = await waitFor(getSubmitButton);
+    if (submitBtn) {
+      submitBtn.click();
     } else {
       pressKey(inputBox);
     }
   } else {
+    await delay(config.delayMs);
     pressKey(inputBox);
   }
-
-  // Clean up URL
-  history.replaceState(null, '', ' ');
 };
