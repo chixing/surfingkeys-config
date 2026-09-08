@@ -258,7 +258,7 @@ export class AiSelector {
 
       if (e.key === 'Tab') {
         const templateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
-        if (templateIndex !== null && !e.shiftKey) {
+        if (templateIndex !== null && !e.shiftKey && !this.promptPreviewInput?.disabled) {
           e.preventDefault();
           e.stopPropagation();
           this.promptPreviewInput?.focus();
@@ -590,36 +590,6 @@ export class AiSelector {
     return null;
   }
 
-  private findLastVisibleTemplateIndex(): number | null {
-    for (let i = this.templateRenderOrder.length - 1; i >= 0; i--) {
-      const index = this.templateRenderOrder[i];
-      if (this.isTemplateRowVisible(index)) return index;
-    }
-    return null;
-  }
-
-  private findAdjacentVisibleTemplateIndex(from: number, delta: number): number | null {
-    let i = this.templateRenderOrder.indexOf(from);
-    if (i < 0) return null;
-
-    i += delta;
-    while (i >= 0 && i < this.templateRenderOrder.length) {
-      const index = this.templateRenderOrder[i];
-      if (this.isTemplateRowVisible(index)) return index;
-      i += delta;
-    }
-    return null;
-  }
-
-  private focusTemplateIndex(index: number): void {
-    const checkbox = this.templateCheckboxes[index];
-    if (checkbox) {
-      checkbox.focus();
-      checkbox.scrollIntoView({ block: 'nearest' });
-    }
-    this.setActivePrompt(index, true, false);
-  }
-
   private applyTemplateFilter(raw: string): void {
     const q = raw.trim().toLowerCase();
     const categoryHasVisible = new Map<PromptCategory, boolean>();
@@ -646,24 +616,42 @@ export class AiSelector {
 
   private tryHandlePromptTemplateKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
     const index = this.getPromptTemplateIndexFromTarget(target);
-    if (index === null) return false;
+    const heading = this.templateCategoryHeadings.get('fabric');
+    if (index === null && target !== heading) return false;
 
-    let nextIndex: number | null = null;
+    if (target === heading && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+      e.preventDefault();
+      this.templateListTouched = true;
+      this.fabricExpanded = e.key === 'ArrowRight';
+      this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
+      return true;
+    }
+
+    const items = Array.from(
+      this.templateList?.querySelectorAll<HTMLElement>(
+        'input[type="checkbox"], [data-sk-category-heading="fabric"]',
+      ) ?? [],
+    ).filter((item) => {
+      const rowIndex = this.getPromptTemplateIndexFromTarget(item);
+      return rowIndex === null ? item.style.display !== 'none' : this.isTemplateRowVisible(rowIndex);
+    });
+    const current = index === null ? target : this.templateCheckboxes[index];
+    let nextIndex = items.indexOf(current);
     if (e.key === 'ArrowDown' || e.key === 'j') {
-      nextIndex = this.findAdjacentVisibleTemplateIndex(index, 1);
+      nextIndex++;
     } else if (e.key === 'ArrowUp' || e.key === 'k') {
-      nextIndex = this.findAdjacentVisibleTemplateIndex(index, -1);
+      nextIndex--;
     } else if (e.key === 'Home') {
-      nextIndex = this.findFirstVisibleTemplateIndex();
+      nextIndex = 0;
     } else if (e.key === 'End') {
-      nextIndex = this.findLastVisibleTemplateIndex();
+      nextIndex = items.length - 1;
     } else return false;
 
     e.preventDefault();
 
-    if (nextIndex === null) return true;
-
-    this.focusTemplateIndex(nextIndex);
+    const next = items[nextIndex];
+    next?.focus();
+    next?.scrollIntoView({ block: 'nearest' });
     return true;
   }
 
@@ -990,6 +978,8 @@ export class AiSelector {
     input.placeholder = 'Template preview / editor...';
     input.addEventListener('input', () => {
       if (this.activePromptIndex === null) return;
+      this.activePromptTouchedByUser = true;
+      this.templateListTouched = true;
       this.promptDrafts[this.activePromptIndex] = input.value;
     });
     this.promptPreviewInput = input;
@@ -1033,6 +1023,7 @@ export class AiSelector {
         heading.tabIndex = 0;
         heading.style.cursor = 'pointer';
         heading.onclick = () => {
+          this.templateListTouched = true;
           this.fabricExpanded = !this.fabricExpanded;
           this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
         };
