@@ -4,33 +4,106 @@
 
 import type { Config, AIServiceName } from '../config';
 import { AI_SERVICES } from '../config';
-import { PROMPT_TEMPLATES } from './templates';
+import { fetchFabricPattern, readFabricIndex, refreshFabricIndex } from './fabric';
+import {
+  formatCombinedQuery,
+  PROMPT_CATEGORY_LABELS,
+  PROMPT_CATEGORY_ORDER,
+  createPromptTemplates,
+  templateSearchHaystack,
+  type PageContext,
+  type PromptCategory,
+  type PromptTemplate,
+} from './templates';
 
 interface AIService {
   name: AIServiceName;
-  url: string;
+  buildUrl: (prompt: string) => string;
   checked: boolean;
+}
+
+const TAB_WARNING_THRESHOLD = 12;
+
+/** Page the dialog was opened on, or null on pages an AI cannot fetch anyway. */
+function capturePageContext(): PageContext | null {
+  const url = window.location.href;
+  if (!/^https?:/i.test(url)) return null;
+  return { url, title: document.title.trim() };
+}
+
+/** Host shown on the page-context toggle, falling back to the raw URL. */
+function pageContextHost(page: PageContext): string {
+  try {
+    return new URL(page.url).host;
+  } catch {
+    return page.url;
+  }
 }
 
 export class AiSelector {
   private config: Config;
   private lastQuery: string | null = null;
   private overlay: HTMLElement | null = null;
+  private styleEl: HTMLStyleElement | null = null;
   private queryInput: HTMLTextAreaElement | null = null;
-  private promptInput: HTMLTextAreaElement | null = null;
+  private promptPreviewInput: HTMLTextAreaElement | null = null;
+  private promptPreviewTitle: HTMLElement | null = null;
+  private clipboardText: string | null = null;
+  private clipboardIndicator: HTMLElement | null = null;
+  private pageContext: PageContext | null = null;
+  private pageContextToggle: HTMLInputElement | null = null;
+  private templateRows: HTMLElement[] = [];
+  private templates: PromptTemplate[] = [];
+  private templateList: HTMLElement | null = null;
+  private templateListTouched = false;
+  private templateRenderOrder: number[] = [];
+  private templateCheckboxes: HTMLInputElement[] = [];
+  private serviceCheckboxes: HTMLInputElement[] = [];
+  private templateFilterInput: HTMLInputElement | null = null;
+  private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
+  private promptDrafts: string[] = [];
+  private fabricLoads = new Map<number, Promise<void>>();
+  private fabricErrors = new Map<number, string>();
+  private fabricExpanded = false;
+  private submitting = false;
+  private selectedPromptIndexes = new Set<number>();
+  private activePromptIndex: number | null = null;
+  private activePromptTouchedByUser: boolean = false;
   private keyHandler: ((e: KeyboardEvent) => void) | null = null;
   private focusHandler: ((e: FocusEvent) => void) | null = null;
   private blurHandler: ((e: FocusEvent) => void) | null = null;
 
   private services: AIService[] = [
-    { name: AI_SERVICES.CHATGPT, url: 'https://chatgpt.com/?q=', checked: true },
-    { name: AI_SERVICES.DOUBAO, url: 'https://www.doubao.com/chat#sk_prompt=', checked: true },
-    { name: AI_SERVICES.ALICE, url: 'https://alice.yandex.ru/?q=', checked: true },
-    { name: AI_SERVICES.CLAUDE, url: 'https://claude.ai/new#sk_prompt=', checked: true },
-    { name: AI_SERVICES.GEMINI, url: 'https://gemini.google.com/app#sk_prompt=', checked: true },
-    { name: AI_SERVICES.PERPLEXITY, url: 'https://perplexity.ai?q=', checked: true },
-    { name: AI_SERVICES.PERPLEXITY_RESEARCH, url: 'https://perplexity.ai#sk_prompt=&sk_mode=research&sk_social=on', checked: true },
-    { name: AI_SERVICES.GROK, url: 'https://grok.com?q=', checked: true },
+    {
+      name: AI_SERVICES.CHATGPT,
+      buildUrl: (p) => `https://chatgpt.com/?prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.DOUBAO,
+      buildUrl: (p) => `https://www.doubao.com/chat#sk_prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.CLAUDE,
+      buildUrl: (p) => `https://claude.ai/new#sk_prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.GEMINI,
+      buildUrl: (p) => `https://gemini.google.com/app#sk_prompt=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.PERPLEXITY,
+      buildUrl: (p) => `https://perplexity.ai/?q=${encodeURIComponent(p)}`,
+      checked: true,
+    },
+    {
+      name: AI_SERVICES.GROK,
+      buildUrl: (p) => `https://grok.com/?q=${encodeURIComponent(p)}`,
+      checked: true,
+    },
   ];
 
   constructor(config: Config) {
@@ -42,32 +115,40 @@ export class AiSelector {
   // ===========================================================================
 
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
+    const cached = readFabricIndex();
+    this.templates = createPromptTemplates(cached);
+    this.templateListTouched = false;
+    this.initializePromptState();
+    this.clipboardText = null;
+    // Only a selection made on this page implies the page is the context. A restored
+    // last query or clipboard text can come from anywhere, so it gets no PAGE block.
+    this.pageContext = initialQuery ? capturePageContext() : null;
+
     this.overlay = this.createOverlay();
     const dialog = this.createDialog();
-    const queryText = this.lastQuery !== null ? this.lastQuery : initialQuery;
+    const queryText = initialQuery || this.lastQuery || '';
 
-    const title = this.createTitle();
+    const footerHints = this.createFooterHints();
     const { label: queryLabel, input: queryInput } = this.createQueryInput(queryText);
-    const { label: promptLabel, input: promptInput, select: promptSelect } = this.createPromptInput();
-    const { label: servicesLabel, container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
-    const selectAllButtons = this.createSelectAllButtons();
+    const { controls: promptControls, picker: promptPicker } = this.createPromptPicker();
+    const { container: servicesContainer } = this.createServicesCheckboxes(selectedServices);
+    const serviceSelectButtons = this.createServiceSelectButtons();
     const buttonsContainer = this.createButtons();
 
     this.queryInput = queryInput;
-    this.promptInput = promptInput;
 
     [
-      title,
+      footerHints,
       queryLabel,
       queryInput,
-      promptLabel,
-      promptSelect,
-      promptInput,
-      servicesLabel,
-      selectAllButtons,
+      promptPicker,
+      promptControls,
       servicesContainer,
+      serviceSelectButtons,
       buttonsContainer,
-    ].forEach(el => dialog.appendChild(el));
+    ].forEach((el) => {
+      dialog.appendChild(el);
+    });
     this.overlay.appendChild(dialog);
 
     this.markAsSurfingKeys(this.overlay);
@@ -78,6 +159,26 @@ export class AiSelector {
     this.setupFocusHandler();
     this.setupInitialFocus(queryInput);
     this.setupOverlayClickHandler();
+    const overlay = this.overlay;
+    void refreshFabricIndex().then((patterns) => {
+      if (
+        !patterns ||
+        this.overlay !== overlay ||
+        !this.templateList ||
+        this.templateListTouched ||
+        this.submitting ||
+        JSON.stringify(patterns) === JSON.stringify(cached)
+      )
+        return;
+      // No template interaction has begun, so only empty Fabric drafts are replaced.
+      // Curated indexes, preview edits, filter input and focus remain intact.
+      this.templates = createPromptTemplates(patterns);
+      this.promptDrafts.length = this.templates.length;
+      this.templates.forEach((template, index) => {
+        if (template.fabricPattern) this.promptDrafts[index] = '';
+      });
+      this.renderTemplateRows(this.templateList);
+    });
   }
 
   close(): void {
@@ -98,17 +199,57 @@ export class AiSelector {
       this.overlay.parentNode.removeChild(this.overlay);
     }
     this.overlay = null;
+    this.styleEl = null;
     this.queryInput = null;
-    this.promptInput = null;
+    this.pageContext = null;
+    this.pageContextToggle = null;
+    this.promptPreviewInput = null;
+    this.promptPreviewTitle = null;
+    this.clipboardText = null;
+    this.clipboardIndicator = null;
+    this.templateRows = [];
+    this.templateList = null;
+    this.templateCheckboxes = [];
+    this.serviceCheckboxes = [];
+    this.templateFilterInput = null;
+    this.templateCategoryHeadings.clear();
+    this.promptDrafts = [];
+    this.selectedPromptIndexes.clear();
+    this.activePromptIndex = null;
   }
 
   updateQuery(text: string): void {
-    const input = document.getElementById('sk-ai-query-input') as HTMLTextAreaElement | null;
-    if (input && !this.lastQuery) {
+    this.clipboardText = text;
+    this.updateClipboardIndicator();
+
+    const input =
+      this.queryInput ?? (document.getElementById('sk-ai-query-input') as HTMLTextAreaElement | null);
+    if (!input) return;
+
+    if (!this.lastQuery) {
       input.value = text;
       input.focus();
       input.select();
+      this.updateClipboardIndicator();
     }
+  }
+
+  searchImmediately(query: string, selectedServices: AIServiceName[], promptTemplate: string = ''): boolean {
+    const trimmedQuery = query.trim();
+    if (!trimmedQuery) return false;
+
+    const selected = this.services.filter((service) => selectedServices.includes(service.name));
+    if (selected.length === 0) return false;
+
+    this.lastQuery = trimmedQuery;
+    const prompt = formatCombinedQuery(trimmedQuery, promptTemplate);
+    selected.forEach((service) => {
+      api.RUNTIME('openLink', {
+        tab: { tabbed: true, active: false },
+        url: service.buildUrl(prompt),
+      });
+    });
+    return true;
   }
 
   // ===========================================================================
@@ -117,7 +258,7 @@ export class AiSelector {
 
   private markAsSurfingKeys(element: HTMLElement): void {
     (element as any).fromSurfingKeys = true;
-    element.querySelectorAll('*').forEach(child => {
+    element.querySelectorAll('*').forEach((child) => {
       (child as any).fromSurfingKeys = true;
     });
   }
@@ -130,9 +271,31 @@ export class AiSelector {
       event.sk_suppressed = true;
       event.sk_stopPropagation = true;
 
-      if (e.key === 'Tab') return;
-
       const target = e.target as HTMLElement | null;
+      if (target?.dataset.skCategoryHeading === 'fabric' && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        e.stopPropagation();
+        target.click();
+        return;
+      }
+
+      if (e.key === 'Tab') {
+        const templateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
+        if (templateIndex !== null && !e.shiftKey && !this.promptPreviewInput?.disabled) {
+          e.preventDefault();
+          e.stopPropagation();
+          this.promptPreviewInput?.focus();
+          return;
+        }
+        if (e.shiftKey && target === this.promptPreviewInput) {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = this.activePromptIndex ?? 0;
+          this.templateCheckboxes[idx]?.focus();
+          return;
+        }
+        return;
+      }
       if (target?.tagName === 'SELECT' && (e.key === 'j' || e.key === 'k')) {
         e.preventDefault();
         e.stopPropagation();
@@ -148,16 +311,33 @@ export class AiSelector {
 
       e.stopPropagation();
 
+      if (target === this.templateFilterInput && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+        e.preventDefault();
+        const first = this.findFirstVisibleTemplateIndex();
+        if (first !== null) {
+          this.templateCheckboxes[first]?.focus();
+          this.templateCheckboxes[first]?.scrollIntoView({ block: 'nearest' });
+          this.setActivePrompt(first, true, false);
+        }
+        return;
+      }
+
+      const isTextArea = target?.tagName === 'TEXTAREA';
+      if (!isTextArea && target && this.overlay?.contains(target)) {
+        if (this.tryHandlePromptTemplateKeyNav(e, target)) return;
+        if (this.tryHandleServiceKeyNav(e, target)) return;
+      }
+
       if (e.key === 'Escape') {
         e.preventDefault();
         if (this.queryInput) this.lastQuery = this.queryInput.value;
         this.close();
       } else if (e.key === 'Enter') {
         const isTextArea = target?.tagName === 'TEXTAREA';
-        if (!isTextArea || !e.shiftKey) {
-          e.preventDefault();
-          this.handleSubmit();
-        }
+        if (isTextArea && e.shiftKey) return;
+
+        e.preventDefault();
+        this.handleSubmit();
       }
     };
 
@@ -234,270 +414,775 @@ export class AiSelector {
     });
   }
 
-  private handleSubmit(): void {
-    if (!this.queryInput) return;
+  private async handleSubmit(): Promise<void> {
+    if (!this.queryInput || this.submitting) return;
     const query = this.queryInput.value.trim();
     if (!query) {
       this.queryInput.focus();
-      this.queryInput.style.borderColor = '#ff6b6b';
+      this.queryInput.classList.add('sk-ai-invalid');
       setTimeout(() => {
-        if (this.queryInput) this.queryInput.style.borderColor = this.config.theme.colors.border;
+        this.queryInput?.classList.remove('sk-ai-invalid');
       }, 1000);
       return;
     }
 
-    const selectedUrls = this.services
-      .filter((_, index) => (document.getElementById(`sk-ai-${index}`) as HTMLInputElement | null)?.checked)
-      .map(service => service.url);
+    const selectedServices = this.services.filter((_, index) => this.serviceCheckboxes[index]?.checked);
 
-    if (selectedUrls.length === 0) {
+    if (selectedServices.length === 0) {
       alert('Please select at least one AI service');
       return;
     }
 
+    this.persistPreviewInput();
+    const drafts = this.promptDrafts;
+    const indexes = this.getSelectedPromptIndexesInOrder();
+    if (!indexes.length && this.activePromptTouchedByUser && this.activePromptIndex !== null) {
+      indexes.push(this.activePromptIndex);
+    }
+    const page = this.getActivePageContext();
+    this.submitting = true;
+    let promptsToSend: string[];
+    try {
+      await Promise.all(indexes.map((index) => this.resolveFabricDraft(index)));
+      if (this.promptDrafts !== drafts) return;
+      promptsToSend = indexes.length ? [...new Set(indexes.map((index) => drafts[index].trim()))] : [''];
+    } catch (error) {
+      if (this.promptDrafts === drafts) alert(error instanceof Error ? error.message : String(error));
+      return;
+    } finally {
+      if (this.promptDrafts === drafts) this.submitting = false;
+    }
+
+    const tabCount = selectedServices.length * promptsToSend.length;
+    if (tabCount > TAB_WARNING_THRESHOLD) {
+      const message = `This will open ${tabCount} tabs (${selectedServices.length} services x ${promptsToSend.length} prompts). Continue?`;
+      if (!window.confirm(message)) return;
+    }
+
     this.lastQuery = this.queryInput.value;
 
-    const promptTemplate = this.promptInput ? this.promptInput.value.trim() : '';
-    const combinedQuery = promptTemplate ? `${query} \n${promptTemplate}` : query;
-
-    selectedUrls.forEach(url => api.tabOpenLink(url + encodeURIComponent(combinedQuery)));
+    selectedServices.forEach((service) => {
+      promptsToSend.forEach((promptTemplate) => {
+        api.tabOpenLink(service.buildUrl(formatCombinedQuery(query, promptTemplate, page)));
+      });
+    });
     this.close();
+  }
+
+  private initializePromptState(): void {
+    this.promptDrafts = this.templates.map((template) => template.value);
+    this.fabricLoads = new Map();
+    this.fabricErrors = new Map();
+    this.fabricExpanded = false;
+    this.submitting = false;
+    this.selectedPromptIndexes.clear();
+    this.activePromptTouchedByUser = false;
+
+    if (this.templates.length === 0) {
+      this.activePromptIndex = null;
+      return;
+    }
+
+    const selectedIndexes = this.getSelectedPromptIndexesInOrder();
+    this.activePromptIndex = selectedIndexes.length > 0 ? selectedIndexes[0] : 0;
+  }
+
+  private persistPreviewInput(): void {
+    if (this.activePromptIndex === null || !this.promptPreviewInput || this.promptPreviewInput.disabled)
+      return;
+    this.promptDrafts[this.activePromptIndex] = this.promptPreviewInput.value;
+  }
+
+  private setActivePrompt(
+    index: number,
+    persistCurrent: boolean = true,
+    focusPreview: boolean = true,
+    markTouched: boolean = true,
+  ): void {
+    if (index < 0 || index >= this.promptDrafts.length) return;
+
+    if (persistCurrent) {
+      this.persistPreviewInput();
+    }
+    this.activePromptIndex = index;
+    if (markTouched) {
+      this.activePromptTouchedByUser = true;
+      this.templateListTouched = true;
+    }
+
+    if (this.promptPreviewInput) {
+      this.promptPreviewInput.disabled = false;
+      this.promptPreviewInput.value = this.promptDrafts[index] || '';
+      if (this.templates[index].fabricPattern && !this.promptDrafts[index]) {
+        const preview = this.promptPreviewInput;
+        const drafts = this.promptDrafts;
+        preview.disabled = true;
+        preview.value = this.fabricErrors.get(index) ?? 'Loading…';
+        void this.resolveFabricDraft(index).then(
+          () => {
+            if (this.promptDrafts !== drafts || this.activePromptIndex !== index) return;
+            preview.value = drafts[index];
+            preview.disabled = false;
+          },
+          (error: Error) => {
+            if (this.promptDrafts === drafts && this.activePromptIndex === index)
+              preview.value = error.message;
+          },
+        );
+      }
+      if (focusPreview) {
+        this.promptPreviewInput.focus();
+        this.promptPreviewInput.selectionStart = this.promptPreviewInput.value.length;
+        this.promptPreviewInput.selectionEnd = this.promptPreviewInput.value.length;
+      }
+    }
+
+    this.updatePromptPreviewTitle();
+    this.updatePromptRowStyles();
+  }
+
+  private updatePromptPreviewTitle(): void {
+    if (!this.promptPreviewTitle) return;
+    if (this.activePromptIndex === null) {
+      this.promptPreviewTitle.textContent = 'Preview / Edit';
+      return;
+    }
+
+    const activeTemplate = this.templates[this.activePromptIndex];
+    this.promptPreviewTitle.textContent = `Preview / Edit: ${activeTemplate?.label || 'Custom'}`;
+  }
+
+  private updatePromptRowStyles(): void {
+    this.templates.forEach((_, index) => {
+      const row = this.templateRows[index];
+      if (!row) return;
+
+      row.classList.toggle('is-active', this.activePromptIndex === index);
+      row.classList.toggle('is-selected', this.selectedPromptIndexes.has(index));
+    });
+  }
+
+  private getSelectedPromptIndexesInOrder(): number[] {
+    const selectedIndexes: number[] = [];
+    this.templates.forEach((_, index) => {
+      if (this.selectedPromptIndexes.has(index)) selectedIndexes.push(index);
+    });
+    return selectedIndexes;
+  }
+
+  private async resolveFabricDraft(index: number): Promise<void> {
+    const name = this.templates[index].fabricPattern;
+    if (!name || this.promptDrafts[index]) return;
+    const error = this.fabricErrors.get(index);
+    if (error) throw new Error(error);
+    let pending = this.fabricLoads.get(index);
+    if (!pending) {
+      const drafts = this.promptDrafts;
+      const errors = this.fabricErrors;
+      const loads = this.fabricLoads;
+      pending = fetchFabricPattern(name)
+        .then(
+          (text) => {
+            drafts[index] = text;
+          },
+          (error: Error) => {
+            errors.set(index, error.message);
+            throw error;
+          },
+        )
+        .finally(() => loads.delete(index));
+      this.fabricLoads.set(index, pending);
+    }
+    await pending;
+  }
+
+  // ===========================================================================
+  // Keyboard Navigation Helpers
+  // ===========================================================================
+
+  private isTemplateRowVisible(index: number): boolean {
+    const row = this.templateRows[index];
+    return !!row && row.style.display !== 'none';
+  }
+
+  private findFirstVisibleTemplateIndex(): number | null {
+    for (const index of this.templateRenderOrder) {
+      if (this.isTemplateRowVisible(index)) return index;
+    }
+    return null;
+  }
+
+  private applyTemplateFilter(raw: string): void {
+    const q = raw.trim().toLowerCase();
+    const categoryHasVisible = new Map<PromptCategory, boolean>();
+
+    this.templates.forEach((template, index) => {
+      const row = this.templateRows[index];
+      if (!row) return;
+
+      const match = !q || templateSearchHaystack(template).includes(q);
+      const collapsed = template.category === 'fabric' && !this.fabricExpanded && !q;
+      row.style.display = match && !collapsed ? 'flex' : 'none';
+      if (match) categoryHasVisible.set(template.category, true);
+    });
+
+    this.templateCategoryHeadings.forEach((heading, category) => {
+      heading.style.display = categoryHasVisible.get(category) ? '' : 'none';
+      if (category === 'fabric') {
+        const expanded = this.fabricExpanded || !!q;
+        heading.setAttribute('aria-expanded', String(expanded));
+        heading.textContent = `${expanded ? '▾' : '▸'} Fabric`;
+      }
+    });
+  }
+
+  private tryHandlePromptTemplateKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
+    const index = this.getPromptTemplateIndexFromTarget(target);
+    const heading = this.templateCategoryHeadings.get('fabric');
+    if (index === null && target !== heading) return false;
+
+    if (target === heading && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+      e.preventDefault();
+      this.templateListTouched = true;
+      this.fabricExpanded = e.key === 'ArrowRight';
+      this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
+      return true;
+    }
+
+    const items = Array.from(
+      this.templateList?.querySelectorAll<HTMLElement>(
+        'input[type="checkbox"], [data-sk-category-heading="fabric"]',
+      ) ?? [],
+    ).filter((item) => {
+      const rowIndex = this.getPromptTemplateIndexFromTarget(item);
+      return rowIndex === null ? item.style.display !== 'none' : this.isTemplateRowVisible(rowIndex);
+    });
+    const current = index === null ? target : this.templateCheckboxes[index];
+    let nextIndex = items.indexOf(current);
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      nextIndex++;
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      nextIndex--;
+    } else if (e.key === 'Home') {
+      nextIndex = 0;
+    } else if (e.key === 'End') {
+      nextIndex = items.length - 1;
+    } else return false;
+
+    e.preventDefault();
+
+    const next = items[nextIndex];
+    next?.focus();
+    next?.scrollIntoView({ block: 'nearest' });
+    return true;
+  }
+
+  private tryHandleServiceKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
+    const index = this.getServiceIndexFromTarget(target);
+    if (index === null) return false;
+
+    let nextIndex: number | null = null;
+    if (e.key === 'ArrowDown' || e.key === 'j') nextIndex = index + 1;
+    else if (e.key === 'ArrowUp' || e.key === 'k') nextIndex = index - 1;
+    else if (e.key === 'Home') nextIndex = 0;
+    else if (e.key === 'End') nextIndex = this.services.length - 1;
+    else return false;
+
+    e.preventDefault();
+
+    if (nextIndex < 0 || nextIndex >= this.services.length) return true;
+
+    const next = this.serviceCheckboxes[nextIndex];
+    if (next) {
+      next.focus();
+      next.scrollIntoView({ block: 'nearest' });
+    }
+    return true;
+  }
+
+  private getPromptTemplateIndexFromTarget(target: HTMLElement): number | null {
+    if (target.id) {
+      const match = /^sk-template-(\d+)$/.exec(target.id);
+      if (match) return Number(match[1]);
+    }
+
+    const row = target.closest('[data-sk-template-index]') as HTMLElement | null;
+    const rowIndex = row?.dataset?.skTemplateIndex;
+    if (rowIndex) {
+      const n = Number(rowIndex);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  private getServiceIndexFromTarget(target: HTMLElement): number | null {
+    if (target.id) {
+      const match = /^sk-ai-(\d+)$/.exec(target.id);
+      if (match) return Number(match[1]);
+    }
+
+    const row = target.closest('[data-sk-service-index]') as HTMLElement | null;
+    const rowIndex = row?.dataset?.skServiceIndex;
+    if (rowIndex) {
+      const n = Number(rowIndex);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  private updateClipboardIndicator(): void {
+    if (!this.clipboardIndicator || !this.queryInput) return;
+
+    const clipboard = (this.clipboardText ?? '').replace(/\r\n/g, '\n').trim();
+    const query = (this.queryInput.value ?? '').replace(/\r\n/g, '\n').trim();
+
+    const shouldShow = clipboard.length > 0 && clipboard !== query;
+    this.clipboardIndicator.style.display = shouldShow ? 'inline-flex' : 'none';
   }
 
   // ===========================================================================
   // DOM Creation
   // ===========================================================================
 
+  private createStyleElement(): HTMLStyleElement {
+    const style = document.createElement('style');
+    // All rules are scoped under #sk-ai-selector-overlay so page CSS cannot bleed
+    // in; theme values flow through --sk-* custom properties set on the overlay.
+    style.textContent = `
+      #sk-ai-selector-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.7); z-index: 2147483647;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--sk-font);
+      }
+      #sk-ai-selector-overlay .sk-ai-dialog {
+        background: var(--sk-bg); border: 2px solid var(--sk-border);
+        border-radius: 8px; padding: 24px; width: min(1120px, 96vw);
+        max-height: 94vh; overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); color: var(--sk-fg);
+      }
+      #sk-ai-selector-overlay .sk-ai-hints {
+        margin: 0 0 10px 0; color: var(--sk-info-fg); font-size: 12px; line-height: 1.4;
+      }
+      #sk-ai-selector-overlay .sk-ai-query-label {
+        display: block; margin-bottom: 8px; color: var(--sk-main-fg); font-size: 14px;
+      }
+      #sk-ai-selector-overlay .sk-ai-clip-indicator {
+        display: none; align-items: center; justify-content: center;
+        margin-left: 10px; padding: 2px 10px; border-radius: 999px;
+        border: 1px solid var(--sk-border); background: var(--sk-bg-dark);
+        color: var(--sk-info-fg); font-family: var(--sk-font); font-size: 12px;
+        font-weight: 600; letter-spacing: 0.02em; user-select: none; vertical-align: middle;
+      }
+      #sk-ai-selector-overlay .sk-ai-page-context {
+        display: inline-flex; align-items: center; gap: 6px;
+        margin-left: 10px; padding: 2px 10px; border-radius: 999px;
+        border: 1px solid var(--sk-border); background: var(--sk-bg-dark);
+        color: var(--sk-fg); font-family: var(--sk-font); font-size: 12px;
+        cursor: pointer; user-select: none; vertical-align: middle;
+        max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      #sk-ai-selector-overlay .sk-ai-query {
+        width: 100%; min-height: 58px; padding: 8px 10px;
+        background: var(--sk-bg-dark); border: 1px solid var(--sk-border);
+        border-radius: 4px; color: var(--sk-fg); font-family: var(--sk-font);
+        font-size: var(--sk-font-size); margin-bottom: 10px; resize: vertical;
+        box-sizing: border-box;
+      }
+      #sk-ai-selector-overlay .sk-ai-query.sk-ai-invalid { border-color: #ff6b6b; }
+      #sk-ai-selector-overlay .sk-ai-picker {
+        display: grid; grid-template-columns: minmax(220px, 28%) 1fr;
+        gap: 12px; margin-bottom: 8px;
+      }
+      #sk-ai-selector-overlay .sk-ai-pane { display: flex; flex-direction: column; min-height: 500px; gap: 8px; }
+      #sk-ai-selector-overlay .sk-ai-filter {
+        width: 100%; padding: 8px 10px; background: var(--sk-bg);
+        border: 1px solid var(--sk-border); border-radius: 4px; color: var(--sk-fg);
+        font-family: var(--sk-font); font-size: 13px; box-sizing: border-box;
+      }
+      #sk-ai-selector-overlay .sk-ai-template-list {
+        max-height: 500px; overflow-y: auto; background: var(--sk-bg-dark);
+        border: 1px solid var(--sk-border); border-radius: 4px; padding: 8px;
+        flex: 1; box-sizing: border-box;
+      }
+      #sk-ai-selector-overlay .sk-ai-cat-heading {
+        color: var(--sk-info-fg); font-size: 11px; font-weight: 700;
+        letter-spacing: 0.06em; text-transform: uppercase; margin: 10px 0 6px 0;
+      }
+      #sk-ai-selector-overlay .sk-ai-row {
+        display: flex; align-items: center; gap: 8px; padding: 5px 8px;
+        border-radius: 4px; border: 1px solid var(--sk-border); background: transparent;
+        margin-bottom: 4px; cursor: pointer; transition: all 0.15s ease;
+      }
+      #sk-ai-selector-overlay .sk-ai-row.is-active { border-color: var(--sk-main-fg); background: var(--sk-border); }
+      #sk-ai-selector-overlay .sk-ai-check {
+        width: 14px; height: 14px; margin: 0; cursor: pointer;
+        flex-shrink: 0; accent-color: var(--sk-accent-fg);
+      }
+      #sk-ai-selector-overlay .sk-ai-row-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+      #sk-ai-selector-overlay .sk-ai-row-label {
+        font-size: 12px; font-weight: 600; line-height: 1.25; color: var(--sk-fg);
+        user-select: none; overflow: hidden; text-overflow: ellipsis;
+        white-space: nowrap; display: block;
+      }
+      #sk-ai-selector-overlay .sk-ai-row.is-selected .sk-ai-row-label { color: var(--sk-accent-fg); }
+      #sk-ai-selector-overlay .sk-ai-preview-title { color: var(--sk-main-fg); font-size: 13px; font-weight: 600; }
+      #sk-ai-selector-overlay .sk-ai-preview {
+        width: 100%; min-height: 440px; padding: 12px; background: var(--sk-bg-dark);
+        border: 1px solid var(--sk-border); border-radius: 4px; color: var(--sk-fg);
+        font-family: var(--sk-font); font-size: var(--sk-font-size); resize: vertical;
+        box-sizing: border-box; flex: 1;
+      }
+      #sk-ai-selector-overlay .sk-ai-btn-row { display: flex; gap: 8px; justify-content: flex-start; }
+      #sk-ai-selector-overlay .sk-ai-btn-row--prompts { margin-bottom: 20px; }
+      #sk-ai-selector-overlay .sk-ai-btn-row--services { margin-bottom: 12px; }
+      #sk-ai-selector-overlay .sk-ai-services {
+        display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 6px; margin-bottom: 8px; padding: 8px; background: var(--sk-bg-dark);
+        border-radius: 4px; border: 1px solid var(--sk-border);
+      }
+      #sk-ai-selector-overlay .sk-ai-service {
+        display: flex; align-items: center; gap: 6px; cursor: pointer; min-width: 0;
+        padding: 4px 6px; border-radius: 4px; background: transparent; transition: background 0.2s;
+      }
+      #sk-ai-selector-overlay .sk-ai-service:hover { background: var(--sk-border); }
+      #sk-ai-selector-overlay .sk-ai-service-label {
+        color: var(--sk-fg); font-size: 13px; cursor: pointer; min-width: 0;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      #sk-ai-selector-overlay .sk-ai-actions { display: flex; gap: 12px; justify-content: flex-end; }
+      #sk-ai-selector-overlay .sk-ai-btn {
+        background: var(--sk-bg-dark); border: 1px solid var(--sk-border);
+        border-radius: 4px; font-family: var(--sk-font); cursor: pointer; transition: all 0.2s;
+      }
+      #sk-ai-selector-overlay .sk-ai-btn:hover { background: var(--sk-border); }
+      #sk-ai-selector-overlay .sk-ai-btn--sm { padding: 4px 12px; font-size: 12px; }
+      #sk-ai-selector-overlay .sk-ai-btn--lg { padding: 10px 24px; font-size: 14px; }
+      #sk-ai-selector-overlay .sk-ai-btn--accent { color: var(--sk-accent-fg); }
+      #sk-ai-selector-overlay .sk-ai-btn--info { color: var(--sk-info-fg); }
+      #sk-ai-selector-overlay .sk-ai-btn--plain { color: var(--sk-fg); }
+      #sk-ai-selector-overlay .sk-ai-btn--primary {
+        background: var(--sk-accent-fg); border-color: var(--sk-accent-fg);
+        color: var(--sk-bg-dark); font-weight: 600;
+      }
+      #sk-ai-selector-overlay .sk-ai-btn--primary:hover { background: var(--sk-main-fg); border-color: var(--sk-main-fg); }
+    `;
+    return style;
+  }
+
   private createOverlay(): HTMLElement {
     const overlay = document.createElement('div');
     overlay.id = 'sk-ai-selector-overlay';
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 2147483647;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: ${this.config.theme.font};
-    `;
+
+    const colors = this.config.theme.colors;
+    overlay.style.setProperty('--sk-font', this.config.theme.font);
+    overlay.style.setProperty('--sk-font-size', this.config.theme.fontSize);
+    overlay.style.setProperty('--sk-bg', colors.bg);
+    overlay.style.setProperty('--sk-bg-dark', colors.bgDark);
+    overlay.style.setProperty('--sk-border', colors.border);
+    overlay.style.setProperty('--sk-fg', colors.fg);
+    overlay.style.setProperty('--sk-main-fg', colors.mainFg);
+    overlay.style.setProperty('--sk-accent-fg', colors.accentFg);
+    overlay.style.setProperty('--sk-info-fg', colors.infoFg);
+
+    this.styleEl = this.createStyleElement();
+    overlay.appendChild(this.styleEl);
+
     return overlay;
   }
 
   private createDialog(): HTMLElement {
     const dialog = document.createElement('div');
-    dialog.style.cssText = `
-      background: ${this.config.theme.colors.bg};
-      border: 2px solid ${this.config.theme.colors.border};
-      border-radius: 8px;
-      padding: 24px;
-      min-width: 480px;
-      max-width: 600px;
-      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-      color: ${this.config.theme.colors.fg};
-    `;
+    dialog.className = 'sk-ai-dialog';
     return dialog;
   }
 
-  private createTitle(): HTMLElement {
-    const title = document.createElement('h2');
-    title.textContent = 'Multi-AI Search';
-    title.style.cssText = `
-      margin: 0 0 16px 0;
-      color: ${this.config.theme.colors.accentFg};
-      font-size: 20px;
-      font-weight: 600;
-    `;
-    return title;
+  private createFooterHints(): HTMLElement {
+    const hints = document.createElement('p');
+    hints.className = 'sk-ai-hints';
+    hints.textContent =
+      'Enter: send · Shift+Enter: newline · Filter: search templates · Templates+Tab: preview · ↑↓/jk: templates · Esc: close';
+    return hints;
   }
 
   private createQueryInput(initialQuery: string): { label: HTMLElement; input: HTMLTextAreaElement } {
     const label = document.createElement('label');
-    label.textContent = 'Search Query:';
-    label.style.cssText = `
-      display: block;
-      margin-bottom: 8px;
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 14px;
-    `;
+    label.className = 'sk-ai-query-label';
+    label.textContent = 'Query:';
+
+    const clipboardIndicator = document.createElement('span');
+    clipboardIndicator.className = 'sk-ai-clip-indicator';
+    clipboardIndicator.textContent = 'Clipboard different';
+    clipboardIndicator.title = 'Clipboard differs from query';
+    this.clipboardIndicator = clipboardIndicator;
+    label.appendChild(clipboardIndicator);
+
+    if (this.pageContext) {
+      label.appendChild(this.createPageContextToggle(this.pageContext));
+    }
 
     const input = document.createElement('textarea');
     input.id = 'sk-ai-query-input';
+    input.className = 'sk-ai-query';
     input.value = initialQuery;
-    input.rows = 3;
-    input.style.cssText = `
-      width: 100%;
-      padding: 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: ${this.config.theme.fontSize};
-      margin-bottom: 20px;
-      resize: vertical;
-      box-sizing: border-box;
-    `;
+    input.rows = 2;
+    input.addEventListener('input', () => this.updateClipboardIndicator());
 
     return { label, input };
   }
 
-  private createPromptInput(): { label: HTMLElement; input: HTMLTextAreaElement; select: HTMLSelectElement } {
-    const label = document.createElement('label');
-    label.textContent = 'Prompt Template (optional):';
-    label.style.cssText = `
-      display: block;
-      margin-bottom: 8px;
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 14px;
-    `;
+  private createPageContextToggle(page: PageContext): HTMLElement {
+    const wrapper = document.createElement('label');
+    wrapper.className = 'sk-ai-page-context';
+    wrapper.title = `Send the page URL and title alongside the selection\n${page.url}`;
 
-    const select = document.createElement('select');
-    select.style.cssText = `
-      width: 100%;
-      padding: 10px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: ${this.config.theme.fontSize};
-      margin-bottom: 8px;
-      cursor: pointer;
-      box-sizing: border-box;
-    `;
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.className = 'sk-ai-check';
+    checkbox.checked = true;
+    this.pageContextToggle = checkbox;
 
-    const defaultTemplate = PROMPT_TEMPLATES.find(t => t.default) || PROMPT_TEMPLATES[0];
+    const text = document.createElement('span');
+    text.textContent = `Page: ${pageContextHost(page)}`;
 
-    PROMPT_TEMPLATES.forEach(template => {
-      const option = document.createElement('option');
-      option.value = template.value;
-      option.textContent = template.label;
-      if (template.default) {
-        option.selected = true;
-      }
-      select.appendChild(option);
-    });
-
-    const input = document.createElement('textarea');
-    input.rows = 2;
-    input.value = defaultTemplate.value;
-    input.placeholder = 'Custom prompt template...';
-    input.style.cssText = `
-      width: 100%;
-      padding: 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: ${this.config.theme.fontSize};
-      margin-bottom: 20px;
-      resize: vertical;
-      box-sizing: border-box;
-    `;
-
-    select.addEventListener('change', () => {
-      input.value = select.value;
-    });
-
-    return { label, input, select };
+    wrapper.appendChild(checkbox);
+    wrapper.appendChild(text);
+    return wrapper;
   }
 
-  private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): { label: HTMLElement; container: HTMLElement } {
-    const label = document.createElement('label');
-    label.textContent = 'Select AI Services:';
-    label.style.cssText = `
-      display: block;
-      margin-bottom: 8px;
-      color: ${this.config.theme.colors.mainFg};
-      font-size: 14px;
-    `;
+  /** Page context to send, honouring the dialog toggle. */
+  private getActivePageContext(): PageContext | null {
+    if (!this.pageContext) return null;
+    if (this.pageContextToggle && !this.pageContextToggle.checked) return null;
+    return this.pageContext;
+  }
 
+  private createPromptPicker(): { controls: HTMLElement; picker: HTMLElement } {
+    const controls = this.createPromptSelectButtons();
+
+    const picker = document.createElement('div');
+    picker.className = 'sk-ai-picker';
+
+    const leftPane = document.createElement('div');
+    leftPane.className = 'sk-ai-pane';
+
+    const filterInput = document.createElement('input');
+    filterInput.type = 'search';
+    filterInput.id = 'sk-template-filter';
+    filterInput.className = 'sk-ai-filter';
+    filterInput.placeholder = 'Filter templates…';
+    filterInput.autocomplete = 'off';
+    filterInput.spellcheck = false;
+    filterInput.addEventListener('input', () => this.applyTemplateFilter(filterInput.value));
+    this.templateFilterInput = filterInput;
+
+    const templateList = document.createElement('div');
+    templateList.className = 'sk-ai-template-list';
+    this.templateList = templateList;
+    for (const event of ['pointerdown', 'focusin', 'keydown']) {
+      templateList.addEventListener(event, () => {
+        this.templateListTouched = true;
+      });
+    }
+
+    this.renderTemplateRows(templateList);
+
+    const rightPane = document.createElement('div');
+    rightPane.className = 'sk-ai-pane';
+
+    const previewTitle = document.createElement('div');
+    previewTitle.className = 'sk-ai-preview-title';
+    this.promptPreviewTitle = previewTitle;
+
+    const input = document.createElement('textarea');
+    input.className = 'sk-ai-preview';
+    input.rows = 12;
+    input.placeholder = 'Template preview / editor...';
+    input.addEventListener('input', () => {
+      if (this.activePromptIndex === null) return;
+      this.activePromptTouchedByUser = true;
+      this.templateListTouched = true;
+      this.promptDrafts[this.activePromptIndex] = input.value;
+    });
+    this.promptPreviewInput = input;
+
+    leftPane.appendChild(filterInput);
+    leftPane.appendChild(templateList);
+
+    rightPane.appendChild(previewTitle);
+    rightPane.appendChild(input);
+
+    picker.appendChild(leftPane);
+    picker.appendChild(rightPane);
+
+    if (this.activePromptIndex !== null) {
+      this.setActivePrompt(this.activePromptIndex, false, true, false);
+    } else {
+      this.updatePromptPreviewTitle();
+      this.updatePromptRowStyles();
+    }
+
+    this.applyTemplateFilter('');
+    return { controls, picker };
+  }
+
+  private renderTemplateRows(templateList: HTMLElement): void {
+    templateList.replaceChildren();
+    this.templateRows = new Array(this.templates.length);
+    this.templateCheckboxes = new Array(this.templates.length);
+    this.templateRenderOrder = [];
+    this.templateCategoryHeadings.clear();
+    PROMPT_CATEGORY_ORDER.forEach((category) => {
+      const indexes = this.templates.map((t, i) => (t.category === category ? i : -1)).filter((i) => i >= 0);
+      if (indexes.length === 0) return;
+
+      const heading = document.createElement('div');
+      heading.className = 'sk-ai-cat-heading';
+      heading.textContent = PROMPT_CATEGORY_LABELS[category];
+      heading.dataset.skCategoryHeading = category;
+      if (category === 'fabric') {
+        heading.setAttribute('role', 'button');
+        heading.tabIndex = 0;
+        heading.style.cursor = 'pointer';
+        heading.onclick = () => {
+          this.templateListTouched = true;
+          this.fabricExpanded = !this.fabricExpanded;
+          this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
+        };
+      }
+      this.templateCategoryHeadings.set(category, heading);
+      templateList.appendChild(heading);
+
+      indexes.forEach((index) => {
+        const row = this.createPromptTemplateRow(this.templates[index], index);
+        this.templateRows[index] = row;
+        this.templateRenderOrder.push(index);
+        templateList.appendChild(row);
+      });
+    });
+
+    this.markAsSurfingKeys(templateList);
+    this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
+    this.updatePromptRowStyles();
+  }
+
+  private createPromptTemplateRow(template: PromptTemplate, index: number): HTMLElement {
+    const row = document.createElement('div');
+    row.className = 'sk-ai-row';
+    row.dataset.skTemplateIndex = String(index);
+    row.onclick = () => this.setActivePrompt(index);
+
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `sk-template-${index}`;
+    checkbox.className = 'sk-ai-check';
+    checkbox.checked = this.selectedPromptIndexes.has(index);
+    checkbox.addEventListener('click', (e) => e.stopPropagation());
+    checkbox.addEventListener('focus', () => this.setActivePrompt(index, true, false));
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        this.selectedPromptIndexes.add(index);
+      } else {
+        this.selectedPromptIndexes.delete(index);
+      }
+      this.setActivePrompt(index, true, false);
+    });
+    this.templateCheckboxes[index] = checkbox;
+
+    const textCol = document.createElement('div');
+    textCol.className = 'sk-ai-row-text';
+
+    const label = document.createElement('span');
+    label.className = 'sk-ai-row-label';
+    label.textContent = template.label;
+
+    textCol.appendChild(label);
+
+    row.appendChild(checkbox);
+    row.appendChild(textCol);
+    return row;
+  }
+
+  private createPromptSelectButtons(): HTMLElement {
+    const container = document.createElement('div');
+    container.className = 'sk-ai-btn-row sk-ai-btn-row--prompts';
+
+    const selectAllBtn = document.createElement('button');
+    selectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--accent';
+    selectAllBtn.textContent = 'Select All Prompts';
+    selectAllBtn.type = 'button';
+    selectAllBtn.onclick = () => {
+      this.templateListTouched = true;
+      this.templates.forEach((_, index) => {
+        this.selectedPromptIndexes.add(index);
+        const checkbox = this.templateCheckboxes[index];
+        if (checkbox) checkbox.checked = true;
+      });
+      if (this.activePromptIndex === null && this.templates.length > 0) {
+        this.setActivePrompt(0);
+        return;
+      }
+      this.updatePromptRowStyles();
+    };
+
+    const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--info';
+    unselectAllBtn.textContent = 'Unselect All Prompts';
+    unselectAllBtn.type = 'button';
+    unselectAllBtn.onclick = () => {
+      this.templateListTouched = true;
+      this.selectedPromptIndexes.clear();
+      this.templates.forEach((_, index) => {
+        const checkbox = this.templateCheckboxes[index];
+        if (checkbox) checkbox.checked = false;
+      });
+      this.updatePromptRowStyles();
+    };
+
+    container.appendChild(selectAllBtn);
+    container.appendChild(unselectAllBtn);
+    return container;
+  }
+
+  private createServicesCheckboxes(selectedServices: AIServiceName[] | null = null): {
+    container: HTMLElement;
+  } {
     const container = document.createElement('div');
     container.id = 'sk-services-container';
-    container.style.cssText = `
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 24px;
-      padding: 16px;
-      background: ${this.config.theme.colors.bgDark};
-      border-radius: 4px;
-      border: 1px solid ${this.config.theme.colors.border};
-    `;
+    container.className = 'sk-ai-services';
 
+    this.serviceCheckboxes = new Array(this.services.length);
     this.services.forEach((service, index) => {
       const isChecked = selectedServices ? selectedServices.includes(service.name) : service.checked;
       const checkboxWrapper = this.createCheckbox(service, index, isChecked);
       container.appendChild(checkboxWrapper);
     });
 
-    return { label, container };
+    return { container };
   }
 
-  private createSelectAllButtons(): HTMLElement {
+  private createServiceSelectButtons(): HTMLElement {
     const container = document.createElement('div');
-    container.style.cssText = `
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-      justify-content: flex-start;
-    `;
+    container.className = 'sk-ai-btn-row sk-ai-btn-row--services';
 
     const selectAllBtn = document.createElement('button');
+    selectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--accent';
     selectAllBtn.textContent = 'Select All';
     selectAllBtn.type = 'button';
-    selectAllBtn.style.cssText = `
-      padding: 4px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.accentFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    selectAllBtn.onmouseenter = () => {
-      selectAllBtn.style.background = this.config.theme.colors.border;
-    };
-    selectAllBtn.onmouseleave = () => {
-      selectAllBtn.style.background = this.config.theme.colors.bgDark;
-    };
     selectAllBtn.onclick = () => {
       this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`) as HTMLInputElement | null;
+        const checkbox = this.serviceCheckboxes[index];
         if (checkbox) checkbox.checked = true;
       });
     };
 
     const unselectAllBtn = document.createElement('button');
+    unselectAllBtn.className = 'sk-ai-btn sk-ai-btn--sm sk-ai-btn--info';
     unselectAllBtn.textContent = 'Unselect All';
     unselectAllBtn.type = 'button';
-    unselectAllBtn.style.cssText = `
-      padding: 4px 12px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.infoFg};
-      font-family: ${this.config.theme.font};
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    unselectAllBtn.onmouseenter = () => {
-      unselectAllBtn.style.background = this.config.theme.colors.border;
-    };
-    unselectAllBtn.onmouseleave = () => {
-      unselectAllBtn.style.background = this.config.theme.colors.bgDark;
-    };
     unselectAllBtn.onclick = () => {
       this.services.forEach((_, index) => {
-        const checkbox = document.getElementById(`sk-ai-${index}`) as HTMLInputElement | null;
+        const checkbox = this.serviceCheckboxes[index];
         if (checkbox) checkbox.checked = false;
       });
     };
@@ -509,40 +1194,19 @@ export class AiSelector {
 
   private createCheckbox(service: AIService, index: number, isChecked: boolean = true): HTMLElement {
     const wrapper = document.createElement('label');
-    wrapper.style.cssText = `
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 4px;
-      transition: background 0.2s;
-    `;
-    wrapper.onmouseenter = () => {
-      wrapper.style.background = this.config.theme.colors.border;
-    };
-    wrapper.onmouseleave = () => {
-      wrapper.style.background = 'transparent';
-    };
+    wrapper.className = 'sk-ai-service';
+    wrapper.dataset.skServiceIndex = String(index);
 
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = isChecked;
     checkbox.id = `sk-ai-${index}`;
-    checkbox.style.cssText = `
-      margin-right: 10px;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      accent-color: ${this.config.theme.colors.accentFg};
-    `;
+    checkbox.className = 'sk-ai-check';
+    this.serviceCheckboxes[index] = checkbox;
 
     const label = document.createElement('span');
+    label.className = 'sk-ai-service-label';
     label.textContent = service.name;
-    label.style.cssText = `
-      color: ${this.config.theme.colors.fg};
-      font-size: 15px;
-      cursor: pointer;
-    `;
 
     wrapper.appendChild(checkbox);
     wrapper.appendChild(label);
@@ -551,11 +1215,14 @@ export class AiSelector {
 
   private createButtons(): HTMLElement {
     const container = document.createElement('div');
-    container.style.cssText = `
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    `;
+    container.className = 'sk-ai-actions';
+    const version = document.createElement('small');
+    version.textContent = `v${__CONFIG_VERSION__}`;
+    version.style.color = 'var(--sk-info-fg)';
+    version.style.fontSize = '11px';
+    version.style.alignSelf = 'center';
+    version.style.marginRight = 'auto';
+    container.appendChild(version);
 
     const cancelBtn = this.createCancelButton();
     const submitBtn = this.createSubmitButton();
@@ -567,24 +1234,8 @@ export class AiSelector {
 
   private createCancelButton(): HTMLElement {
     const btn = document.createElement('button');
+    btn.className = 'sk-ai-btn sk-ai-btn--lg sk-ai-btn--plain';
     btn.textContent = 'Cancel';
-    btn.style.cssText = `
-      padding: 10px 24px;
-      background: ${this.config.theme.colors.bgDark};
-      border: 1px solid ${this.config.theme.colors.border};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.fg};
-      font-family: ${this.config.theme.font};
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    btn.onmouseenter = () => {
-      btn.style.background = this.config.theme.colors.border;
-    };
-    btn.onmouseleave = () => {
-      btn.style.background = this.config.theme.colors.bgDark;
-    };
     btn.onclick = () => {
       if (this.queryInput) this.lastQuery = this.queryInput.value;
       this.close();
@@ -594,27 +1245,8 @@ export class AiSelector {
 
   private createSubmitButton(): HTMLElement {
     const btn = document.createElement('button');
+    btn.className = 'sk-ai-btn sk-ai-btn--lg sk-ai-btn--primary';
     btn.textContent = 'Open Selected AIs';
-    btn.style.cssText = `
-      padding: 10px 24px;
-      background: ${this.config.theme.colors.accentFg};
-      border: 1px solid ${this.config.theme.colors.accentFg};
-      border-radius: 4px;
-      color: ${this.config.theme.colors.bgDark};
-      font-family: ${this.config.theme.font};
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    `;
-    btn.onmouseenter = () => {
-      btn.style.background = this.config.theme.colors.mainFg;
-      btn.style.borderColor = this.config.theme.colors.mainFg;
-    };
-    btn.onmouseleave = () => {
-      btn.style.background = this.config.theme.colors.accentFg;
-      btn.style.borderColor = this.config.theme.colors.accentFg;
-    };
     btn.onclick = () => this.handleSubmit();
     return btn;
   }

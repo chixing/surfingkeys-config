@@ -4,6 +4,7 @@
  */
 
 declare global {
+  const __CONFIG_VERSION__: string;
   interface Window {
     api: SurfingKeysAPI;
     settings: SurfingKeysSettings;
@@ -31,6 +32,7 @@ export interface SurfingKeysAPI {
   map(new_keystroke: string, old_keystroke: string, domain?: string, new_annotation?: string): void;
   unmap(keystroke: string, domain?: string): void;
   iunmap(keystroke: string, domain?: string): void;
+  vunmap(keystroke: string, domain?: string): void;
   imap(new_keystroke: string, old_keystroke: string, domain?: string, new_annotation?: string): void;
   cmap(new_keystroke: string, old_keystroke: string, domain?: string, new_annotation?: string): void;
 
@@ -38,21 +40,21 @@ export interface SurfingKeysAPI {
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string; repeatIgnore?: boolean }
+    options?: { domain?: string; repeatIgnore?: boolean },
   ): void;
 
   imapkey(
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string }
+    options?: { domain?: string },
   ): void;
 
   vmapkey(
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string }
+    options?: { domain?: string },
   ): void;
 
   // Omnibar
@@ -66,7 +68,7 @@ export interface SurfingKeysAPI {
     create(
       cssSelector: string,
       onHintKey: (element: HTMLElement) => void,
-      options?: { multipleHits?: boolean }
+      options?: { multipleHits?: boolean },
     ): void;
     style(css: string, mode?: string): void;
   };
@@ -90,10 +92,12 @@ export interface SurfingKeysAPI {
     suggestionUrlOrType?: string,
     suggestionCallbackOrUrl?: string | ((response: any) => any),
     suggestionCallbackOrOnlyThisSite?: string | ((response: any) => any) | boolean,
-    onlyThisSite?: boolean
+    onlyThisSite?: boolean,
   ): void;
 
   removeSearchAlias(alias: string, searchUrl?: string, onlyThisSite?: boolean): void;
+
+  RUNTIME(action: string, args?: Record<string, any>, callback?: (response: any) => void): void;
 
   // Tabs
   tabOpenLink(url: string, target?: string): void;
@@ -101,6 +105,7 @@ export interface SurfingKeysAPI {
   // Other utilities
   getBrowserName(): string;
   aceVimMap(lhs: string, rhs: string, ctx?: string): void;
+  addVimMapKey(...maps: Record<string, unknown>[]): void;
 
   // Pass-through mode
   passThrough(timeout?: number): void;

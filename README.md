@@ -138,6 +138,16 @@ api.mapkey('am', 'My AI Search', () => {
 });
 ```
 
+### Use multi-prompt fanout
+
+- Press `aa` to open the Multi-AI dialog. The lowercase AI shortcuts (`aa`, `ac`, `ad`, `ae`,
+  `ag`, `ap`, and `ak`) prefill the dialog with selected text when available, including while
+  SurfingKeys Visual mode is active; otherwise they fall back to the remembered query or clipboard.
+- Enter your query, optionally select one or more prompt templates, then select one or more AI services.
+- With no prompt templates selected, submit sends only the search query.
+- Submit opens tabs for every selected `service x prompt` combination.
+- If the selection would open more than 12 tabs, the dialog asks for confirmation first.
+
 ## Troubleshooting
 
 - **Build fails:** `npm run type-check` to see errors.

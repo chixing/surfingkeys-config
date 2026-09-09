@@ -1,83 +1,74 @@
 import { AI_SERVICES } from '../config';
 import type { AIServiceName } from '../config';
-import { AiSelector } from '../ai/selector';
+import type { AiSelector } from '../ai/selector';
+import { promptValueByLabel } from '../ai/templates';
 import { isZenBrowser } from '../utils';
+import { installUrlHistoryTracker, openBackInNewTab } from './backInNewTab';
+import { registerEditorMappings } from './editor';
+import { copyImageToClipboard } from './copyImage';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
-  navigator.clipboard.readText().then(text => aiSelector.updateQuery(text)).catch(() => {});
+  navigator.clipboard
+    .readText()
+    .then((text) => aiSelector.updateQuery(text))
+    .catch(() => {});
+}
+
+function getSelectedText(): string {
+  const activeElement = document.activeElement;
+  if (activeElement instanceof HTMLInputElement || activeElement instanceof HTMLTextAreaElement) {
+    const start = activeElement.selectionStart;
+    const end = activeElement.selectionEnd;
+    if (start !== null && end !== null && start !== end) {
+      return activeElement.value.slice(start, end).trim();
+    }
+  }
+
+  return window.getSelection()?.toString().trim() ?? '';
 }
 
 function createAiShortcut(aiSelector: AiSelector, services?: AIServiceName[]): () => void {
   return () => {
-    aiSelector.show('', services ?? null);
-    readClipboardAndUpdate(aiSelector);
-  };
-}
-
-function resolveImageUrl(imgElement: HTMLImageElement): string | null {
-  let imageUrl = imgElement.src || imgElement.getAttribute('data-src') || imgElement.getAttribute('data-lazy-src');
-  if (!imageUrl && imgElement.srcset) {
-    const srcset = imgElement.srcset.split(',');
-    imageUrl = srcset[0].trim().split(' ')[0];
-  }
-  return imageUrl || null;
-}
-
-async function copyPngToClipboard(blob: Blob | null, fallbackUrl: string): Promise<void> {
-  try {
-    if (!blob) throw new Error('Empty blob');
-    const data = [new ClipboardItem({ 'image/png': blob })];
-    await navigator.clipboard.write(data);
-    api.Front.showBanner('Image copied to clipboard!', 'success');
-  } catch {
-    api.Clipboard.write(fallbackUrl);
-    api.Front.showBanner('Copied URL (Clipboard write failed)', 'warning');
-  }
-}
-
-function convertAndCopyImage(url: string): void {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(img, 0, 0);
-      canvas.toBlob(blob => copyPngToClipboard(blob, url), 'image/png');
+    const selectedText = getSelectedText();
+    aiSelector.show(selectedText, services ?? null);
+    if (!selectedText) {
+      readClipboardAndUpdate(aiSelector);
     }
   };
-  img.onerror = () => {
-    fetch(url)
-      .then(r => r.blob())
-      .then(blob => {
-        const blobUrl = URL.createObjectURL(blob);
-        const img2 = new Image();
-        img2.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img2.width;
-          canvas.height = img2.height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img2, 0, 0);
-            canvas.toBlob(b => {
-              URL.revokeObjectURL(blobUrl);
-              copyPngToClipboard(b, url);
-            }, 'image/png');
-          }
-        };
-        img2.src = blobUrl;
-      })
-      .catch(() => {
-        api.Clipboard.write(url);
-        api.Front.showBanner('Copied URL (Image load failed)', 'warning');
-      });
-  };
-  img.src = url;
 }
 
+function registerAiDialogShortcut(
+  keys: string,
+  annotation: string,
+  aiSelector: AiSelector,
+  services?: AIServiceName[],
+): void {
+  api.mapkey(keys, annotation, createAiShortcut(aiSelector, services));
+  api.vmapkey(keys, annotation, createAiShortcut(aiSelector, services));
+}
+
+function createAiLinkShortcut(
+  aiSelector: AiSelector,
+  services: AIServiceName[],
+  promptTemplate: string = '',
+): () => void {
+  return () => {
+    api.Hints.create('a[href]', (element: HTMLElement) => {
+      const href = (element as HTMLAnchorElement).href;
+      if (!href) {
+        api.Front.showBanner('Could not find link URL', 'error');
+        return;
+      }
+      if (!aiSelector.searchImmediately(href, services, promptTemplate)) {
+        api.Front.showBanner('Could not search link', 'error');
+      }
+    });
+  };
+}
 export function registerKeyMappings(aiSelector: AiSelector): void {
+  installUrlHistoryTracker();
+  registerEditorMappings();
+
   // Zen Browser fix: use native Ctrl-w instead of SurfingKeys closeTab
   if (isZenBrowser()) {
     api.map('x', '<Ctrl-w>');
@@ -86,6 +77,7 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   // Navigation
   api.map('K', '[[');
   api.map('J', ']]');
+  api.mapkey('A', '#4Open back in new tab', openBackInNewTab, { repeatIgnore: true });
 
   // Tab Search
   api.mapkey('T', '#3Choose a tab', () => {
@@ -101,35 +93,49 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
 
   // Unmappings
   api.iunmap('<Ctrl-a>');
+  api.unmap('gr');
+  api.vunmap('gr');
 
   // Omnibar Navigation
   api.cmap('<Ctrl->>', '<Ctrl-,>');
 
   // Copy image shortcut
-  api.mapkey('ye', 'Copy image to clipboard', () => {
-    api.Hints.create('img', (element: HTMLElement) => {
-      const imgElement = element as HTMLImageElement;
-      const imageUrl = resolveImageUrl(imgElement);
-      if (!imageUrl) {
-        api.Front.showBanner('Could not find image source', 'error');
-        return;
-      }
-      convertAndCopyImage(imageUrl);
-    });
-  });
+  api.mapkey('ye', 'Copy image to clipboard', copyImageToClipboard);
 
   // Chrome Internal Pages
   api.mapkey('gp', '#12Open Passwords', () => api.tabOpenLink('chrome://password-manager/passwords'));
   api.mapkey('gs', '#12Open Extensions', () => api.tabOpenLink('chrome://extensions/shortcuts'));
 
   // AI search shortcuts
-  api.mapkey('aa', 'Multi-AI Search (Clipboard/Input)', createAiShortcut(aiSelector));
-  api.mapkey('ac', 'ChatGPT Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.CHATGPT]));
-  api.mapkey('ad', 'Doubao Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.DOUBAO]));
-  api.mapkey('ay', 'Alice Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.ALICE]));
-  api.mapkey('ae', 'Claude Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.CLAUDE]));
-  api.mapkey('ag', 'Gemini Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GEMINI]));
-  api.mapkey('ap', 'Perplexity Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]));
-  api.mapkey('aP', 'Perplexity Research Mode (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.PERPLEXITY_RESEARCH]));
-  api.mapkey('ak', 'Grok Search (Clipboard/Input)', createAiShortcut(aiSelector, [AI_SERVICES.GROK]));
+  registerAiDialogShortcut('aa', 'Multi-AI Search (Selection/Clipboard/Input)', aiSelector);
+  registerAiDialogShortcut('ac', 'ChatGPT Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.CHATGPT,
+  ]);
+  api.mapkey('aC', 'ChatGPT Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.CHATGPT]));
+  registerAiDialogShortcut('ad', 'Doubao Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.DOUBAO,
+  ]);
+  api.mapkey('aD', 'Doubao Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.DOUBAO]));
+  registerAiDialogShortcut('ae', 'Claude Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.CLAUDE,
+  ]);
+  api.mapkey('aE', 'Claude Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.CLAUDE]));
+  registerAiDialogShortcut('ag', 'Gemini Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.GEMINI,
+  ]);
+  api.mapkey(
+    'aG',
+    'Gemini Search hinted link',
+    createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI], promptValueByLabel('Deep Summary')),
+  );
+  registerAiDialogShortcut('ap', 'Perplexity Search (Selection/Clipboard/Input)', aiSelector, [
+    AI_SERVICES.PERPLEXITY,
+  ]);
+  api.mapkey(
+    'aP',
+    'Perplexity Search hinted link',
+    createAiLinkShortcut(aiSelector, [AI_SERVICES.PERPLEXITY]),
+  );
+  registerAiDialogShortcut('ak', 'Grok Search (Selection/Clipboard/Input)', aiSelector, [AI_SERVICES.GROK]);
+  api.mapkey('aK', 'Grok Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GROK]));
 }
