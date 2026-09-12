@@ -40,13 +40,18 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
         return utils.createURLItem(prefix + s.full_name, s.html_url);
       }),
   },
-  libhunt: { alias: 'l', search: 'https://www.libhunt.com/search?query=' },
+  bilibili: {
+    alias: 'l',
+    search: 'https://search.bilibili.com/all?keyword=',
+    compl: 'https://s.search.bilibili.com/main/suggest?term=',
+    callback: (response: CompletionResponse) => {
+      const res = JSON.parse(response.text);
+      return res.result?.tag?.map((t: any) => t.value) ?? [];
+    },
+  },
   yandex: { alias: 'n', search: 'https://yandex.com/search/?text=' },
-  skidrow: { alias: 'k', search: 'https://www.skidrowreloaded.com/?s=' },
   anna: { alias: 'c', search: 'https://annas-archive.gl/search?q=' },
   libgen: { alias: 'v', search: 'https://libgen.li/index.php?req=' },
-  urban: { alias: 'u', search: 'https://www.urbandictionary.com/define.php?term=' },
-  archive: { alias: 'r', search: 'https://archive.is/' },
 };
 
 export function registerSearchEngines(): void {
