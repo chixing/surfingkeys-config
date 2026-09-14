@@ -1,6 +1,6 @@
 {
   "name": "surfingkeys-config",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "TypeScript-based SurfingKeys configuration",
   "private": true,
   "type": "module",
