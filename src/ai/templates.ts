@@ -432,6 +432,84 @@ Then each section in prose, with any table kept short:
     tags: ['web', 'narrative', 'vendor'],
   },
   {
+    label: 'How This Business Works',
+    value: `Role
+Analyst explaining a company as a working business — who it serves and how it gets paid — not a stock pitch or a vendor scorecard.
+
+Goal
+Research the company implied in the source (infer name and URL; if missing, say Unknown and what to verify). Lead with the idea, the customer, and the money.
+
+${WEB_RULES}
+
+Open with 4-6 sentences a smart outsider could repeat: what they do, who pays, how money comes in, and why that combination works or is strained.
+
+Then each section in prose:
+1) The idea — the product or service in plain language, the problem, what it replaces. The one sentence worth remembering.
+2) Customers — who buys, who uses if different, why they pay, the job being done. Name segments the evidence supports (consumer vs business, SMB vs enterprise, geography). Named logos only if sourced. Who is clearly not a customer.
+3) How they make money — the revenue model (subscription, take-rate, ads, usage, hardware, marketplace, services, or a mix), the paying unit, public pricing, and what expands revenue (seats, usage, SKUs, take-rate). Mention costs only when they are load-bearing (subsidies, COGS, negative take-rate).
+4) How they get customers — the main motion: product-led, sales-led, marketplace, partnerships, ads, brand. The wedge that wins the first deal.
+5) The offer — flagship product first, then the rest of the line as a buyer would meet them. Core vs upsell.
+6) Alternatives — what a customer would use instead, including in-house or doing nothing. One line each on the difference.
+7) Proof — sourced customers, revenue or usage signals, stage. Funding only if it explains the stage. No vanity metrics.
+8) What could break it — concentration, model risk, regulation, a competitor making the idea free, or a hole in the public story.
+
+500-700 words. Prefer the company site, pricing page, filings, and interviews over roundups. Skip any section the evidence does not support, and say why.`,
+    category: 'research',
+    description: 'Customers, the offer, and how they make money',
+    tier: 'long',
+    tags: ['web', 'business', 'customers', 'revenue', 'pricing'],
+  },
+  {
+    label: 'Competitive Landscape',
+    value: `Role
+Competitive analyst mapping the neighborhood around the product or company in the source — not a buyer's scorecard and not a "best tools" dump.
+
+Goal
+Identify what a customer would use instead (replacement), what they would use with it (complement), and the sibling categories next door.
+
+Resolve the subject first
+- Name the subject exactly. If it is a product inside a larger company or platform, map the product and name the parent once. Never credit the parent's customers or traction to the product.
+- Flag name collisions: other companies or products with the same or a near-identical name.
+- If the name is missing, say Unknown, what to verify, and map only what the source supports.
+
+${WEB_RULES}
+- Anchor on today's date. Every number, named customer, funding round, rank, and release status (GA, beta, waitlist) gets an inline link and a month and year, or "Unknown" plus where to check.
+- Tag each maturity or traction claim [Verified] (primary or independent source you opened), [Vendor claim] (the company's own stats or marketing), or [Inference]. Named customer case studies count as evidence; unnamed vendor stats ("thousands of teams") do not.
+- No vague size words ("large ARR", "Fortune-scale", "heavily used") without the number and its source.
+- Prefer filings, pricing pages, docs, integration directories and marketplaces, changelogs, named case studies, and practitioner writeups. Roundups and listicles may surface names but never count as evidence.
+
+Maturity bar — nothing too green on the main map
+A name earns a slot in Replacements or Complements only if a stranger can buy or use it today (GA or public self-serve, not a waitlist, private beta, or sales-only pilot) AND there is evidence of real use: named customers, 2+ years in market, public revenue or usage, app-store or marketplace rank, or an active community (give the count). Funding, valuation, launch posts, waitlists, roundup mentions, and "AI for X" landing pages do not count.
+Park anything interesting but unripe under Watch. Prefer incumbents and proven challengers over lookalikes. Apply the bar to the subject too and report the result in the snapshot; the subject stays at the center of the map either way.
+
+Classification
+- Never list a product as both a replacement and a complement. If it is shifting (platform expansion, a "works with" that later swallows the job), classify it by how most customers use it today and flag the shift.
+- One product per row. Combine names only when they are sold as one product.
+- The subject's parent or sister products are not complements; cover them in the snapshot.
+- Limits are "up to". Fewer strong rows beat padding.
+- Do-nothing / in-house is a replacement when that is what customers really do. Describe it; never attach invented or vendor-sourced stats to it.
+
+Open with 4-6 sentences: the job the subject does, the category name buyers actually use, the subject's maturity in a phrase, the neighborhood in one breath, and the most direct replacement plus the complement most likely to absorb the job.
+
+Then:
+1) Subject snapshot — bullets: what it is; parent company, if any; availability, pricing, and license, dated; maturity evidence, tagged; name collisions.
+2) Category neighborhood — how vendors name the space vs how customers search for it. False friends: products that look similar on a landing page but do a different job, one line each. One line on the status-quo alternative (spreadsheet, intern, in-house, the incumbent process).
+3) Replacements — true substitutes: the customer picks one. Up to 6. Table: product, segment it actually serves, why it substitutes, maturity evidence (linked, dated, tagged), where it beats the subject, where the subject beats it. Then one line on the free/open-source or "good enough" option people really use, if not in the table.
+4) Complements — used alongside, not instead. Up to 6. Table: product, the job it covers that the subject does not, evidence they are stacked (integration page, marketplace listing, docs, reference architecture), threat (none / partial / eating the job, and why).
+5) Sibling categories — 3-5 adjacent markets a buyer or analyst would confuse with this one. For each: the job, 2-3 established names, and the signal that a buyer should look there instead of at the subject.
+6) Who wins which customer — table: segment, usual winner, runner-up, the subject's role. Use only segments where the winner actually differs (SMB vs enterprise, technical vs not, regulated industry; geography only with evidence). Note where a replacement in one segment is a complement in another.
+7) Switching — lock-in specific to this category (data, workflow, integrations, contracts, muscle memory). The usual migration path in 2-4 steps. The concrete condition under which a named complement becomes a replacement.
+8) Watch — up to 5, one product or one market shift per line: why people mention it, and which part of the maturity bar it fails.
+9) Gaps — incumbents or categories you could not verify, and the 3 checks that would most change this map.
+10) Sources — numbered: title, publisher, URL, date published or accessed.
+
+1,200-1,800 words. Skip any section or row the evidence does not support, and say why in one line.`,
+    category: 'research',
+    description: 'Replacements vs complements, sibling categories, no vaporware',
+    tier: 'long',
+    tags: ['web', 'competitors', 'alternatives', 'replacements', 'complements', 'categories'],
+  },
+  {
     label: 'Compare Products',
     value: `Role
 Product evaluator comparing the tools, vendors, or services implied by the source for a real buying decision.
