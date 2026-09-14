@@ -434,36 +434,28 @@ Then each section in prose, with any table kept short:
   {
     label: 'How This Business Works',
     value: `Role
-Analyst explaining a company as a working business — who it serves and how it gets paid — not a stock pitch or a vendor scorecard.
+Analyst explaining a company as a working business: who it serves and how it gets paid. Not a stock pitch or a vendor scorecard.
 
 Goal
-Research the company implied in the source. Lead with the idea, the customer, and the money.
-
-Resolve the subject first
-- Infer the company name and primary domain. If the source is a product, launch, or referral page, name the product and its parent company in the first sentence and say which one you are analyzing. Default: the company, with the source's product as the lens. Never use the two names interchangeably.
-- If the company cannot be identified, say Unknown, list what to check (site footer, WHOIS, LinkedIn, Crunchbase), and stop.
+Research the company implied in the source. If the source is a product or launch page, name the product and its parent company in the first sentence and say which you analyze (default: the company, through that product). Never use the two names interchangeably. If the company cannot be identified, say Unknown, what to check, and stop.
 
 ${WEB_RULES}
-- Anchor on today's date. Every price, funding round, headcount, and metric gets a specific linked page (not just the homepage) and a month and year. Flag anything older than 12 months as possibly stale.
-- Tag claims that are not independently verifiable: [Vendor claim] for the company's own stats or marketing, [Inference] for your reasoning. Untagged sentences must be backed by a linked source.
-- Prefer the company site, pricing page, docs, filings, and founder or executive interviews. Roundups and review sites are a last resort.
+- Every price, funding round, and metric gets a specific linked page and a month and year.
+- Tag unverified claims [Vendor claim] (the company's own stats) or [Inference] (your reasoning).
 
-Format
-- Open with 4-6 sentences a smart outsider could repeat: what they do, who pays, the paying unit and anchor price, and why that combination works or is strained. End with the one sentence worth remembering.
-- Then each section as a short prose paragraph led by a bold label. No bullets or numbered headings inside sections.
-- Skip any section the evidence does not support, and say why in one line.
+Open with 4-6 sentences a smart outsider could repeat: what they do, who pays, the paying unit and anchor price, and why that works or is strained. End with the one sentence worth remembering.
 
-Sections
-1) The idea — the product or service in plain language, the problem, and what it replaces (tools, labor, or habits).
-2) Customers — who buys, who uses if different, the job being done, and why they pay instead of making do. Name only segments the evidence supports (consumer vs business, SMB vs enterprise, industry, geography). Named logos only if sourced, and say which product each one uses. Who is clearly not a customer.
-3) How they make money — the revenue model (subscription, usage, take-rate, ads, hardware, marketplace, services, or a mix), the paying unit, the anchor public price, and the main lever that expands revenue per customer. Summarize the pricing shape; do not list every meter. Mention costs only when they are load-bearing (subsidies, COGS, pass-through margins). If there is a free or open-source tier, say what forces the upgrade to paid.
-4) How they get customers — the main motion (product-led, sales-led, partnerships, marketplace, ads, brand) and the wedge that wins the first deal: the smallest unit of adoption.
-5) The offer — flagship first, then the rest of the line in the order a buyer meets it. Core vs upsell.
-6) Alternatives — what a customer would use instead, including in-house and doing nothing. One sentence each on the real difference from the buyer's side. Tag [Inference] unless a source supports the comparison.
-7) Proof — sourced customers, revenue or usage signals, and stage. Funding only if it explains the stage. No vanity metrics (downloads, stars, waitlists) unless tied to paid use; tag company-reported numbers [Vendor claim].
-8) What could break it — 2-3 risks, most serious first: concentration, model risk, regulation, platform dependence, or a competitor making the core free. End with the single unknown number that would most change the picture and where it might surface.
+Then each section as a short prose paragraph with a bold label:
+1) The idea: the product in plain language, the problem, what it replaces.
+2) Customers: who buys, who uses if different, the job, why they pay. Only sourced segments and logos, noting which product each logo uses. Who is clearly not a customer.
+3) How they make money: revenue model, paying unit, anchor price, and the main lever that grows revenue per customer. Summarize pricing; do not list every meter. If there is a free or open-source tier, what forces the upgrade.
+4) How they get customers: the main motion and the wedge that wins the first deal.
+5) The offer: flagship first, then the line as a buyer meets it. Core vs upsell.
+6) Alternatives: what customers use instead, including in-house or nothing. One sentence each on the difference.
+7) Proof: sourced customers, revenue or usage signals, stage. Funding only if it explains the stage. No vanity metrics.
+8) What could break it: 2-3 risks, worst first. End with the one unknown number that would most change the picture.
 
-500-700 words including the opening. Rough budget: opening 90, idea 60, customers 90, money 110, acquisition 60, offer 60, alternatives 70, proof 60, risks 70. Before sending, check the word count, that every price and metric is dated and linked, and that every inference and vendor claim is tagged.`,
+500-700 words including the opening. Skip any section the evidence does not support, and say why.`,
     category: 'research',
     description: 'Customers, the offer, and how they make money',
     tier: 'long',
