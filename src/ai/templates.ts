@@ -521,27 +521,37 @@ Output
   {
     label: 'User Reviews + Sentiment',
     value: `Role
-Product research analyst doing evidence-based customer research.
+Product research analyst doing evidence-based customer research. Report what users say, not what the vendor claims.
 
 Goal
-Analyze real user reviews and community discussion for the product, app, service, or tool implied in the source, then compare with its main competitors.
+Analyze real user reviews and community discussion for the product implied in the source, then compare it with the rivals users actually weigh it against. Name the exact product, platform, and parent company, and flag name collisions. If the product cannot be identified, say Unknown, what to check, and stop.
 
 ${WEB_RULES}
 
-Prefer primary review and community sources: app stores, G2, Capterra, Trustpilot, Reddit, Hacker News, GitHub issues, forums, support boards, recent social posts.
-Every theme needs dated examples. Distinguish "themes I observed" from "how common this is" — do not present a handful of posts as a distribution, and say when the sample is too thin to support a claim.
+Evidence rules
+- Use app stores, G2, Capterra, Trustpilot, Reddit, Hacker News, GitHub issues, forums, support boards, recent social posts. Vendor case studies, affiliate "best of" lists, and review farms are not evidence.
+- Default window is the last 18 months. Use older posts only for trend, marked stale.
+- Report the sample: sources checked, roughly how many reviews or threads read, date range. A star average needs its rating count and date.
+- Weigh platform bias: app stores and Trustpilot skew angry, G2 and Capterra skew incentivized, Reddit and HN skew technical. Discount posts that look fake, paid, or written by staff.
+- State frequency as "n of ~N read", or one-off / recurring / dominant. No percentages from a thin sample.
+- Quote short snippets verbatim with link and date. Do not soften or sharpen a complaint.
 
 Output
-1) Executive read — overall sentiment, how much evidence you actually found, and the biggest pattern.
-2) Themes — praise, recurring complaints, accepted trade-offs, and any differences by segment the evidence shows (new vs power users, small teams vs enterprise, technical vs not).
-3) Trend — only if dated evidence shows one, with what changed: release, pricing move, acquisition, outage. Say "no clear trend" otherwise.
-4) Evidence table — source, date, segment, sentiment, specific claim, confidence.
-5) Competitors — the main rivals, where reviewers say each clearly wins or loses.
-6) Implications — best-fit and worst-fit users, adoption risks, what to test before committing.`,
+1) Executive read: overall sentiment, sample size and date range, the biggest pattern, your confidence.
+2) Why people pick it: the jobs they use it for and the praise that recurs.
+3) Complaints, ranked by frequency and severity. Tag each dealbreaker (drives churn), friction, or accepted trade-off. Note whether the vendor responded or fixed it.
+4) Segments: only differences the evidence shows (new vs power users, solo vs enterprise, platform).
+5) Trend: only with dated evidence, tied to what changed (release, pricing move, acquisition, outage). Otherwise "no clear trend".
+6) Switching: who users leave for and why, and who they came from. Cite the posts.
+7) Competitors, 2-4 named in switching or comparison posts: where reviewers say each wins or loses. Not a feature table.
+8) Evidence table, up to 15 rows: source, date, segment, sentiment, quote, link.
+9) Implications: best-fit and worst-fit users, adoption risks, what to test in a trial before committing.
+
+Under 1,200 words. Skip any section the evidence does not support, and say why in one line.`,
     category: 'research',
-    description: 'User sentiment with competitor comparison',
+    description: 'Sampled user sentiment, complaints, and switching',
     tier: 'long',
-    tags: ['web', 'reviews', 'sentiment', 'competitors'],
+    tags: ['web', 'reviews', 'sentiment', 'competitors', 'churn', 'switching'],
   },
   {
     label: 'Exact Use Cases',
