@@ -229,6 +229,26 @@ Constraints
     tags: ['eli5', 'incremental'],
   },
   {
+    label: 'Explain As You Go',
+    value: `${TRANSFORM_RULE}
+
+Rewrite the source so a beginner can read it top to bottom without a glossary.
+
+Keep the original structure, section order, headings, claims, numbers, and voice. Do not summarize, and do not turn it into a cheat sheet or FAQ.
+
+Bold each loaded term on first mention and teach it on the spot, in the same paragraph or the next 1-3 sentences: what it is in plain language, why it shows up here, a concrete physical or workshop picture if one earns its place, and what it costs to misread it. Two to six sentences each — a parenthetical nickname is not an explanation. Later mentions use the term normally.
+Where two terms are easy to confuse, contrast them right there.
+
+Keep the author's conclusions. Add no advice they did not give, and drop no numbers.
+The result should come out clearly longer than the source because of the teaching asides, not padding.
+
+Output the rewritten piece only, under the source's own headings, with no vocabulary list at the end.`,
+    category: 'explain',
+    description: 'Rewrite with every term taught inline',
+    tier: 'long',
+    tags: ['teaching', 'jargon', 'beginner'],
+  },
+  {
     label: 'Check My Understanding',
     value: `The source contains my explanation of something, or my explanation plus the material it is about.
 
