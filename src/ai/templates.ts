@@ -232,24 +232,21 @@ Constraints
     label: 'Explain As You Go',
     value: `${TRANSFORM_RULE}
 
-Explain the source to a beginner who has no background in the topic, in your own words, so they can read it top to bottom without a glossary.
+Explain the source to a beginner as one continuous story they can read top to bottom.
 
-Structure
-- Open with a short plain-language summary: what this is about, why it matters, and the author's main conclusion.
-- Then walk through the source in its own section order, under its own headings. Summarize each section in fresh wording instead of restating it sentence by sentence. Keep every key claim and number.
+**The big picture.** Open with the mental model the reader needs before any detail: what problem exists in this area, how people usually deal with it, and where the page's subject sits. Start from what the reader already knows from everyday life. Use your own knowledge, and web browsing when available.
 
-Teaching
-- Bold each loaded term on first mention and teach it on the spot: what it is in plain language, why it shows up here, and a concrete everyday picture if one helps. Two to four sentences each. Later mentions use the term normally.
-- Where two terms are easy to confuse, contrast them right there.
+Then follow the source in its own order, under its own headings. Write in prose paragraphs, and make each paragraph answer the question the previous one naturally raises ("So why is that slow?", "How does it get around that?"), so the explanation builds instead of jumping.
 
-Going beyond the page
-- Add the background the source assumes but never explains: history, how the underlying technology or idea works, common real-world examples, and how this fits the wider field.
-- Use your own knowledge, and web browsing when available.
-- Mark every outside addition with "Background:" so it stays separate from what the author actually said. Never attribute outside facts to the author.
+Introduce a term only when the story needs it, explain it in plain words in the same sentence, and bold it once. Never pause for a list of definitions.
 
-Keep the author's conclusions as theirs. Output the explanation only, with no vocabulary list at the end.`,
+Add the background the source assumes but never explains: history, how the underlying technology or idea works, common real-world examples, and how this fits the wider field. Put it in its own paragraph starting with "Background:", right after the part of the story it supports, so it stays separate from what the author actually said. Never attribute outside facts to the author.
+
+Keep every key claim and number from the source, and keep the author's conclusions as theirs.
+
+Finish with a short paragraph that sums up the whole picture. Be thorough but not repetitive: cover every section, and never make the same point twice.`,
     category: 'explain',
-    description: 'Beginner summary with terms taught and outside background',
+    description: 'Beginner story with big picture and outside background',
     tier: 'long',
     tags: ['teaching', 'jargon', 'beginner'],
   },
