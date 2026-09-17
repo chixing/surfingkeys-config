@@ -97,7 +97,8 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   api.vunmap('gr');
 
   // Omnibar Navigation
-  api.cmap('<Ctrl->>', '<Ctrl-,>');
+  api.cmap('<Alt-l>', '<Ctrl-.>');
+  api.cmap('<Alt-h>', '<Ctrl-,>');
 
   // Copy image shortcut
   api.mapkey('ye', 'Copy image to clipboard', copyImageToClipboard);
