@@ -31,7 +31,7 @@ configuration. `src/` is bundled by **tsup** into a single minified IIFE at
 
 Entry `src/index.ts` wires everything in order: build `CONFIG` → `applySettings()`
 → construct `AiSelector` → `registerKeyMappings()` → `initializeSiteAutomations()`
-→ `registerSearchEngines()` → `applyTheme()`.
+→ `registerSearchEngines()` → `applyTheme()` → `keepFrontendDetachedWhenIdle()`.
 
 - The global `api` and `settings` objects are injected by SurfingKeys **at
   runtime**; they are hand-typed in `src/types/surfingkeys.d.ts`. That file is

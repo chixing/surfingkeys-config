@@ -9,6 +9,7 @@ import { registerKeyMappings } from './keymaps/register';
 import { initializeSiteAutomations } from './automations';
 import { registerSearchEngines } from './search/engines';
 import { applyTheme } from './theme/apply';
+import { keepFrontendDetachedWhenIdle } from './frontendDetach';
 
 // Export for debugging
 (window as any).__CONFIG__ = CONFIG;
@@ -21,5 +22,6 @@ registerKeyMappings(aiSelector);
 initializeSiteAutomations(CONFIG);
 registerSearchEngines();
 applyTheme(CONFIG);
+keepFrontendDetachedWhenIdle();
 
 console.log('[SurfingKeys] TypeScript configuration loaded');
