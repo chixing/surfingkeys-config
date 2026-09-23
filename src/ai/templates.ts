@@ -211,24 +211,6 @@ End with the single sentence worth remembering.`,
     tier: 'short',
   },
   {
-    label: 'ELI5 Section-by-Section',
-    value: `Analyze the source and format the response exactly as follows.
-
-1) High-Level Summary
-   - Concise overview of the main point of the entire piece.
-2) Section-by-Section ELI5
-   - Break the content down section by section in plain, simple language.
-
-Constraints
-- No analogies. Explain directly and simply.
-- Cover only the first 2-3 sections, then stop so I can absorb them.
-- End by telling me to say "continue" for the next sections.`,
-    category: 'explain',
-    description: 'Plain-language breakdown, paced in chunks',
-    tier: 'short',
-    tags: ['eli5', 'incremental'],
-  },
-  {
     label: 'Explain As You Go',
     value: `${TRANSFORM_RULE}
 
