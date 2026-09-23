@@ -1,7 +1,6 @@
 import { AI_SERVICES } from '../config';
 import type { AIServiceName } from '../config';
 import type { AiSelector } from '../ai/selector';
-import { promptValueByLabel } from '../ai/templates';
 import { isZenBrowser } from '../utils';
 import { installUrlHistoryTracker, openBackInNewTab } from './backInNewTab';
 import { registerEditorMappings } from './editor';
@@ -124,11 +123,7 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   registerAiDialogShortcut('ag', 'Gemini Search (Selection/Clipboard/Input)', aiSelector, [
     AI_SERVICES.GEMINI,
   ]);
-  api.mapkey(
-    'aG',
-    'Gemini Search hinted link',
-    createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI], promptValueByLabel('Deep Summary')),
-  );
+  api.mapkey('aG', 'Gemini Search hinted link', createAiLinkShortcut(aiSelector, [AI_SERVICES.GEMINI]));
   registerAiDialogShortcut('ap', 'Perplexity Search (Selection/Clipboard/Input)', aiSelector, [
     AI_SERVICES.PERPLEXITY,
   ]);
