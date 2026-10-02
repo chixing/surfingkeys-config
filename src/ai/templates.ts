@@ -114,179 +114,163 @@ export function templateSearchHaystack(template: PromptTemplate): string {
 const CURATED_PROMPT_TEMPLATES: PromptTemplate[] = [
   // --- standards ---
   {
-    label: 'ASD-STE100 Audit',
+    label: 'Simplify Technical Writing',
     value: `${TRANSFORM_RULE}
 
-Explain or rewrite the mechanism or spec in the source using ASD-STE100 (Simplified Technical English, ~80% compliance).
-- Short sentences: instructions under 20 words, descriptions under 25 words.
-- One topic or instruction per sentence.
-- Active voice and direct verbs only.
-- Approved general words; technical terms only when strictly necessary.
-- No metaphors, no perfect tenses, no semicolons.
-- Maximum three-word noun clusters.
-Preserve every technical state change, condition, and boundary. Remove all conversational prose and filler.`,
+Rewrite the source as technical instructions or descriptions using the writing rules of ASD-STE100 Simplified Technical English where possible.
+- Use no more than 20 words per procedural sentence and 25 per descriptive sentence. Give one instruction per procedural sentence.
+- Use active voice. In descriptions, use passive voice only when the agent is unknown.
+- Use a consistent word for each concept. Prefer approved general words and preserve necessary technical names and terms.
+- Avoid long noun clusters, ambiguous pronouns, and semicolons.
+Preserve conditions, warnings, limits, and the order of operations. Do not claim formal ASD-STE100 compliance without checking the official dictionary and full rules.`,
     category: 'standards',
-    description: 'Aerospace controlled English for auditability',
+    description: 'ASD-STE100 style for clear technical procedures',
     tier: 'short',
-    tags: ['audit', 'spec', 'ste100', 'precision'],
+    tags: ['asd-ste100', 'simplified technical english', 'procedure', 'spec'],
   },
   {
-    label: 'ISO 24495-1 Plain',
+    label: 'Write in Plain Language',
     value: `${TRANSFORM_RULE}
 
-Explain or rewrite the source following ISO 24495-1:2023 plain language principles.
-Make the content directly relevant, findable, understandable, and usable for the intended reader.
-- Relevant: Address what the reader needs to know or do; skip irrelevant background.
-- Findable: Use clear section headings, short paragraphs, and bulleted lists.
-- Understandable: Plain everyday words, active voice, short sentences; explain essential technical terms on first use.
-- Usable: Make actions, choices, and error paths explicit and easy to execute.
-Do not dumb it down or use forced analogies; make the true content immediately accessible.`,
+Rewrite or explain the source for its intended reader using the four principles of ISO 24495-1:2023. If the reader is not specified, infer one and state the assumption briefly.
+- Relevant: Keep the information the reader needs for their purpose.
+- Findable: Put key information where the reader expects it; use descriptive headings and lists when they help.
+- Understandable: Use familiar words and clear sentences; explain necessary terms.
+- Usable: Make the next step or decision clear where the source supports one.
+Preserve essential facts and qualifications. Do not invent actions or remove detail the reader needs.`,
     category: 'standards',
-    description: 'Relevant, findable, understandable, usable',
+    description: 'ISO 24495-1: relevant, findable, understandable, usable',
     tier: 'short',
-    tags: ['plain-language', 'iso', 'clarity'],
+    tags: ['iso 24495-1', 'plain language', 'clarity'],
   },
   {
-    label: 'ISO + Zinsser',
+    label: 'Cut Clutter, Keep Meaning',
     value: `${TRANSFORM_RULE}
 
-Explain or rewrite the source using ISO 24495-1 plain language and William Zinsser's craft principles from On Writing Well.
-- Ruthlessly strip clutter: cut every word, phrase, and qualifier that does no work.
-- Use common words, vigorous active verbs, and lean sentences.
-- One thought per sentence.
-- Maintain a clear, engaging human voice; avoid corporate or academic jargon.
-- Retain every concrete fact, figure, and essential qualification without throat-clearing.
-Clear thinking becomes clear writing.`,
+Rewrite the source for its intended reader, combining ISO 24495-1 plain language principles with William Zinsser's advice in On Writing Well.
+- Put the reader's purpose first and organize the information so it is easy to find and use.
+- Cut repetition, throat-clearing, and words that add no meaning. Choose precise, familiar words and direct verbs.
+- Keep a natural voice. Explain necessary jargon instead of replacing exact terms with vague ones.
+- Retain concrete facts, figures, uncertainty, and qualifications that affect the meaning.`,
     category: 'standards',
-    description: 'Plain language stripped of every word of clutter',
+    description: 'ISO plain language with Zinsser-style editing',
     tier: 'short',
-    tags: ['zinsser', 'editing', 'voice', 'brevity'],
+    tags: ['iso 24495-1', 'zinsser', 'plain language', 'editing'],
   },
   {
-    label: 'Pyramid Principle',
+    label: 'Lead With the Answer',
     value: `${TRANSFORM_RULE}
 
-Structure the analysis, recommendation, or explanation of the source using Barbara Minto's Pyramid Principle.
-1) Governing Thought: State the core answer, recommendation, or conclusion up front in 1-2 direct sentences.
-2) Supporting Pillars: Group supporting reasons into 3-4 mutually exclusive, collectively exhaustive (MECE) categories.
-3) Evidence: Provide concrete facts, data, and operational trade-offs underneath each pillar.
-Deliver the bottom line before the reasoning so the reader gets the conclusion first.`,
+Organize the source using Barbara Minto's Pyramid Principle.
+1) State the question the reader needs answered, then give the answer or main conclusion first. If the source cannot support an answer, say so.
+2) Group the supporting ideas by a clear logic, such as reasons, steps, or parts. Make groups distinct and cover the points needed to support the conclusion; do not force a fixed number.
+3) Under each group, give the source's evidence and relevant qualifications. Show how the points support the answer.`,
     category: 'standards',
-    description: 'Answer first, grouped MECE reasons, evidence',
+    description: 'Minto Pyramid Principle: answer first, then reasons',
     tier: 'short',
-    tags: ['pyramid', 'minto', 'decision', 'executive'],
+    tags: ['minto pyramid principle', 'mece', 'decision', 'structure'],
   },
   {
-    label: 'RFC 2119 Spec',
+    label: 'Write Testable Requirements',
     value: `${TRANSFORM_RULE}
 
-Specify the requirements, invariants, and behaviors in the source using formal IETF RFC 2119 requirement levels.
-- Use uppercase keywords strictly: MUST / SHALL / REQUIRED (absolute requirement), MUST NOT / SHALL NOT (absolute prohibition), SHOULD / RECOMMENDED (valid reasons may exist to ignore, but consequences must be understood), SHOULD NOT / NOT RECOMMENDED, MAY / OPTIONAL (truly optional).
-- State each requirement as an atomic, testable assertion.
-- Differentiate system constraints (MUST) from design recommendations (SHOULD) and implementation choices (MAY).
-- Eliminate ambiguous terms like "often", "preferably", or "should ideally".`,
+Turn the source's stated behaviors and constraints into testable requirements using BCP 14 (RFC 2119 and RFC 8174).
+- Use MUST or MUST NOT for absolute requirements or prohibitions; SHOULD or SHOULD NOT when exceptions may be justified; MAY for truly optional behavior. Use these terms sparingly and only when the source supports that strength.
+- Write one observable behavior per requirement. Include the actor, condition, and expected result where known.
+- Preserve stated exceptions and consequences. Mark missing decisions as "Unspecified" instead of assigning a requirement level.
+- Include a BCP 14 note citing RFC 2119 and RFC 8174: only all-capitals keywords carry the defined requirement meanings.`,
     category: 'standards',
-    description: 'Formal IETF requirement levels (MUST, SHOULD, MAY)',
+    description: 'RFC 2119/8174 levels for clear, testable specs',
     tier: 'short',
-    tags: ['rfc2119', 'spec', 'requirements', 'contract'],
+    tags: ['rfc 2119', 'rfc 8174', 'bcp 14', 'spec', 'requirements'],
   },
   {
-    label: 'BLUF Operational',
+    label: 'Put the Bottom Line First',
     value: `${TRANSFORM_RULE}
 
-Format the source using the military BLUF (Bottom Line Up Front) standard for rapid executive/incident briefing.
-1) BLUF: The single most critical conclusion, status, or decision in 1-2 direct sentences.
-2) Immediate Action: Who must do what, by when, and what blocks them. State "None" if informational only.
-3) Core Facts: The 5 Ws (Who, What, Where, When, Why) in concise bullet points.
-4) Key Risks & Trade-offs: What could go wrong or what is being compromised.
-5) Background / Context: Essential supporting history only; cut everything else.`,
+Turn the source into a Bottom Line Up Front (BLUF) brief.
+1) Open with the main conclusion, status, or decision in one or two sentences.
+2) State the next action, owner, and deadline only if the source establishes them.
+3) Give the few facts and risks that explain the bottom line, then any essential background.
+Keep the brief scannable. Label important missing information as unknown; do not invent owners, deadlines, or risks.`,
     category: 'standards',
-    description: 'Bottom Line Up Front: action and facts before context',
+    description: 'BLUF brief: conclusion and action before context',
     tier: 'short',
-    tags: ['bluf', 'incident', 'briefing', 'military'],
+    tags: ['bluf', 'bottom line up front', 'incident', 'briefing'],
   },
   {
-    label: 'Smart Brevity',
+    label: 'Make It Scannable',
     value: `${TRANSFORM_RULE}
 
-Rewrite the source using Axios Smart Brevity for immediate scannability. Total length under 250 words.
-- Headline: Punchy, active statement of the news or core insight.
-- First sentence: One bold sentence giving the takeaway.
-- Why it matters: 1-2 sentences on the real-world impact.
-- The details: 3-5 bulleted points. **Bold the first 2-4 words** of each bullet.
-- Go deeper: One final sentence pointing to the broader trend or next milestone.
-Zero throat-clearing, zero passive voice.`,
+Rewrite the source using Axios Smart Brevity for a reader who will scan it.
+- Lead with a concrete headline and one sentence saying what's new or most important.
+- Add "Why it matters:" with the impact for that reader, grounded in the source.
+- Give only the essential details in short paragraphs or bullets. Use bold lead-ins where they help scanning.
+- Add "Go deeper:" only if the source provides a useful next step or further detail.
+Cut repetition and familiar background while preserving the facts and caveats needed to understand the update.`,
     category: 'standards',
-    description: 'Axios style: Why it matters, bold bullets, <250 words',
+    description: 'Axios Smart Brevity: what matters in a quick scan',
     tier: 'short',
-    tags: ['smart-brevity', 'axios', 'scannable', 'executive'],
+    tags: ['smart brevity', 'axios', 'scannable', 'brief'],
   },
   {
-    label: "Orwell's 6 Rules",
+    label: 'Remove Jargon and Clichés',
     value: `${TRANSFORM_RULE}
 
-Rewrite the source strictly applying George Orwell's six rules from Politics and the English Language:
-1) Never use a metaphor, simile, or other figure of speech which you are used to seeing in print.
-2) Never use a long word where a short one will do.
-3) If it is possible to cut a word out, always cut it out.
-4) Never use the passive where you can use the active.
-5) Never use a foreign phrase, a scientific word, or a jargon word if you can think of an everyday English equivalent.
-6) Break any of these rules sooner than say anything outright barbarous.
-Output the rewrite first, then up to four bullets noting jargon or passive constructions eliminated.`,
+Rewrite the source using George Orwell's six rules from Politics and the English Language.
+- Replace stale figures of speech, needless long words, and jargon when a clear everyday phrase works.
+- Cut words that add nothing and use active voice when it makes the actor clearer.
+- Keep exact technical terms when a simpler word would change the meaning.
+- Break any of these rules before making the prose awkward or obscuring the truth.
+Give the rewrite first, then briefly note any consequential wording changes.`,
     category: 'standards',
-    description: 'Classic anti-jargon, plain Saxon English',
+    description: "Orwell's six rules for direct, precise prose",
     tier: 'short',
-    tags: ['orwell', 'editing', 'craft', 'anti-jargon'],
+    tags: ['orwell', 'six rules', 'editing', 'jargon', 'clichés'],
   },
   {
-    label: 'Amazon PR/FAQ',
+    label: 'Draft a Press Release and FAQ',
     value: `${TRANSFORM_RULE}
 
-Structure the product or technical proposal in the source using Amazon's Working Backwards PR/FAQ framework.
-1) PRESS RELEASE
-   - Heading & Dateline: Customer-facing launch headline and summary.
-   - Problem: The customer pain point described from their perspective.
-   - Solution: How this capability cleanly solves it.
-   - Leader Quote: A quote from leadership explaining the strategic vision.
-   - Customer Experience: How a customer gets started and the immediate benefit.
-   - Call to Action: Where to go next.
-2) CRITICAL FAQ
-   - 3 hardest external customer questions (pricing, limits, migration).
-   - 3 hardest internal engineering/business questions (feasibility, unit economics, edge cases).`,
+Draft a Working Backwards PR/FAQ for the product idea in the source. Treat the press release as a proposed future launch, not an announcement of an actual product.
+1) Press release: Write a customer-facing headline and short narrative naming the customer, their problem, the proposed experience, and its benefit. Include a call to action only if one is known.
+2) Customer FAQ: Answer the hardest likely questions about use, limits, cost, and alternatives where the source provides evidence.
+3) Internal FAQ: Address feasibility, trade-offs, risks, and how success would be measured.
+Separate source-backed facts from proposals and open questions. Do not invent customer research, pricing, dates, or attributed quotes.`,
     category: 'standards',
-    description: 'Amazon working backwards customer press release + FAQ',
+    description: 'Amazon Working Backwards press release and FAQ',
     tier: 'long',
-    tags: ['amazon', 'pr-faq', 'product', 'proposal'],
+    tags: ['amazon', 'working backwards', 'pr/faq', 'product', 'proposal'],
   },
   {
-    label: 'First Principles',
+    label: 'Reason From Basics',
     value: `${TRANSFORM_RULE}
 
-Deconstruct the problem, architecture, or claim in the source using First Principles reasoning.
-1) Identify the core problem or goal being addressed.
-2) Strip away all assumptions, industry consensus, benchmarks, and historical precedent. Forbid reasoning by analogy.
-3) Identify the foundational truths: physics, mathematics, core constraints, and fundamental cost/resource limits.
-4) Reconstruct the solution from the ground up from these fundamental truths.
-5) Contrast: Where does this ground-up solution differ from common industry practice, and why?`,
+Analyze the source using first-principles reasoning.
+1) State the problem and the outcome sought.
+2) List the relevant assumptions and constraints. Separate source-backed facts from claims that need testing.
+3) Identify the most basic facts or mechanisms that govern this problem; use physical or mathematical limits only when relevant.
+4) Build a possible answer from those facts, showing each step and where uncertainty remains.
+5) Compare the result with the source's proposed approach, if any. Name the evidence needed to choose between them.`,
     category: 'standards',
-    description: 'Axiomatic deconstruction: physics & math over analogy',
+    description: 'First-principles reasoning from facts and constraints',
     tier: 'long',
-    tags: ['first-principles', 'reasoning', 'architecture', 'physics'],
+    tags: ['first principles', 'reasoning', 'assumptions', 'architecture'],
   },
   {
-    label: 'Feynman Technique',
+    label: 'Explain It to a Beginner',
     value: `${TRANSFORM_RULE}
 
-Explain the concept or mechanism in the source using the Feynman Technique.
-1) Explain it simply as if teaching an intelligent 12-year-old or someone completely outside the field.
-2) Ban all domain acronyms and insider jargon. If a technical term is unavoidable, define it using everyday physical concepts.
-3) Use one vivid, mechanically accurate real-world analogy.
-4) Identify the "Intuition Gap": the exact place where most people's mental model breaks down or gets confused, and resolve it.
-5) One-sentence summary that captures the foundational essence.`,
+Explain the source as if teaching a curious beginner, using the approach often called the Feynman Technique.
+1) Describe the idea in plain words, starting with what it does and why.
+2) Walk through a concrete example. Define each necessary technical term when it first appears.
+3) Identify the step that is hardest to explain; unpack it or say what the source leaves unclear.
+4) Use an analogy only if it is accurate and makes that step easier to understand. State where the analogy stops working.
+End with a one-sentence recap.`,
     category: 'standards',
-    description: 'Intuition-first breakdown, zero jargon, vivid model',
+    description: 'Feynman-style teaching with a concrete example',
     tier: 'short',
-    tags: ['feynman', 'learning', 'mental-model', 'intuition'],
+    tags: ['feynman technique', 'learning', 'beginner', 'explanation'],
   },
 
   // --- quick ---
