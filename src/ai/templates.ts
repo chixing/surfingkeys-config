@@ -4,7 +4,15 @@
 
 import type { FabricPattern } from './fabric';
 
-export type PromptCategory = 'quick' | 'explain' | 'code' | 'research' | 'decision' | 'write' | 'fabric';
+export type PromptCategory =
+  | 'standards'
+  | 'quick'
+  | 'explain'
+  | 'code'
+  | 'research'
+  | 'decision'
+  | 'write'
+  | 'fabric';
 export type PromptTier = 'short' | 'long';
 
 export interface PromptTemplate {
@@ -18,6 +26,7 @@ export interface PromptTemplate {
 }
 
 export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
+  standards: 'Standards',
   quick: 'Quick',
   explain: 'Explain',
   code: 'Code',
@@ -28,6 +37,7 @@ export const PROMPT_CATEGORY_LABELS: Record<PromptCategory, string> = {
 };
 
 export const PROMPT_CATEGORY_ORDER: PromptCategory[] = [
+  'standards',
   'quick',
   'explain',
   'code',
@@ -102,6 +112,183 @@ export function templateSearchHaystack(template: PromptTemplate): string {
 }
 
 const CURATED_PROMPT_TEMPLATES: PromptTemplate[] = [
+  // --- standards ---
+  {
+    label: 'ASD-STE100 Audit',
+    value: `${TRANSFORM_RULE}
+
+Explain or rewrite the mechanism or spec in the source using ASD-STE100 (Simplified Technical English, ~80% compliance).
+- Short sentences: instructions under 20 words, descriptions under 25 words.
+- One topic or instruction per sentence.
+- Active voice and direct verbs only.
+- Approved general words; technical terms only when strictly necessary.
+- No metaphors, no perfect tenses, no semicolons.
+- Maximum three-word noun clusters.
+Preserve every technical state change, condition, and boundary. Remove all conversational prose and filler.`,
+    category: 'standards',
+    description: 'Aerospace controlled English for auditability',
+    tier: 'short',
+    tags: ['audit', 'spec', 'ste100', 'precision'],
+  },
+  {
+    label: 'ISO 24495-1 Plain',
+    value: `${TRANSFORM_RULE}
+
+Explain or rewrite the source following ISO 24495-1:2023 plain language principles.
+Make the content directly relevant, findable, understandable, and usable for the intended reader.
+- Relevant: Address what the reader needs to know or do; skip irrelevant background.
+- Findable: Use clear section headings, short paragraphs, and bulleted lists.
+- Understandable: Plain everyday words, active voice, short sentences; explain essential technical terms on first use.
+- Usable: Make actions, choices, and error paths explicit and easy to execute.
+Do not dumb it down or use forced analogies; make the true content immediately accessible.`,
+    category: 'standards',
+    description: 'Relevant, findable, understandable, usable',
+    tier: 'short',
+    tags: ['plain-language', 'iso', 'clarity'],
+  },
+  {
+    label: 'ISO + Zinsser',
+    value: `${TRANSFORM_RULE}
+
+Explain or rewrite the source using ISO 24495-1 plain language and William Zinsser's craft principles from On Writing Well.
+- Ruthlessly strip clutter: cut every word, phrase, and qualifier that does no work.
+- Use common words, vigorous active verbs, and lean sentences.
+- One thought per sentence.
+- Maintain a clear, engaging human voice; avoid corporate or academic jargon.
+- Retain every concrete fact, figure, and essential qualification without throat-clearing.
+Clear thinking becomes clear writing.`,
+    category: 'standards',
+    description: 'Plain language stripped of every word of clutter',
+    tier: 'short',
+    tags: ['zinsser', 'editing', 'voice', 'brevity'],
+  },
+  {
+    label: 'Pyramid Principle',
+    value: `${TRANSFORM_RULE}
+
+Structure the analysis, recommendation, or explanation of the source using Barbara Minto's Pyramid Principle.
+1) Governing Thought: State the core answer, recommendation, or conclusion up front in 1-2 direct sentences.
+2) Supporting Pillars: Group supporting reasons into 3-4 mutually exclusive, collectively exhaustive (MECE) categories.
+3) Evidence: Provide concrete facts, data, and operational trade-offs underneath each pillar.
+Deliver the bottom line before the reasoning so the reader gets the conclusion first.`,
+    category: 'standards',
+    description: 'Answer first, grouped MECE reasons, evidence',
+    tier: 'short',
+    tags: ['pyramid', 'minto', 'decision', 'executive'],
+  },
+  {
+    label: 'RFC 2119 Spec',
+    value: `${TRANSFORM_RULE}
+
+Specify the requirements, invariants, and behaviors in the source using formal IETF RFC 2119 requirement levels.
+- Use uppercase keywords strictly: MUST / SHALL / REQUIRED (absolute requirement), MUST NOT / SHALL NOT (absolute prohibition), SHOULD / RECOMMENDED (valid reasons may exist to ignore, but consequences must be understood), SHOULD NOT / NOT RECOMMENDED, MAY / OPTIONAL (truly optional).
+- State each requirement as an atomic, testable assertion.
+- Differentiate system constraints (MUST) from design recommendations (SHOULD) and implementation choices (MAY).
+- Eliminate ambiguous terms like "often", "preferably", or "should ideally".`,
+    category: 'standards',
+    description: 'Formal IETF requirement levels (MUST, SHOULD, MAY)',
+    tier: 'short',
+    tags: ['rfc2119', 'spec', 'requirements', 'contract'],
+  },
+  {
+    label: 'BLUF Operational',
+    value: `${TRANSFORM_RULE}
+
+Format the source using the military BLUF (Bottom Line Up Front) standard for rapid executive/incident briefing.
+1) BLUF: The single most critical conclusion, status, or decision in 1-2 direct sentences.
+2) Immediate Action: Who must do what, by when, and what blocks them. State "None" if informational only.
+3) Core Facts: The 5 Ws (Who, What, Where, When, Why) in concise bullet points.
+4) Key Risks & Trade-offs: What could go wrong or what is being compromised.
+5) Background / Context: Essential supporting history only; cut everything else.`,
+    category: 'standards',
+    description: 'Bottom Line Up Front: action and facts before context',
+    tier: 'short',
+    tags: ['bluf', 'incident', 'briefing', 'military'],
+  },
+  {
+    label: 'Smart Brevity',
+    value: `${TRANSFORM_RULE}
+
+Rewrite the source using Axios Smart Brevity for immediate scannability. Total length under 250 words.
+- Headline: Punchy, active statement of the news or core insight.
+- First sentence: One bold sentence giving the takeaway.
+- Why it matters: 1-2 sentences on the real-world impact.
+- The details: 3-5 bulleted points. **Bold the first 2-4 words** of each bullet.
+- Go deeper: One final sentence pointing to the broader trend or next milestone.
+Zero throat-clearing, zero passive voice.`,
+    category: 'standards',
+    description: 'Axios style: Why it matters, bold bullets, <250 words',
+    tier: 'short',
+    tags: ['smart-brevity', 'axios', 'scannable', 'executive'],
+  },
+  {
+    label: "Orwell's 6 Rules",
+    value: `${TRANSFORM_RULE}
+
+Rewrite the source strictly applying George Orwell's six rules from Politics and the English Language:
+1) Never use a metaphor, simile, or other figure of speech which you are used to seeing in print.
+2) Never use a long word where a short one will do.
+3) If it is possible to cut a word out, always cut it out.
+4) Never use the passive where you can use the active.
+5) Never use a foreign phrase, a scientific word, or a jargon word if you can think of an everyday English equivalent.
+6) Break any of these rules sooner than say anything outright barbarous.
+Output the rewrite first, then up to four bullets noting jargon or passive constructions eliminated.`,
+    category: 'standards',
+    description: 'Classic anti-jargon, plain Saxon English',
+    tier: 'short',
+    tags: ['orwell', 'editing', 'craft', 'anti-jargon'],
+  },
+  {
+    label: 'Amazon PR/FAQ',
+    value: `${TRANSFORM_RULE}
+
+Structure the product or technical proposal in the source using Amazon's Working Backwards PR/FAQ framework.
+1) PRESS RELEASE
+   - Heading & Dateline: Customer-facing launch headline and summary.
+   - Problem: The customer pain point described from their perspective.
+   - Solution: How this capability cleanly solves it.
+   - Leader Quote: A quote from leadership explaining the strategic vision.
+   - Customer Experience: How a customer gets started and the immediate benefit.
+   - Call to Action: Where to go next.
+2) CRITICAL FAQ
+   - 3 hardest external customer questions (pricing, limits, migration).
+   - 3 hardest internal engineering/business questions (feasibility, unit economics, edge cases).`,
+    category: 'standards',
+    description: 'Amazon working backwards customer press release + FAQ',
+    tier: 'long',
+    tags: ['amazon', 'pr-faq', 'product', 'proposal'],
+  },
+  {
+    label: 'First Principles',
+    value: `${TRANSFORM_RULE}
+
+Deconstruct the problem, architecture, or claim in the source using First Principles reasoning.
+1) Identify the core problem or goal being addressed.
+2) Strip away all assumptions, industry consensus, benchmarks, and historical precedent. Forbid reasoning by analogy.
+3) Identify the foundational truths: physics, mathematics, core constraints, and fundamental cost/resource limits.
+4) Reconstruct the solution from the ground up from these fundamental truths.
+5) Contrast: Where does this ground-up solution differ from common industry practice, and why?`,
+    category: 'standards',
+    description: 'Axiomatic deconstruction: physics & math over analogy',
+    tier: 'long',
+    tags: ['first-principles', 'reasoning', 'architecture', 'physics'],
+  },
+  {
+    label: 'Feynman Technique',
+    value: `${TRANSFORM_RULE}
+
+Explain the concept or mechanism in the source using the Feynman Technique.
+1) Explain it simply as if teaching an intelligent 12-year-old or someone completely outside the field.
+2) Ban all domain acronyms and insider jargon. If a technical term is unavoidable, define it using everyday physical concepts.
+3) Use one vivid, mechanically accurate real-world analogy.
+4) Identify the "Intuition Gap": the exact place where most people's mental model breaks down or gets confused, and resolve it.
+5) One-sentence summary that captures the foundational essence.`,
+    category: 'standards',
+    description: 'Intuition-first breakdown, zero jargon, vivid model',
+    tier: 'short',
+    tags: ['feynman', 'learning', 'mental-model', 'intuition'],
+  },
+
   // --- quick ---
   {
     label: 'Extract Data',
