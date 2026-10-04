@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const [command, directory = 'release'] = process.argv.slice(2);
@@ -38,6 +38,7 @@ if (command === 'pack') {
     execFileSync('git', ['merge-base', '--is-ancestor', sha, 'origin/main']);
   }
   requireValue(files.every((file) => existsSync(join('dist', file))), 'Build the bundle before packaging');
+  requireValue(!existsSync(directory) || readdirSync(directory).length === 0, 'Retained package destination is populated; choose a new directory');
   mkdirSync(directory, { recursive: true });
   for (const file of files) copyFileSync(join('dist', file), join(directory, file));
   const manifest = {
