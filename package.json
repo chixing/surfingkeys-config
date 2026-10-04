@@ -10,8 +10,11 @@
     "type-check": "tsc --noEmit",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
-    "release": "npm run type-check && npm run lint && npm version patch -m \"Release %s\" && git push --follow-tags",
-    "deploy": "npm run build && gh gist edit 82767d49380294ad7b298554e2c0e59b dist/surfingkeys.js"
+    "release": "npm run verify && npm version patch -m \"Release %s\" && git push --follow-tags",
+    "deploy": "node scripts/release.mjs deploy",
+    "verify": "npm run lint && npm run type-check && npm run build",
+    "package:release": "npm run verify && node scripts/release.mjs pack",
+    "verify:release": "node scripts/release.mjs verify"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.3",

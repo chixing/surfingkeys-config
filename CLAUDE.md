@@ -8,24 +8,19 @@ configuration. `src/` is bundled by **tsup** into a single minified IIFE at
 
 ## Deploy
 
-- `dist/surfingkeys.js` is published to a GitHub gist (`82767d49380294ad7b298554e2c0e59b`)
-  via `npm run deploy` (`gh gist edit ...`).
-- CI (`.github/workflows/deploy.yml`) runs deploy on every push to `main`, so
-  **pushing to main = deploying**. Lint and type-check run in CI before deploy.
-- Git is the source of truth for the version in package.json and package-lock.json.
-  Build and deploy use that exact version, shown at the bottom-left of the dialog
-  and in the bundle banner. Deploy never changes the version.
-- To release: commit your changes on `main`, then run `npm run release` with a clean
-  working tree. It runs type-check and lint, bumps the patch version in both package
-  files, commits and tags the version, then pushes to trigger CI deployment.
-  If the push fails, resolve it and retry `git push --follow-tags`; do not bump again.
+- Main pushes do not publish. `.github/workflows/bundle.yml` builds a retained bundle on a version tag or manual dispatch; `.github/workflows/deploy.yml` promotes a successful bundle run only by manual dispatch.
+- Version comes from package.json/package-lock.json. A tag must be `v<version>` and identify main history. Bundles record source SHA; `release/` contains exact JS/source map, manifest and SHA256SUMS.
+- Run `npm run package:release` from a clean checkout to lint, type-check, build and package. `npm run deploy` verifies and publishes retained `release/surfingkeys.js` without rebuilding. It requires the recorded source in `origin/main`.
+- To promote or restore, dispatch “Promote retained bundle to Gist” on main with a successful “Bundle release” run ID. The workflow validates run provenance, source ancestry and hashes before editing the existing gist. Restoring uses the previous successful run, not a rebuild.
+- `npm run release` verifies, bumps the patch version, commits/tags, then pushes for packaging. A push failure should be retried without another bump. Tag builds save draft downloads; publication and gist promotion remain deliberate.
+- Verify the loaded dialog version and intended page/clipboard behavior before calling a promotion accepted. See RELEASE.md for installation and recovery.
 
 ## Commands
 
 - `npm run build` / `npm run watch` — tsup bundle (watch rebuilds on change)
 - `npm run type-check` — `tsc --noEmit`, strict
 - `npm run lint` / `npm run lint:fix` — Biome check / check --write
-- `npm run deploy` — build + push bundle to the gist
+- `npm run deploy` — verify + push the retained release bundle to the gist
 
 ## Architecture
 

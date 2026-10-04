@@ -34,6 +34,7 @@ vim src/*.ts
 git add -A
 git commit -m "Update config"
 git push
+npm run package:release
 npm run deploy
 ```
 
@@ -52,6 +53,7 @@ git commit -m "Update config"
 git push
 
 # Deploy
+npm run package:release
 npm run deploy
 ```
 
@@ -62,7 +64,7 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
 ```
 
 - `npm run build` compiles TypeScript to a single `dist/surfingkeys.js` bundle.
-- `npm run deploy` runs the build and then updates the gist via `gh gist edit`.
+- `npm run package:release` verifies and packages a clean commit. `npm run deploy` verifies the retained bytes and updates the gist without rebuilding. Main pushes do not deploy; see [release and recovery](RELEASE.md).
 
 ## Scripts
 
@@ -71,7 +73,8 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
 | `npm run build` | Build `dist/surfingkeys.js` from TypeScript sources |
 | `npm run watch` | Auto-rebuild on file changes |
 | `npm run type-check` | Validate types without building |
-| `npm run deploy` | Build and push to gist |
+| `npm run package:release` | Verify, build and retain release files |
+| `npm run deploy` | Verify and promote retained release files |
 
 ## Project Structure
 
