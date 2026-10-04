@@ -62,7 +62,12 @@ function captureHashPrompt(): string | null {
   if (typeof window === 'undefined' || !window.location?.hash?.startsWith(PROMPT_KEY)) {
     return null;
   }
-  const promptText = decodeURIComponent(window.location.hash.substring(PROMPT_KEY.length));
+  let promptText: string;
+  try {
+    promptText = decodeURIComponent(window.location.hash.substring(PROMPT_KEY.length));
+  } catch {
+    return null;
+  }
   history.replaceState(null, '', ' ');
   return promptText;
 }

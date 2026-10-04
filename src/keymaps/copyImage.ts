@@ -37,23 +37,31 @@ function convertAndCopyImage(url: string): void {
     drawImageToPngBlob(img, (blob) => copyPngToClipboard(blob, url));
   };
   img.onerror = () => {
+    const copyUrl = () => {
+      api.Clipboard.write(url);
+      api.Front.showBanner('Copied URL (Image load failed)', 'warning');
+    };
     fetch(url)
       .then((r) => r.blob())
       .then((blob) => {
         const blobUrl = URL.createObjectURL(blob);
         const img2 = new Image();
         img2.onload = () => {
-          drawImageToPngBlob(img2, (b) => {
+          try {
+            drawImageToPngBlob(img2, (b) => copyPngToClipboard(b, url));
+          } catch {
+            copyUrl();
+          } finally {
             URL.revokeObjectURL(blobUrl);
-            copyPngToClipboard(b, url);
-          });
+          }
+        };
+        img2.onerror = () => {
+          URL.revokeObjectURL(blobUrl);
+          copyUrl();
         };
         img2.src = blobUrl;
       })
-      .catch(() => {
-        api.Clipboard.write(url);
-        api.Front.showBanner('Copied URL (Image load failed)', 'warning');
-      });
+      .catch(copyUrl);
   };
   img.src = url;
 }
