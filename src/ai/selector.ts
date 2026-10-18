@@ -4,7 +4,6 @@
 
 import type { Config, AIServiceName } from '../config';
 import { AI_SERVICES } from '../config';
-import { fetchFabricPattern, readFabricIndex, refreshFabricIndex } from './fabric';
 import {
   formatCombinedQuery,
   PROMPT_CATEGORY_LABELS,
@@ -48,6 +47,7 @@ export class AiSelector {
   private queryInput: HTMLTextAreaElement | null = null;
   private promptPreviewInput: HTMLTextAreaElement | null = null;
   private promptPreviewTitle: HTMLElement | null = null;
+  private promptPreviewMeta: HTMLElement | null = null;
   private clipboardText: string | null = null;
   private clipboardIndicator: HTMLElement | null = null;
   private pageContext: PageContext | null = null;
@@ -55,17 +55,12 @@ export class AiSelector {
   private templateRows: HTMLElement[] = [];
   private templates: PromptTemplate[] = [];
   private templateList: HTMLElement | null = null;
-  private templateListTouched = false;
   private templateRenderOrder: number[] = [];
   private templateCheckboxes: HTMLInputElement[] = [];
   private serviceCheckboxes: HTMLInputElement[] = [];
   private templateFilterInput: HTMLInputElement | null = null;
   private templateCategoryHeadings = new Map<PromptCategory, HTMLElement>();
   private promptDrafts: string[] = [];
-  private fabricLoads = new Map<number, Promise<void>>();
-  private fabricErrors = new Map<number, string>();
-  private fabricExpanded = false;
-  private submitting = false;
   private selectedPromptIndexes = new Set<number>();
   private activePromptIndex: number | null = null;
   private activePromptTouchedByUser: boolean = false;
@@ -115,9 +110,7 @@ export class AiSelector {
   // ===========================================================================
 
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
-    const cached = readFabricIndex();
-    this.templates = createPromptTemplates(cached);
-    this.templateListTouched = false;
+    this.templates = createPromptTemplates();
     this.initializePromptState();
     this.clipboardText = null;
     // Only a selection made on this page implies the page is the context. A restored
@@ -159,26 +152,6 @@ export class AiSelector {
     this.setupFocusHandler();
     this.setupInitialFocus(queryInput);
     this.setupOverlayClickHandler();
-    const overlay = this.overlay;
-    void refreshFabricIndex().then((patterns) => {
-      if (
-        !patterns ||
-        this.overlay !== overlay ||
-        !this.templateList ||
-        this.templateListTouched ||
-        this.submitting ||
-        JSON.stringify(patterns) === JSON.stringify(cached)
-      )
-        return;
-      // No template interaction has begun, so only empty Fabric drafts are replaced.
-      // Curated indexes, preview edits, filter input and focus remain intact.
-      this.templates = createPromptTemplates(patterns);
-      this.promptDrafts.length = this.templates.length;
-      this.templates.forEach((template, index) => {
-        if (template.fabricPattern) this.promptDrafts[index] = '';
-      });
-      this.renderTemplateRows(this.templateList);
-    });
   }
 
   close(): void {
@@ -205,6 +178,7 @@ export class AiSelector {
     this.pageContextToggle = null;
     this.promptPreviewInput = null;
     this.promptPreviewTitle = null;
+    this.promptPreviewMeta = null;
     this.clipboardText = null;
     this.clipboardIndicator = null;
     this.templateRows = [];
@@ -272,13 +246,6 @@ export class AiSelector {
       event.sk_stopPropagation = true;
 
       const target = e.target as HTMLElement | null;
-      if (target?.dataset.skCategoryHeading === 'fabric' && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        e.stopPropagation();
-        target.click();
-        return;
-      }
-
       if (e.key === 'Tab') {
         const templateIndex = target ? this.getPromptTemplateIndexFromTarget(target) : null;
         if (templateIndex !== null && !e.shiftKey && !this.promptPreviewInput?.disabled) {
@@ -414,8 +381,8 @@ export class AiSelector {
     });
   }
 
-  private async handleSubmit(): Promise<void> {
-    if (!this.queryInput || this.submitting) return;
+  private handleSubmit(): void {
+    if (!this.queryInput) return;
     const query = this.queryInput.value.trim();
     if (!query) {
       this.queryInput.focus();
@@ -434,24 +401,14 @@ export class AiSelector {
     }
 
     this.persistPreviewInput();
-    const drafts = this.promptDrafts;
     const indexes = this.getSelectedPromptIndexesInOrder();
     if (!indexes.length && this.activePromptTouchedByUser && this.activePromptIndex !== null) {
       indexes.push(this.activePromptIndex);
     }
     const page = this.getActivePageContext();
-    this.submitting = true;
-    let promptsToSend: string[];
-    try {
-      await Promise.all(indexes.map((index) => this.resolveFabricDraft(index)));
-      if (this.promptDrafts !== drafts) return;
-      promptsToSend = indexes.length ? [...new Set(indexes.map((index) => drafts[index].trim()))] : [''];
-    } catch (error) {
-      if (this.promptDrafts === drafts) alert(error instanceof Error ? error.message : String(error));
-      return;
-    } finally {
-      if (this.promptDrafts === drafts) this.submitting = false;
-    }
+    const promptsToSend = indexes.length
+      ? [...new Set(indexes.map((index) => this.promptDrafts[index].trim()))]
+      : [''];
 
     const tabCount = selectedServices.length * promptsToSend.length;
     if (tabCount > TAB_WARNING_THRESHOLD) {
@@ -471,10 +428,6 @@ export class AiSelector {
 
   private initializePromptState(): void {
     this.promptDrafts = this.templates.map((template) => template.value);
-    this.fabricLoads = new Map();
-    this.fabricErrors = new Map();
-    this.fabricExpanded = false;
-    this.submitting = false;
     this.selectedPromptIndexes.clear();
     this.activePromptTouchedByUser = false;
 
@@ -507,29 +460,11 @@ export class AiSelector {
     this.activePromptIndex = index;
     if (markTouched) {
       this.activePromptTouchedByUser = true;
-      this.templateListTouched = true;
     }
 
     if (this.promptPreviewInput) {
       this.promptPreviewInput.disabled = false;
       this.promptPreviewInput.value = this.promptDrafts[index] || '';
-      if (this.templates[index].fabricPattern && !this.promptDrafts[index]) {
-        const preview = this.promptPreviewInput;
-        const drafts = this.promptDrafts;
-        preview.disabled = true;
-        preview.value = this.fabricErrors.get(index) ?? 'Loading…';
-        void this.resolveFabricDraft(index).then(
-          () => {
-            if (this.promptDrafts !== drafts || this.activePromptIndex !== index) return;
-            preview.value = drafts[index];
-            preview.disabled = false;
-          },
-          (error: Error) => {
-            if (this.promptDrafts === drafts && this.activePromptIndex === index)
-              preview.value = error.message;
-          },
-        );
-      }
       if (focusPreview) {
         this.promptPreviewInput.focus();
         this.promptPreviewInput.selectionStart = this.promptPreviewInput.value.length;
@@ -543,6 +478,8 @@ export class AiSelector {
 
   private updatePromptPreviewTitle(): void {
     if (!this.promptPreviewTitle) return;
+    this.promptPreviewMeta?.replaceChildren();
+    if (this.promptPreviewMeta) this.promptPreviewMeta.hidden = true;
     if (this.activePromptIndex === null) {
       this.promptPreviewTitle.textContent = 'Preview / Edit';
       return;
@@ -550,6 +487,18 @@ export class AiSelector {
 
     const activeTemplate = this.templates[this.activePromptIndex];
     this.promptPreviewTitle.textContent = `Preview / Edit: ${activeTemplate?.label || 'Custom'}`;
+    if (this.promptPreviewMeta && activeTemplate?.source) {
+      this.promptPreviewMeta.hidden = false;
+      const context = activeTemplate.context === 'conversation' ? 'Conversation' : 'Page';
+      this.promptPreviewMeta.append(`${context} · Adapted from `);
+      const link = document.createElement('a');
+      link.href = activeTemplate.source.url;
+      link.textContent = activeTemplate.source.author;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      this.promptPreviewMeta.appendChild(link);
+      this.markAsSurfingKeys(this.promptPreviewMeta);
+    }
   }
 
   private updatePromptRowStyles(): void {
@@ -568,32 +517,6 @@ export class AiSelector {
       if (this.selectedPromptIndexes.has(index)) selectedIndexes.push(index);
     });
     return selectedIndexes;
-  }
-
-  private async resolveFabricDraft(index: number): Promise<void> {
-    const name = this.templates[index].fabricPattern;
-    if (!name || this.promptDrafts[index]) return;
-    const error = this.fabricErrors.get(index);
-    if (error) throw new Error(error);
-    let pending = this.fabricLoads.get(index);
-    if (!pending) {
-      const drafts = this.promptDrafts;
-      const errors = this.fabricErrors;
-      const loads = this.fabricLoads;
-      pending = fetchFabricPattern(name)
-        .then(
-          (text) => {
-            drafts[index] = text;
-          },
-          (error: Error) => {
-            errors.set(index, error.message);
-            throw error;
-          },
-        )
-        .finally(() => loads.delete(index));
-      this.fabricLoads.set(index, pending);
-    }
-    await pending;
   }
 
   // ===========================================================================
@@ -621,44 +544,25 @@ export class AiSelector {
       if (!row) return;
 
       const match = !q || templateSearchHaystack(template).includes(q);
-      const collapsed = template.category === 'fabric' && !this.fabricExpanded && !q;
-      row.style.display = match && !collapsed ? 'flex' : 'none';
+      row.style.display = match ? 'flex' : 'none';
       if (match) categoryHasVisible.set(template.category, true);
     });
 
     this.templateCategoryHeadings.forEach((heading, category) => {
       heading.style.display = categoryHasVisible.get(category) ? '' : 'none';
-      if (category === 'fabric') {
-        const expanded = this.fabricExpanded || !!q;
-        heading.setAttribute('aria-expanded', String(expanded));
-        heading.textContent = `${expanded ? '▾' : '▸'} Fabric`;
-      }
     });
   }
 
   private tryHandlePromptTemplateKeyNav(e: KeyboardEvent, target: HTMLElement): boolean {
     const index = this.getPromptTemplateIndexFromTarget(target);
-    const heading = this.templateCategoryHeadings.get('fabric');
-    if (index === null && target !== heading) return false;
-
-    if (target === heading && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
-      e.preventDefault();
-      this.templateListTouched = true;
-      this.fabricExpanded = e.key === 'ArrowRight';
-      this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
-      return true;
-    }
-
+    if (index === null) return false;
     const items = Array.from(
-      this.templateList?.querySelectorAll<HTMLElement>(
-        'input[type="checkbox"], [data-sk-category-heading="fabric"]',
-      ) ?? [],
+      this.templateList?.querySelectorAll<HTMLElement>('input[type="checkbox"]') ?? [],
     ).filter((item) => {
       const rowIndex = this.getPromptTemplateIndexFromTarget(item);
-      return rowIndex === null ? item.style.display !== 'none' : this.isTemplateRowVisible(rowIndex);
+      return rowIndex !== null && this.isTemplateRowVisible(rowIndex);
     });
-    const current = index === null ? target : this.templateCheckboxes[index];
-    let nextIndex = items.indexOf(current);
+    let nextIndex = items.indexOf(this.templateCheckboxes[index]);
     if (e.key === 'ArrowDown' || e.key === 'j') {
       nextIndex++;
     } else if (e.key === 'ArrowUp' || e.key === 'k') {
@@ -827,6 +731,8 @@ export class AiSelector {
       }
       #sk-ai-selector-overlay .sk-ai-row.is-selected .sk-ai-row-label { color: var(--sk-accent-fg); }
       #sk-ai-selector-overlay .sk-ai-preview-title { color: var(--sk-main-fg); font-size: 13px; font-weight: 600; }
+      #sk-ai-selector-overlay .sk-ai-preview-meta { color: var(--sk-info-fg); font-size: 12px; }
+      #sk-ai-selector-overlay .sk-ai-preview-meta a { color: var(--sk-main-fg); text-decoration: underline; }
       #sk-ai-selector-overlay .sk-ai-preview {
         width: 100%; min-height: 440px; padding: 12px; background: var(--sk-bg-dark);
         border: 1px solid var(--sk-border); border-radius: 4px; color: var(--sk-fg);
@@ -979,12 +885,6 @@ export class AiSelector {
     const templateList = document.createElement('div');
     templateList.className = 'sk-ai-template-list';
     this.templateList = templateList;
-    for (const event of ['pointerdown', 'focusin', 'keydown']) {
-      templateList.addEventListener(event, () => {
-        this.templateListTouched = true;
-      });
-    }
-
     this.renderTemplateRows(templateList);
 
     const rightPane = document.createElement('div');
@@ -994,6 +894,11 @@ export class AiSelector {
     previewTitle.className = 'sk-ai-preview-title';
     this.promptPreviewTitle = previewTitle;
 
+    const previewMeta = document.createElement('div');
+    previewMeta.className = 'sk-ai-preview-meta';
+    previewMeta.hidden = true;
+    this.promptPreviewMeta = previewMeta;
+
     const input = document.createElement('textarea');
     input.className = 'sk-ai-preview';
     input.rows = 12;
@@ -1001,7 +906,6 @@ export class AiSelector {
     input.addEventListener('input', () => {
       if (this.activePromptIndex === null) return;
       this.activePromptTouchedByUser = true;
-      this.templateListTouched = true;
       this.promptDrafts[this.activePromptIndex] = input.value;
     });
     this.promptPreviewInput = input;
@@ -1010,6 +914,7 @@ export class AiSelector {
     leftPane.appendChild(templateList);
 
     rightPane.appendChild(previewTitle);
+    rightPane.appendChild(previewMeta);
     rightPane.appendChild(input);
 
     picker.appendChild(leftPane);
@@ -1040,16 +945,6 @@ export class AiSelector {
       heading.className = 'sk-ai-cat-heading';
       heading.textContent = PROMPT_CATEGORY_LABELS[category];
       heading.dataset.skCategoryHeading = category;
-      if (category === 'fabric') {
-        heading.setAttribute('role', 'button');
-        heading.tabIndex = 0;
-        heading.style.cursor = 'pointer';
-        heading.onclick = () => {
-          this.templateListTouched = true;
-          this.fabricExpanded = !this.fabricExpanded;
-          this.applyTemplateFilter(this.templateFilterInput?.value ?? '');
-        };
-      }
       this.templateCategoryHeadings.set(category, heading);
       templateList.appendChild(heading);
 
@@ -1112,7 +1007,6 @@ export class AiSelector {
     selectAllBtn.textContent = 'Select All Prompts';
     selectAllBtn.type = 'button';
     selectAllBtn.onclick = () => {
-      this.templateListTouched = true;
       this.templates.forEach((_, index) => {
         this.selectedPromptIndexes.add(index);
         const checkbox = this.templateCheckboxes[index];
@@ -1130,7 +1024,6 @@ export class AiSelector {
     unselectAllBtn.textContent = 'Unselect All Prompts';
     unselectAllBtn.type = 'button';
     unselectAllBtn.onclick = () => {
-      this.templateListTouched = true;
       this.selectedPromptIndexes.clear();
       this.templates.forEach((_, index) => {
         const checkbox = this.templateCheckboxes[index];
