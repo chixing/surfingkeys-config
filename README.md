@@ -151,6 +151,11 @@ api.mapkey('am', 'My AI Search', () => {
 - Submit opens tabs for every selected `service x prompt` combination.
 - If the selection would open more than 12 tabs, the dialog asks for confirmation first.
 
+The **Thariq** and **Felix** sections contain adapted practitioner prompts. Their previews
+link to the original sources and show whether they work on a page or start a conversation.
+Thariq covers blind spots, domain vocabulary, and goal interviews. Felix covers expert
+deep reading, improving a task request, and finding the outcome behind a task.
+
 ## Troubleshooting
 
 - **Build fails:** `npm run type-check` to see errors.
