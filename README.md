@@ -7,6 +7,7 @@ Modern TypeScript-based SurfingKeys configuration with full type safety and IDE 
 - **Source repo:** https://github.com/chixing/surfingkeys-config
 - **Gist raw (loaded by SurfingKeys):** https://gist.githubusercontent.com/chixing/82767d49380294ad7b298554e2c0e59b/raw/surfingkeys.js
 - **Gist edit:** https://gist.github.com/chixing/82767d49380294ad7b298554e2c0e59b
+- **Templates raw:** https://gist.githubusercontent.com/chixing/82767d49380294ad7b298554e2c0e59b/raw/templates.json
 
 This project uses two remotes:
 - **Regular GitHub repo** stores all TypeScript source and tooling.
@@ -75,6 +76,7 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
 | `npm run type-check` | Validate types without building |
 | `npm run package:release` | Verify, build and retain release files |
 | `npm run deploy` | Verify and promote retained release files |
+| `npm run deploy:templates` | Publish `templates.json` independently to the gist |
 
 ## Project Structure
 
@@ -83,7 +85,7 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
   ├── src/                       # TypeScript source files
   │   ├── ai/
   │   │   ├── selector.ts         # Multi-AI dialog UI/logic
-  │   │   └── templates.ts        # Prompt templates
+  │   │   └── templates.ts        # Catalog loader, types, and prompt formatting
   │   ├── automations/
   │   │   └── index.ts            # Site-specific automations
   │   ├── keymaps/
@@ -98,6 +100,7 @@ src/*.ts  --(npm run build)-->  dist/surfingkeys.js  --(npm run deploy)-->  GitH
   │   ├── utils.ts               # Utility functions
   │   └── index.ts               # Main entry point
   ├── package.json               # Dependencies & scripts
+  ├── templates.json             # Prompt catalog (fetched when the dialog opens)
   ├── tsconfig.json              # TypeScript configuration
   ├── tsup.config.ts             # tsup bundler config
   └── dist/                      # Generated output (git ignored)
@@ -155,6 +158,29 @@ The **Thariq** and **Felix** sections contain adapted practitioner prompts. Thei
 link to the original sources and show whether they work on a page or start a conversation.
 Thariq covers blind spots, domain vocabulary, and goal interviews. Felix covers expert
 deep reading, improving a task request, and finding the outcome behind a task.
+
+### Update prompt templates
+
+Edit `templates.json`, then run `npm run lint` and `npm run deploy:templates`.
+Publish the catalog once before promoting the first config that uses the remote loader.
+Subsequent template changes need no config rebuild, release, or browser reload:
+each dialog opening requests the catalog again with a cache-busting query parameter.
+
+The dialog opens immediately while templates load. Invalid JSON, invalid template fields,
+or a request taking longer than 10 seconds produces an error with a Retry button;
+you can still send a query without a template. Closing and reopening the dialog
+discards edits and selections, and fetches a fresh catalog.
+
+The catalog is a JSON array with the existing `label`, `value`, `category`, `description`,
+and `tier` fields, plus optional `tags`, `context`, and `source` fields. Categories are
+`standards`, `explain`, `research`, `decision`, `thariq`, and `felix`; tiers are `short` or `long`.
+It is loaded as data, never executed as JavaScript.
+
+By default, the catalog is a separate file in the same gist as the config.
+To use another gist, upload `templates.json` there and set `CONFIG.promptTemplatesUrl`
+in `src/config.ts` to its raw HTTPS URL (without a revision hash). Also update the gist ID
+in the `deploy:templates` script. Changing the URL requires a config release;
+editing the catalog at that URL does not.
 
 ## Troubleshooting
 

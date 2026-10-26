@@ -25,6 +25,7 @@ export interface Config {
   omnibarMaxResults: number;
   historyMUOrder: boolean;
   delayMs: number;
+  promptTemplatesUrl: string;
   theme: Theme;
 }
 
@@ -34,6 +35,8 @@ export const CONFIG: Config = {
   omnibarMaxResults: 20,
   historyMUOrder: false,
   delayMs: 1500,
+  promptTemplatesUrl:
+    'https://gist.githubusercontent.com/chixing/82767d49380294ad7b298554e2c0e59b/raw/templates.json',
   theme: {
     font: "'Monaco', 'Consolas', 'Courier New', monospace",
     fontSize: '16px',

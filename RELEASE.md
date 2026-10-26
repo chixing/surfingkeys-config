@@ -2,6 +2,11 @@
 
 Main is source history; a merge does not change the live gist. The release version is package.json/package-lock.json. Every retained bundle records the source SHA, version, JS/source-map hashes and a checksum file.
 
+The prompt catalog is deployed separately with `npm run deploy:templates`. Publish
+`templates.json` before promoting the first bundle that uses the remote catalog.
+Bundle promotion and rollback do not change the catalog. To roll back templates,
+restore the desired `templates.json` from source history and publish it separately.
+
 ## Build a candidate
 
 1. Merge reviewed changes, fetch main and use a clean checkout.

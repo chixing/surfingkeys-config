@@ -8,7 +8,7 @@ import {
   formatCombinedQuery,
   PROMPT_CATEGORY_LABELS,
   PROMPT_CATEGORY_ORDER,
-  createPromptTemplates,
+  loadPromptTemplates,
   templateSearchHaystack,
   type PageContext,
   type PromptCategory,
@@ -110,7 +110,8 @@ export class AiSelector {
   // ===========================================================================
 
   show(initialQuery: string = '', selectedServices: AIServiceName[] | null = null): void {
-    this.templates = createPromptTemplates();
+    if (this.overlay) this.close();
+    this.templates = [];
     this.initializePromptState();
     this.clipboardText = null;
     // Only a selection made on this page implies the page is the context. A restored
@@ -152,6 +153,39 @@ export class AiSelector {
     this.setupFocusHandler();
     this.setupInitialFocus(queryInput);
     this.setupOverlayClickHandler();
+    void this.refreshTemplates();
+  }
+
+  private async refreshTemplates(): Promise<void> {
+    const overlay = this.overlay;
+    const list = this.templateList;
+    if (!overlay || !list) return;
+    list.textContent = 'Loading templates…';
+    list.setAttribute('aria-busy', 'true');
+    try {
+      const templates = await loadPromptTemplates(this.config.promptTemplatesUrl);
+      if (this.overlay !== overlay) return;
+      this.templates = templates;
+      this.initializePromptState();
+      this.renderTemplateRows(list);
+      if (this.activePromptIndex !== null) {
+        this.setActivePrompt(this.activePromptIndex, false, false, false);
+      } else {
+        list.textContent = 'No templates in this catalog.';
+      }
+    } catch (error) {
+      if (this.overlay !== overlay) return;
+      list.textContent = `Could not load templates: ${error instanceof Error ? error.message : String(error)}. You can still send a query. `;
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'sk-ai-btn sk-ai-btn--sm';
+      retry.textContent = 'Retry';
+      retry.onclick = () => void this.refreshTemplates();
+      list.appendChild(retry);
+      this.markAsSurfingKeys(list);
+    } finally {
+      list.removeAttribute('aria-busy');
+    }
   }
 
   close(): void {
