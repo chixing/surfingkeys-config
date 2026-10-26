@@ -56,7 +56,7 @@ if (command === 'pack') {
   const manifest = verify(directory);
   if (command === 'deploy') {
     execFileSync('git', ['merge-base', '--is-ancestor', manifest.source_sha, 'origin/main']);
-    execFileSync('gh', ['gist', 'edit', '82767d49380294ad7b298554e2c0e59b', join(directory, 'surfingkeys.js')], { stdio: 'inherit' });
+    execFileSync('gh', ['gist', 'edit', '82767d49380294ad7b298554e2c0e59b', '--filename', 'surfingkeys.js', join(directory, 'surfingkeys.js')], { stdio: 'inherit' });
   }
   console.log(`${command === 'deploy' ? 'Promoted' : 'Verified'} ${manifest.version} from ${manifest.source_sha}`);
 } else {
