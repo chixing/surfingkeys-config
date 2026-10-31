@@ -5,6 +5,8 @@ import { isZenBrowser } from '../utils';
 import { installUrlHistoryTracker, openBackInNewTab } from './backInNewTab';
 import { registerEditorMappings } from './editor';
 import { copyImageToClipboard } from './copyImage';
+import { openTabGroups } from './tabGroups';
+import { installGroupDissolveParticipant } from './dissolveGroup';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
   navigator.clipboard
@@ -66,6 +68,7 @@ function createAiLinkShortcut(
 }
 export function registerKeyMappings(aiSelector: AiSelector): void {
   installUrlHistoryTracker();
+  installGroupDissolveParticipant();
   registerEditorMappings();
 
   // Zen Browser fix: use native Ctrl-w instead of SurfingKeys closeTab
@@ -77,6 +80,9 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   api.map('K', '[[');
   api.map('J', ']]');
   api.mapkey('A', '#4Open back in new tab', openBackInNewTab, { repeatIgnore: true });
+
+  api.unmap(';G');
+  api.mapkey(';g', '#3Manage tab groups', openTabGroups);
 
   // Tab Search
   api.mapkey('T', '#3Choose a tab', () => {
