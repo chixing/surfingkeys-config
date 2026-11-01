@@ -59,7 +59,11 @@ export interface SurfingKeysAPI {
 
   // Omnibar
   Front: {
-    openOmnibar(options: { type: string; extra?: string }): void;
+    openOmnibar(options: {
+      type: string;
+      extra?: string | { title: string; url: string; id: string }[];
+      onEnter?: (item: { id?: string; url?: string }) => void;
+    }): void;
     showBanner(message: string, type?: 'success' | 'error' | 'warning'): void;
   };
 
