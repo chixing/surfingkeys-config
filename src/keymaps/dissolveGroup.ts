@@ -1,5 +1,5 @@
 // Each tab must send ungroupTab itself: Surfingkeys ignores supplied tab IDs.
-// Activation events wake participants; there is no permanent background poller.
+// Activation events wake participants; visible tabs also check for missed events.
 const STORAGE_KEY = 'skConfigDissolveGroup';
 const TAB_TIMEOUT_MS = 5000;
 const JOB_TIMEOUT_MS = 45000;
@@ -91,13 +91,22 @@ export function installGroupDissolveParticipant(): void {
     }
   };
   checkParticipant = check;
+  let foregroundTimer: number | undefined;
   const wake = () => {
+    if (foregroundTimer !== undefined) window.clearInterval(foregroundTimer);
+    foregroundTimer =
+      document.visibilityState === 'visible'
+        ? window.setInterval(() => {
+            void check();
+          }, 2000)
+        : undefined;
     void check();
   };
   window.addEventListener('focus', wake);
   document.addEventListener('visibilitychange', wake);
   state.__skDissolveCleanup = () => {
     stopped = true;
+    if (foregroundTimer !== undefined) window.clearInterval(foregroundTimer);
     window.removeEventListener('focus', wake);
     document.removeEventListener('visibilitychange', wake);
   };

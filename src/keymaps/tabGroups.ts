@@ -15,197 +15,426 @@ interface TabGroup {
   tabs: GroupTab[];
 }
 
-interface MenuItem {
-  title: string;
-  run: () => void | Promise<void>;
-}
-
 const COLORS = ['grey', 'blue', 'red', 'yellow', 'green', 'pink', 'purple', 'cyan', 'orange'];
-const name = (group: TabGroup) => group.title || 'Untitled group';
+let dismiss: (() => void) | undefined;
 
 function request<T>(action: string, args: Record<string, unknown> = {}): Promise<T> {
   return new Promise((resolve, reject) => {
     const timeout = window.setTimeout(() => reject(new Error('Surfingkeys did not respond.')), 4000);
-    try {
-      api.RUNTIME(action, args, (response) => {
-        clearTimeout(timeout);
-        if (response?.error) reject(new Error(response.error));
-        else resolve(response);
-      });
-    } catch (reason) {
+    api.RUNTIME(action, args, (response) => {
       clearTimeout(timeout);
-      reject(reason);
-    }
-  });
-}
-
-const getGroups = () => request<{ groups: TabGroup[] }>('getTabGroups').then((response) => response.groups);
-
-async function currentGroup(id: number): Promise<TabGroup> {
-  const group = (await getGroups()).find((item) => item.id === id);
-  if (!group) throw new Error('This group no longer exists. Open ;g to refresh.');
-  return group;
-}
-
-function report(reason: unknown): void {
-  api.Front.showBanner(reason instanceof Error ? reason.message : String(reason), 'error');
-}
-
-// UserURLs supplies Surfingkeys' own focused input, filtering, selection, and
-// Escape handling. onEnter consumes our opaque IDs; no URLs are opened.
-function menu(items: MenuItem[]): void {
-  api.Front.openOmnibar({
-    type: 'UserURLs',
-    extra: items.map((item, index) => ({ title: item.title, url: '', id: String(index) })),
-    onEnter: (selected) => {
-      const item = items.find((_, index) => String(index) === selected.id);
-      if (!item) return;
-      // Let the current frontend finish hiding before opening the next picker
-      // or a native input prompt. This also keeps focus in the next picker.
-      window.setTimeout(() => {
-        void Promise.resolve().then(item.run).catch(report);
-      }, 50);
-    },
-  });
-}
-
-function colorMenu(title: string, run: (color: string) => Promise<void>): void {
-  menu(COLORS.map((color) => ({ title: `${title}: ${color}`, run: () => run(color) })));
-}
-
-async function createGroup(): Promise<void> {
-  const title = window.prompt('New tab group name');
-  if (title === null) return;
-  colorMenu('Create group with this tab', async (color) => {
-    await request('createTabGroup', { title: title.trim(), color });
-    api.Front.showBanner('Group created. Press ;g to manage it.', 'success');
-  });
-}
-
-async function editGroup(id: number, color?: string): Promise<void> {
-  let group = await currentGroup(id);
-  const title = color ? (group.title ?? '') : window.prompt('Rename tab group', group.title ?? '');
-  if (title === null) return;
-  // Metadata updates reuse a live member; a cached member may have moved to
-  // another group while the picker or prompt was open.
-  group = await currentGroup(id);
-  if (!group.tabs.length) throw new Error('This group has no open tabs.');
-  await request('createTabGroup', {
-    groupId: id,
-    tabIds: [group.tabs[0].id],
-    title: title.trim(),
-    color: color ?? group.color,
-  });
-  api.Front.showBanner('Group updated.', 'success');
-}
-
-async function showActions(id: number, windowId: number): Promise<void> {
-  const group = await currentGroup(id);
-  const sameWindow = group.windowId === windowId;
-  const actions: MenuItem[] = [];
-  if (sameWindow && !group.active)
-    actions.push({
-      title: 'Add / move this tab to group',
-      run: async () => {
-        await request('createTabGroup', { groupId: id });
-      },
+      if (response?.error) reject(new Error(response.error));
+      else resolve(response);
     });
-  if (group.active)
-    actions.push({
-      title: 'Remove this tab from group — keep tab open',
-      run: () => api.RUNTIME('ungroupTab'),
-    });
-  actions.push(
-    { title: 'Rename group', run: () => editGroup(id) },
-    { title: 'Change group color', run: () => colorMenu('Group color', (color) => editGroup(id, color)) },
-    {
-      title: group.collapsed ? 'Expand group' : 'Collapse group',
-      run: () => {
-        api.RUNTIME('collapseGroup', { groupId: id, collapsed: !group.collapsed });
-      },
-    },
-  );
-  if (sameWindow)
-    actions.push({
-      title: 'Dissolve group — keep all tabs open',
-      run: async () => {
-        const result = await dissolveGroup(
-          id,
-          () => {},
-          () => false,
-        );
-        if (!result.remaining.length)
-          api.Front.showBanner('Group dissolved. All tabs remain open.', 'success');
-        else
-          menu([
-            {
-              title: `${result.remaining.length} tabs still grouped — retry after loading this config`,
-              run: () => showActions(id, windowId),
-            },
-            ...result.remaining.map((title) => ({
-              title: `Still grouped: ${title}`,
-              run: () => showActions(id, windowId),
-            })),
-            { title: 'Back to groups', run: openTabGroups },
-          ]);
-      },
-    });
-  actions.push(
-    {
-      title: sameWindow ? 'Switch to group' : 'Switch to group in other window',
-      run: async () => {
-        const fresh = await currentGroup(id);
-        if (fresh.tabs.length) api.RUNTIME('focusTab', { tabId: fresh.tabs[0].id, windowId: fresh.windowId });
-      },
-    },
-    {
-      title: 'Close group and all its tabs…',
-      run: async () => {
-        const fresh = await currentGroup(id);
-        menu([
-          { title: 'Cancel — keep tabs open', run: () => showActions(id, windowId) },
-          {
-            title: `Confirm close ${fresh.tabs.length} tabs in ${name(fresh)}`,
-            run: async () => {
-              const latest = await currentGroup(id);
-              const ids = (item: TabGroup) =>
-                item.tabs
-                  .map((tab) => tab.id)
-                  .sort()
-                  .join();
-              if (ids(latest) !== ids(fresh))
-                throw new Error('Group membership changed. Review it before closing.');
-              api.RUNTIME('closeTabByIds', { tabIds: latest.tabs.map((tab) => tab.id) });
-            },
-          },
-        ]);
-      },
-    },
-    { title: 'Back to groups', run: openTabGroups },
-  );
-  menu(actions.map((action) => ({ ...action, title: `${action.title} · ${name(group)}` })));
+  });
 }
 
 export async function openTabGroups(): Promise<void> {
-  try {
-    const [groups, current] = await Promise.all([
-      getGroups(),
-      request<{ tabs: { windowId: number }[] }>('getTabs', {
-        queryInfo: { currentWindow: true, active: true },
-      }),
-    ]);
-    if (!Array.isArray(groups)) throw new Error('Tab groups are unavailable in this browser.');
-    const windowId = current.tabs[0]?.windowId;
-    if (windowId === undefined) throw new Error('Could not determine the current window.');
-    groups.sort((a, b) => Number(b.active) - Number(a.active) || name(a).localeCompare(name(b)));
-    menu([
-      ...groups.map((group) => ({
-        title: `${group.active ? 'Current group: ' : ''}${name(group)} · ${group.tabs.length} tabs · ${group.color}${group.windowId !== windowId ? ' · other window' : ''} · ${group.tabs.map((tab) => tab.title).join(' / ')}`,
-        run: () => showActions(group.id, windowId),
-      })),
-      { title: 'Create new group with this tab…', run: createGroup },
-    ]);
-  } catch (reason) {
-    report(reason);
+  if (dismiss) {
+    dismiss();
+    return;
   }
+  const parentDocument = window.document;
+  const previousFocus = parentDocument.activeElement;
+  // Surfingkeys ignores frames whose layout viewport is <= 16px wide.
+  // Scale this private frame to the screen and counter-scale its content, so
+  // the dialog keeps ordinary dimensions without entering Surfingkeys modes.
+  const container = parentDocument.createElement('div');
+  container.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;';
+  const host = parentDocument.createElement('iframe');
+  host.title = 'Tab groups';
+  host.setAttribute('sandbox', 'allow-same-origin');
+  host.style.cssText = 'all:initial;position:absolute;inset:0;width:16px;border:0;';
+  const sizeFrame = () => {
+    host.style.setProperty('zoom', String(window.innerWidth / 16));
+    host.style.height = `${(16 * window.innerHeight) / window.innerWidth}px`;
+  };
+  sizeFrame();
+  container.append(host);
+  let closed = false;
+  let resize: (() => void) | undefined;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    container.remove();
+    if (resize) window.removeEventListener('resize', resize);
+    dismiss = undefined;
+    if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
+  };
+  dismiss = close;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timeout = window.setTimeout(
+        () => reject(new Error('This page blocked the tab-group dialog.')),
+        2000,
+      );
+      host.onload = () => {
+        clearTimeout(timeout);
+        resolve();
+      };
+      host.onerror = () => {
+        clearTimeout(timeout);
+        reject(new Error('This page blocked the tab-group dialog.'));
+      };
+      parentDocument.documentElement.append(container);
+    });
+    if (closed) return;
+    if (!host.contentDocument || !host.contentWindow)
+      throw new Error('This page blocked the tab-group dialog.');
+  } catch (reason) {
+    if (closed) return;
+    close();
+    api.Front.showBanner(reason instanceof Error ? reason.message : String(reason), 'error');
+    return;
+  }
+  const document = host.contentDocument;
+  const dialogWindow = host.contentWindow;
+  if (!document || !dialogWindow) {
+    close();
+    return;
+  }
+  host.onload = null;
+  document.head.replaceChildren();
+  document.body.replaceChildren();
+  const style = document.createElement('style');
+  style.textContent = `
+    html { height: 100%; overflow: hidden; color-scheme: dark; }
+    body { margin: 0; width: var(--screen-width); min-height: var(--screen-height); background: #0009; display: grid;
+      place-items: start center; padding-top: calc(var(--screen-height) * .1); box-sizing: border-box;
+      color: #eee; font: 15px/1.5 system-ui; }
+    * { box-sizing: border-box; }
+    section { width: min(640px, calc(var(--screen-width) * .94)); max-height: calc(var(--screen-height) * .8); overflow: auto; padding: 22px;
+      background: #202127; border: 1px solid #555; border-radius: 12px; box-shadow: 0 18px 60px #0008; }
+    h2 { margin: 0 0 12px; font-size: 20px; }
+    p { color: #bbb; margin: 8px 0; }
+    input, select, button { font: inherit; color: inherit; background: #30323b;
+      border: 1px solid #666; border-radius: 6px; padding: 8px 10px; }
+    input, select { width: 100%; margin: 6px 0 12px; }
+    button { cursor: pointer; text-align: left; }
+    button:hover, button:focus-visible { background: #454958; outline: 2px solid #9abaff; }
+    button:disabled { opacity: .5; cursor: default; }
+    nav { display: grid; gap: 8px; margin-top: 12px; }
+    footer { color: #bbb; margin-top: 16px; font-size: 13px; }
+    input:focus-visible, select:focus-visible { outline: 2px solid #9abaff; }
+    #groups { display: grid; gap: 8px; }
+    #groups button { width: 100%; }
+    #status { color: #ffcf80; white-space: pre-wrap; }
+    .danger { border-color: #ef8585; }
+  `;
+  const panel = document.createElement('section');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-label', 'Tab groups');
+  const sheet = new (dialogWindow as Window & { CSSStyleSheet: typeof CSSStyleSheet }).CSSStyleSheet();
+  sheet.replaceSync(style.textContent ?? '');
+  document.adoptedStyleSheets = [sheet];
+  document.body.append(panel);
+  resize = () => {
+    sizeFrame();
+    document.body.style.transform = `scale(${16 / window.innerWidth})`;
+    document.body.style.transformOrigin = '0 0';
+    document.body.style.setProperty('--screen-width', `${window.innerWidth}px`);
+    document.body.style.setProperty('--screen-height', `${window.innerHeight}px`);
+  };
+  resize();
+  window.addEventListener('resize', resize);
+  document.body.addEventListener('click', (event) => {
+    if (event.target === document.body) close();
+  });
+  for (const type of ['focus', 'focusin', 'mousedown', 'keyup']) {
+    dialogWindow.addEventListener(type, (event) => event.stopImmediatePropagation(), true);
+  }
+  dialogWindow.addEventListener(
+    'keydown',
+    (event) => {
+      event.stopImmediatePropagation();
+      const target = event.target as HTMLElement | null;
+      const controls = Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select:not(:disabled)',
+        ),
+      );
+      const index = target ? controls.indexOf(target) : -1;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        close();
+      } else if (target?.tagName === 'INPUT' && event.key === 'Enter') {
+        event.preventDefault();
+        if ((target as HTMLInputElement).type === 'search')
+          panel.querySelector<HTMLButtonElement>('#groups button')?.click();
+        else panel.querySelector<HTMLButtonElement>('button[data-submit]')?.click();
+      } else if (
+        target?.tagName === 'INPUT' &&
+        (target as HTMLInputElement).type === 'search' &&
+        event.key === 'ArrowDown'
+      ) {
+        event.preventDefault();
+        panel.querySelector<HTMLButtonElement>('#groups button')?.focus();
+      } else if (target?.tagName === 'BUTTON' && (event.key === 'Enter' || event.key === ' ')) {
+        event.preventDefault();
+        (target as HTMLButtonElement).click();
+      } else if (
+        target?.tagName === 'SELECT' &&
+        ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+      ) {
+        event.preventDefault();
+        const select = target as HTMLSelectElement;
+        select.selectedIndex =
+          event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? select.options.length - 1
+              : Math.max(
+                  0,
+                  Math.min(
+                    select.options.length - 1,
+                    select.selectedIndex + (event.key === 'ArrowDown' ? 1 : -1),
+                  ),
+                );
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (event.key === 'Tab') {
+        event.preventDefault();
+        controls[(index + (event.shiftKey ? -1 : 1) + controls.length) % controls.length]?.focus();
+      } else if (
+        target?.tagName === 'BUTTON' &&
+        ['ArrowDown', 'ArrowUp', 'j', 'k', 'Home', 'End'].includes(event.key)
+      ) {
+        event.preventDefault();
+        const step = event.key === 'ArrowUp' || event.key === 'k' ? -1 : 1;
+        const next =
+          event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? controls.length - 1
+              : (index + step + controls.length) % controls.length;
+        controls[next]?.focus();
+      }
+    },
+    true,
+  );
+
+  function element<K extends keyof HTMLElementTagNameMap>(tag: K, text = ''): HTMLElementTagNameMap[K] {
+    const node = document.createElement(tag);
+    node.textContent = text;
+    (node as any).fromSurfingKeys = true;
+    return node;
+  }
+  function page(title: string): HTMLElement {
+    panel.replaceChildren(element('h2', title));
+    const content = element('div');
+    panel.append(content);
+    const status = element('p');
+    status.id = 'status';
+    status.setAttribute('role', 'status');
+    panel.append(
+      status,
+      element('footer', '↑↓ Move · Tab / Shift-Tab Next / previous · Enter Select · Esc Close'),
+    );
+    return content;
+  }
+  function error(reason: unknown): void {
+    const status = panel.querySelector('#status');
+    if (status) status.textContent = reason instanceof Error ? reason.message : String(reason);
+  }
+  function button(parent: HTMLElement, label: string, action: () => void | Promise<void>): HTMLButtonElement {
+    const node = element('button', label);
+    node.type = 'button';
+    node.onclick = async () => {
+      node.disabled = true;
+      try {
+        await action();
+      } catch (reason) {
+        error(reason);
+      } finally {
+        node.disabled = false;
+        if (node.isConnected && document.activeElement === document.body) node.focus();
+      }
+    };
+    parent.append(node);
+    return node;
+  }
+  const name = (group: TabGroup) => group.title || 'Untitled group';
+
+  function edit(group?: TabGroup): void {
+    const content = page(group ? `Edit ${name(group)}` : 'Create group with this tab');
+    const label = element('label', 'Name');
+    const title = element('input');
+    title.setAttribute('aria-label', 'Name');
+    title.value = group?.title ?? '';
+    label.append(title);
+    const colorLabel = element('label', 'Color');
+    const color = element('select');
+    color.setAttribute('aria-label', 'Color');
+    for (const value of COLORS) {
+      const option = element('option', value);
+      option.value = value;
+      color.append(option);
+    }
+    color.value = group?.color ?? 'blue';
+    colorLabel.append(color);
+    content.append(label, colorLabel);
+    const actions = element('nav');
+    content.append(actions);
+    const save = button(actions, group ? 'Save changes' : 'Create', async () => {
+      // createTabGroup also updates metadata. Reuse one existing member so editing
+      // another group never moves the current tab into it.
+      const args: Record<string, unknown> = { title: title.value.trim(), color: color.value };
+      if (group) {
+        const fresh = (await request<{ groups: TabGroup[] }>('getTabGroups')).groups.find(
+          (item) => item.id === group.id,
+        );
+        if (!fresh?.tabs.length) throw new Error('This group no longer has open tabs. Refresh the list.');
+        args.groupId = fresh.id;
+        args.tabIds = [fresh.tabs[0].id];
+      }
+      await request('createTabGroup', args);
+      await list();
+    });
+    button(actions, 'Back', list);
+    save.dataset.submit = 'true';
+    title.focus();
+    title.select();
+  }
+
+  function details(group: TabGroup, windowId: number): void {
+    const content = page(name(group));
+    content.append(element('p', `${group.tabs.length} tabs · ${group.color}`));
+    const actions = element('nav');
+    content.append(actions);
+    const add = button(actions, 'Add / move this tab here', async () => {
+      await request('createTabGroup', { groupId: group.id });
+      close();
+    });
+    add.disabled = group.active || group.windowId !== windowId;
+    if (group.windowId !== windowId) content.append(element('p', 'This group is in another window.'));
+    if (group.active) {
+      button(actions, 'Remove this tab from group', () => {
+        api.RUNTIME('ungroupTab');
+        close();
+      });
+    }
+    button(actions, 'Rename / recolor', () => edit(group));
+    button(actions, group.collapsed ? 'Expand' : 'Collapse', () => {
+      api.RUNTIME('collapseGroup', { groupId: group.id, collapsed: !group.collapsed });
+      close();
+    });
+    if (group.tabs.length) {
+      const dissolve = button(actions, 'Dissolve group — keep tabs open', async () => {
+        const content = page(`Dissolving ${name(group)}`);
+        content.append(element('p', 'Tabs are visited one at a time, then focus returns here.'));
+        let cancelled = false;
+        button(content, 'Stop', () => {
+          cancelled = true;
+        }).focus();
+        const result = await dissolveGroup(
+          group.id,
+          (message) => {
+            if (!closed) error(message);
+          },
+          () => closed || cancelled,
+        );
+        if (closed) return;
+        const done = page(result.remaining.length ? 'Group partly dissolved' : 'Group dissolved');
+        done.append(
+          element(
+            'p',
+            result.remaining.length
+              ? `${result.remaining.length} tabs remain grouped. They may need this config loaded or Surfingkeys enabled. Retry after opening them, or use Chrome’s Ungroup command.`
+              : 'All tabs are ungrouped and remain open.',
+          ),
+        );
+        for (const title of result.remaining) done.append(element('p', title));
+        if (result.added)
+          done.append(
+            element('p', `${result.added} tabs joined during the operation and were left grouped.`),
+          );
+        button(done, 'Back to groups', list).focus();
+      });
+      dissolve.disabled = group.windowId !== windowId;
+      if (dissolve.disabled) dissolve.title = 'Switch to this group’s window to dissolve it.';
+      button(actions, 'Switch to group', () => {
+        api.RUNTIME('focusTab', { tabId: group.tabs[0].id, windowId: group.windowId });
+        close();
+      });
+      button(actions, 'Close group…', () => {
+        const confirmation = page(`Close ${name(group)}?`);
+        confirmation.append(element('p', `This closes all ${group.tabs.length} tabs in this group.`));
+        const choices = element('nav');
+        confirmation.append(choices);
+        button(choices, 'Cancel', () => details(group, windowId)).focus();
+        button(choices, `Close ${group.tabs.length} tabs`, async () => {
+          const fresh = await request<{ groups: TabGroup[] }>('getTabGroups');
+          const current = fresh.groups.find((item) => item.id === group.id);
+          if (!current) throw new Error('This group no longer exists.');
+          if (
+            current.tabs
+              .map((tab) => tab.id)
+              .sort()
+              .join() !==
+            group.tabs
+              .map((tab) => tab.id)
+              .sort()
+              .join()
+          ) {
+            throw new Error('Group membership changed. Go back and review it before closing.');
+          }
+          api.RUNTIME('closeTabByIds', { tabIds: current.tabs.map((tab) => tab.id) });
+          close();
+        }).className = 'danger';
+      });
+    }
+    button(actions, 'Back', list);
+    actions.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+  }
+
+  async function list(): Promise<void> {
+    const content = page('Tab groups');
+    const search = element('input');
+    search.type = 'search';
+    search.placeholder = 'Search groups or tab titles';
+    search.setAttribute('aria-label', 'Search groups or tab titles');
+    const actions = element('nav');
+    const rows = element('div');
+    rows.id = 'groups';
+    content.append(search, rows, actions);
+    button(actions, 'Create group', () => edit());
+    button(actions, 'Close menu', close);
+    search.focus();
+    try {
+      const [result, current] = await Promise.all([
+        request<{ groups: TabGroup[] }>('getTabGroups'),
+        request<{ tabs: { windowId: number }[] }>('getTabs', {
+          queryInfo: { currentWindow: true, active: true },
+        }),
+      ]);
+      if (closed || !content.isConnected) return;
+      if (!Array.isArray(result?.groups)) throw new Error('Tab groups are unavailable in this browser.');
+      const windowId = current.tabs[0]?.windowId;
+      if (windowId === undefined) throw new Error('Could not determine the current window.');
+      const render = () => {
+        rows.replaceChildren();
+        const query = search.value.toLowerCase();
+        const groups = result.groups.filter((group) =>
+          [name(group), ...group.tabs.map((tab) => tab.title)].join(' ').toLowerCase().includes(query),
+        );
+        groups.sort((a, b) => Number(b.active) - Number(a.active) || name(a).localeCompare(name(b)));
+        for (const group of groups) {
+          button(
+            rows,
+            `${group.active ? '● ' : ''}${name(group)} · ${group.tabs.length} tabs · ${group.color}${group.windowId !== windowId ? ' · other window' : ''}`,
+            () => details(group, windowId),
+          );
+        }
+        if (!groups.length)
+          rows.append(element('p', result.groups.length ? 'No matching groups.' : 'No groups yet.'));
+      };
+      search.oninput = render;
+      render();
+      if (document.activeElement === document.body) search.focus();
+    } catch (reason) {
+      if (!closed && content.isConnected) error(reason);
+    }
+  }
+  dialogWindow.focus();
+  void list();
 }

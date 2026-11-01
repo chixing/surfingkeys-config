@@ -161,30 +161,33 @@ deep reading, improving a task request, and finding the outcome behind a task.
 
 ### Manage tab groups
 
-Press `;g` to open the custom tab-group menu. Search group names or tab titles,
-then choose a group to add/move the current tab, remove the current tab, rename
-or recolor, collapse/expand, dissolve it while keeping tabs open, switch to it,
-or close it. Closing a group requires confirmation. Create a new named, colored group directly from the menu.
+Press `;g` to open the custom dialog with its search field focused. Type to filter
+by group name or tab title. Down selects the first result; Enter opens a separate
+screen with a vertical list of actions. Create and rename/recolor use inline
+forms inside the same dialog. Closing a group requires confirmation, with Cancel
+focused first. The upstream `;G` mapping is removed.
 
-The menu uses Surfingkeys’ omnibar and focuses its search field on opening.
-Type to filter groups or actions, use Tab/Shift-Tab or Up/Down to select, Enter
-to activate, and Escape to dismiss. Create/rename uses a keyboard-accessible
-native text prompt, and color selection uses the same searchable picker.
-Groups from other windows are labeled; switching and editing are available, but adding tabs and dissolving groups are
-limited to the current window. The upstream `;G` mapping is removed.
+Use Up/Down (or j/k on buttons) to navigate, Tab/Shift-Tab to cycle through controls,
+Enter/Space to activate buttons, and Escape to close. Enter in the name field
+submits a create/rename form. Color supports Up/Down and Home/End. The dialog
+resizes with the browser and keeps its keyboard handling separate from the page.
 
-Requires a Surfingkeys version exposing the tab-group runtime actions and a
-browser with the tabGroups API. Dissolving uses a temporary extension-storage
-request and visits each tab so that tab can ungroup itself, then restores the starting tab. It does not move,
-reload, or close tabs. Each participating tab needs this version of the config
-loaded; after installing it, reload the intended pages when safe to do so.
-Restricted pages, disabled Surfingkeys, or pages still running an older config
-may remain grouped and are listed in the result. Requests expire after five
-seconds per tab; the operation stops after about 45 seconds. Dissolving runs
-until completion or that timeout. There is no permanent polling loop.
-Removing the final member removes its group while keeping the tab open.
+Actions include add/move the current tab, remove it, rename/recolor, collapse or
+expand, dissolve while keeping tabs open, switch to the group, and close it.
+Groups in other windows are labeled. Switch to their window before adding tabs
+or dissolving them.
 
-Changes to this config require a release and promotion before the installed
+Dissolving visits each tab so it can ungroup itself, then restores the starting
+tab. It does not move, reload, or close tabs. Participating pages need the updated
+config loaded; reload them when safe after installing a new version. Restricted
+pages, disabled Surfingkeys, or older configs may leave some tabs grouped; the
+result lists them. Requests expire after five seconds per tab, and the operation
+stops after about 45 seconds. Stop or Escape in the dialog cancels further visits.
+Visible pages check shared requests every two seconds as a fallback for missed
+activation events; hidden pages stop this timer.
+
+Requires Surfingkeys tab-group runtime actions and a browser with the tabGroups
+API. Source changes require a release and promotion before the installed
 extension loads them.
 
 ### Update prompt templates
