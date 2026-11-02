@@ -161,7 +161,7 @@ deep reading, improving a task request, and finding the outcome behind a task.
 
 ### Manage tab groups
 
-Press `;g` to open the custom dialog with its search field focused. Type to filter
+Press `;gg` to open the custom dialog with its search field focused. Type to filter
 by group name or tab title. Down selects the first result; Enter opens a separate
 screen with a vertical list of actions. Create and rename/recolor use inline
 forms inside the same dialog. Closing a group requires confirmation, with Cancel

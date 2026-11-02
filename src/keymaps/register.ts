@@ -82,7 +82,7 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   api.mapkey('A', '#4Open back in new tab', openBackInNewTab, { repeatIgnore: true });
 
   api.unmap(';G');
-  api.mapkey(';g', '#3Manage tab groups', openTabGroups);
+  api.mapkey(';gg', '#3Manage tab groups', openTabGroups);
 
   // Tab Search
   api.mapkey('T', '#3Choose a tab', () => {
