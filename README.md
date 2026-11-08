@@ -177,12 +177,19 @@ expand, dissolve while keeping tabs open, switch to the group, and close it.
 Groups in other windows are labeled. Switch to their window before adding tabs
 or dissolving them.
 
+Choose **Dissolve all groups in this window — keep tabs open** from the `;gg`
+menu to dissolve every group in the current window, regardless of the search
+filter. Other windows are untouched. Groups and tabs added after the operation
+starts are left alone. Stop or Escape cancels further visits; tabs already
+ungrouped stay ungrouped.
+
 Dissolving visits each tab so it can ungroup itself, then restores the starting
 tab. It does not move, reload, or close tabs. Participating pages need the updated
 config loaded; reload them when safe after installing a new version. Restricted
 pages, disabled Surfingkeys, or older configs may leave some tabs grouped; the
 result lists them. Requests expire after five seconds per tab, and the operation
-stops after about 45 seconds. Stop or Escape in the dialog cancels further visits.
+stops after about 45 seconds for the entire operation, including when dissolving
+all groups. Stop or Escape in the dialog cancels further visits.
 Visible pages check shared requests every two seconds as a fallback for missed
 activation events; hidden pages stop this timer.
 

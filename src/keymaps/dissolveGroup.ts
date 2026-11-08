@@ -6,6 +6,7 @@ const JOB_TIMEOUT_MS = 45000;
 
 interface Group {
   id: number;
+  title?: string;
   windowId: number;
   active: boolean;
   tabs: { id: number; title: string; url?: string; active?: boolean }[];
@@ -120,7 +121,22 @@ export async function dissolveGroup(
   progress: (message: string) => void,
   cancelled: () => boolean,
 ): Promise<DissolveResult> {
-  if (running) throw new Error('A group is already being dissolved.');
+  return dissolveGroups(groupId, progress, cancelled);
+}
+
+export async function dissolveAllGroups(
+  progress: (message: string) => void,
+  cancelled: () => boolean,
+): Promise<DissolveResult> {
+  return dissolveGroups(null, progress, cancelled);
+}
+
+async function dissolveGroups(
+  groupId: number | null,
+  progress: (message: string) => void,
+  cancelled: () => boolean,
+): Promise<DissolveResult> {
+  if (running) throw new Error('A group operation is already in progress.');
   running = true;
   const jobId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   let ownedToken = '';
@@ -129,29 +145,37 @@ export async function dissolveGroup(
     const pending = await readTask();
     if (pending && (pending.jobExpires ?? pending.expires) > Date.now())
       throw new Error('Another group operation is in progress.');
-    const group = (await groups()).find((item) => item.id === groupId);
-    if (!group) return { remaining: [], added: 0 };
+    const snapshot = await groups();
     origin = (
       await request<{ tabs: { id: number; windowId: number }[] }>('getTabs', {
         queryInfo: { currentWindow: true, active: true },
       })
     ).tabs[0];
-    if (!origin || origin.windowId !== group.windowId) {
+    if (!origin) throw new Error('Could not determine the current window.');
+    const targets = snapshot.filter((group) =>
+      groupId === null ? group.windowId === origin?.windowId : group.id === groupId,
+    );
+    if (targets.some((group) => group.windowId !== origin?.windowId)) {
       origin = undefined;
       throw new Error('Switch to a tab in this group’s window, then dissolve it there.');
     }
+    // Snapshot the whole batch once: groups/tabs added later are never visited.
+    const tabs = targets.flatMap((group) => group.tabs.map((tab) => ({ groupId: group.id, tab })));
     const deadline = Date.now() + JOB_TIMEOUT_MS;
-    for (const [index, tab] of group.tabs.entries()) {
+    for (const [index, { groupId: targetGroupId, tab }] of tabs.entries()) {
       if (cancelled() || Date.now() >= deadline) break;
-      const current = (await groups()).find((item) => item.id === groupId);
-      if (!current?.tabs.some((item) => item.id === tab.id)) continue;
+      const current = (await groups()).find((item) => item.id === targetGroupId);
+      if (current?.windowId !== origin.windowId || !current.tabs.some((item) => item.id === tab.id)) continue;
       if (tab.url && !/^(https?|file):/i.test(tab.url)) continue;
-      progress(`Dissolving group: ${index + 1} / ${group.tabs.length} — ${tab.title}`);
+      if (cancelled() || Date.now() >= deadline) break;
+      progress(
+        `Dissolving ${groupId === null ? 'all groups' : 'group'}: ${index + 1} / ${tabs.length} — ${tab.title}`,
+      );
       ownedToken = `${jobId}-${index}`;
       const task: Task = {
         token: ownedToken,
         jobExpires: deadline,
-        groupId,
+        groupId: targetGroupId,
         windowId: current.windowId,
         tabId: tab.id,
         expires: Math.min(Date.now() + TAB_TIMEOUT_MS, deadline),
@@ -168,7 +192,7 @@ export async function dissolveGroup(
       // The originating tab may already be active and receive no activation event.
       void checkParticipant?.();
       while (!cancelled() && Date.now() < task.expires) {
-        const latest = (await groups()).find((item) => item.id === groupId);
+        const latest = (await groups()).find((item) => item.id === targetGroupId);
         if (!latest?.tabs.some((item) => item.id === tab.id)) break;
         await pause(200);
       }
@@ -178,11 +202,18 @@ export async function dissolveGroup(
       // Invalidate each task before the next tab, including timed-out tabs.
       writeTask({ ...task, tabId: -1, expires: 0 });
     }
-    const remaining = (await groups()).find((item) => item.id === groupId)?.tabs ?? [];
-    const originalIds = new Set(group.tabs.map((tab) => tab.id));
+    const targetIds = new Set(targets.map((group) => group.id));
+    const remaining = (await groups()).filter((group) => targetIds.has(group.id));
+    const originalIds = new Set(tabs.map(({ tab }) => tab.id));
     return {
-      remaining: remaining.map((tab) => tab.title || `Tab ${tab.id}`),
-      added: remaining.filter((tab) => !originalIds.has(tab.id)).length,
+      remaining: remaining.flatMap((group) =>
+        group.tabs.map((tab) =>
+          groupId === null
+            ? `${group.title || 'Untitled group'} — ${tab.title || `Tab ${tab.id}`}`
+            : tab.title || `Tab ${tab.id}`,
+        ),
+      ),
+      added: remaining.flatMap((group) => group.tabs).filter((tab) => !originalIds.has(tab.id)).length,
     };
   } finally {
     try {

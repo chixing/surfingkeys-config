@@ -1,4 +1,4 @@
-import { dissolveGroup } from './dissolveGroup';
+import { dissolveAllGroups, dissolveGroup } from './dissolveGroup';
 
 interface GroupTab {
   id: number;
@@ -255,6 +255,46 @@ export async function openTabGroups(): Promise<void> {
   }
   const name = (group: TabGroup) => group.title || 'Untitled group';
 
+  async function dissolve(group?: TabGroup): Promise<void> {
+    const content = page(group ? `Dissolving ${name(group)}` : 'Dissolving all groups in this window');
+    content.append(
+      element('p', 'Tabs are visited one at a time, then focus returns here. All tabs stay open.'),
+    );
+    let cancelled = false;
+    button(content, 'Stop', () => {
+      cancelled = true;
+    }).focus();
+    const progress = (message: string) => {
+      if (!closed) error(message);
+    };
+    const isCancelled = () => closed || cancelled;
+    const result = group
+      ? await dissolveGroup(group.id, progress, isCancelled)
+      : await dissolveAllGroups(progress, isCancelled);
+    if (closed) return;
+    const done = page(
+      result.remaining.length
+        ? group
+          ? 'Group partly dissolved'
+          : 'Groups partly dissolved'
+        : group
+          ? 'Group dissolved'
+          : 'All groups dissolved in this window',
+    );
+    done.append(
+      element(
+        'p',
+        result.remaining.length
+          ? `${result.remaining.length} tabs remain grouped. They may need this config loaded or Surfingkeys enabled. Retry after opening them, or use Chrome’s Ungroup command.`
+          : 'All tabs are ungrouped and remain open.',
+      ),
+    );
+    for (const title of result.remaining) done.append(element('p', title));
+    if (result.added)
+      done.append(element('p', `${result.added} tabs joined during the operation and were left grouped.`));
+    button(done, 'Back to groups', list).focus();
+  }
+
   function edit(group?: TabGroup): void {
     const content = page(group ? `Edit ${name(group)}` : 'Create group with this tab');
     const label = element('label', 'Name');
@@ -319,39 +359,9 @@ export async function openTabGroups(): Promise<void> {
       close();
     });
     if (group.tabs.length) {
-      const dissolve = button(actions, 'Dissolve group — keep tabs open', async () => {
-        const content = page(`Dissolving ${name(group)}`);
-        content.append(element('p', 'Tabs are visited one at a time, then focus returns here.'));
-        let cancelled = false;
-        button(content, 'Stop', () => {
-          cancelled = true;
-        }).focus();
-        const result = await dissolveGroup(
-          group.id,
-          (message) => {
-            if (!closed) error(message);
-          },
-          () => closed || cancelled,
-        );
-        if (closed) return;
-        const done = page(result.remaining.length ? 'Group partly dissolved' : 'Group dissolved');
-        done.append(
-          element(
-            'p',
-            result.remaining.length
-              ? `${result.remaining.length} tabs remain grouped. They may need this config loaded or Surfingkeys enabled. Retry after opening them, or use Chrome’s Ungroup command.`
-              : 'All tabs are ungrouped and remain open.',
-          ),
-        );
-        for (const title of result.remaining) done.append(element('p', title));
-        if (result.added)
-          done.append(
-            element('p', `${result.added} tabs joined during the operation and were left grouped.`),
-          );
-        button(done, 'Back to groups', list).focus();
-      });
-      dissolve.disabled = group.windowId !== windowId;
-      if (dissolve.disabled) dissolve.title = 'Switch to this group’s window to dissolve it.';
+      const dissolveButton = button(actions, 'Dissolve group — keep tabs open', () => dissolve(group));
+      dissolveButton.disabled = group.windowId !== windowId;
+      if (dissolveButton.disabled) dissolveButton.title = 'Switch to this group’s window to dissolve it.';
       button(actions, 'Switch to group', () => {
         api.RUNTIME('focusTab', { tabId: group.tabs[0].id, windowId: group.windowId });
         close();
@@ -398,6 +408,10 @@ export async function openTabGroups(): Promise<void> {
     rows.id = 'groups';
     content.append(search, rows, actions);
     button(actions, 'Create group', () => edit());
+    const dissolveAll = button(actions, 'Dissolve all groups in this window — keep tabs open', () =>
+      dissolve(),
+    );
+    dissolveAll.disabled = true;
     button(actions, 'Close menu', close);
     search.focus();
     try {
@@ -411,6 +425,7 @@ export async function openTabGroups(): Promise<void> {
       if (!Array.isArray(result?.groups)) throw new Error('Tab groups are unavailable in this browser.');
       const windowId = current.tabs[0]?.windowId;
       if (windowId === undefined) throw new Error('Could not determine the current window.');
+      dissolveAll.disabled = !result.groups.some((group) => group.windowId === windowId && group.tabs.length);
       const render = () => {
         rows.replaceChildren();
         const query = search.value.toLowerCase();
