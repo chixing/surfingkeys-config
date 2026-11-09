@@ -32,7 +32,7 @@ export function keepFrontendDetachedWhenIdle(): void {
   setInterval(() => {
     // Destroying the stock frontend can return focus to the page body. Keep it
     // attached while the custom groups dialog owns the keyboard.
-    if (document.querySelector('iframe[data-sk-tab-groups-dialog]')) {
+    if (document.querySelector('iframe[data-sk-tab-groups-dialog], iframe[data-sk-url-editor-dialog]')) {
       idleSince = null;
       return;
     }

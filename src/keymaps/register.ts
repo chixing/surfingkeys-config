@@ -7,6 +7,7 @@ import { registerEditorMappings } from './editor';
 import { copyImageToClipboard } from './copyImage';
 import { openTabGroups } from './tabGroups';
 import { installGroupDissolveParticipant } from './dissolveGroup';
+import { openUrlEditor } from './urlEditor';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
   navigator.clipboard
@@ -83,6 +84,7 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
 
   api.unmap(';G');
   api.mapkey(';gg', '#3Manage tab groups', openTabGroups);
+  api.mapkey(';i', '#4Edit URL by path and query parameters', openUrlEditor, { repeatIgnore: true });
 
   // Tab Search
   api.mapkey('T', '#3Choose a tab', () => {

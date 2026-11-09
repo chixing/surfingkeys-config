@@ -159,6 +159,20 @@ link to the original sources and show whether they work on a page or start a con
 Thariq covers blind spots, domain vocabulary, and goal interviews. Felix covers expert
 deep reading, improving a task request, and finding the outcome behind a task.
 
+### Edit URL components
+
+Press `;i` to edit the current HTTP(S) URL in a structured dialog. Scheme, host,
+port, individual path segments, query name/value rows, and fragment are separate
+fields. Query checkboxes temporarily exclude parameters. Duplicate names, bare
+flags, empty values, and untouched URL encoding are preserved; edited fields are
+encoded automatically. Fragment edits preserve hash-route delimiters.
+
+The live preview updates as you type. **Ctrl+Enter** opens the URL in this tab;
+**Ctrl+Shift+Enter** opens a new tab. **Alt+P** adds a path segment, **Alt+Q** adds
+a query parameter, and **Alt+H** focuses the fragment. **Tab/Shift+Tab** cycle
+controls; **Esc** closes. **Reset** restores the opening URL. **Load a full URL**
+parses another address. The existing `;u` free editor remains available.
+
 ### Manage tab groups
 
 Press `;gg` and type a group name or tab title. The first match is selected
