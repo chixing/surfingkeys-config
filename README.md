@@ -172,11 +172,13 @@ open, **u** to remove this tab (when it belongs to the group), or **x** to revie
 closing the group. Closing defaults to Cancel; **y** confirms only after the
 confirmation is displayed and membership is rechecked.
 
-From the list, **Alt+N** creates a group, **Alt+Shift+D** dissolves all groups in
+From the list, **Alt+N** creates a group, **Ctrl+Shift+U** dissolves all groups in
 the current window regardless of the search filter, and **?** shows shortcuts.
 **Alt+W** shows/hides other windows; they are hidden initially. Switch to another
 window before moving tabs into or dissolving its groups. **Esc** goes back, then
-closes. Arrow keys remain available, and Tab/Shift+Tab cycle controls. Enter saves
+closes. On the command screen, Up/Down moves within a column, Left/Right moves
+between enabled commands, and Home/End jumps to the first/last command. Disabled
+commands are skipped; Enter/Space activates. Tab/Shift+Tab cycle controls. Enter saves
 forms; colors support Up/Down and Home/End.
 
 The compact dialog uses its own Blob document and scoped styles, keeping its

@@ -235,7 +235,7 @@ export async function openTabGroups(): Promise<void> {
       'footer',
       goBack === close
         ? 'Type to filter · Enter Actions · Ctrl+Enter Switch'
-        : 'Press a letter to act · Esc Back',
+        : 'Arrows Move · Enter Select · Letter shortcuts · Esc Back',
     );
     panel.replaceChildren(header, content, message, footer);
     return content;
@@ -450,8 +450,9 @@ export async function openTabGroups(): Promise<void> {
       ['Alt+1–9', 'Open actions for a numbered result'],
       ['S / A / R', 'In actions: switch / move this tab / rename'],
       ['C / D / X', 'In actions: collapse / ungroup / close group'],
+      ['Arrow keys', 'Move between commands; Enter or Space activates'],
       ['Alt+N', 'New group'],
-      ['Alt+Shift+D', 'Ungroup all in this window'],
+      ['Ctrl+Shift+U', 'Ungroup all in this window'],
       ['Alt+W', 'Show / hide other windows'],
       ['Esc', 'Back, then close'],
     ])
@@ -492,7 +493,7 @@ export async function openTabGroups(): Promise<void> {
     toolbar.className = 'toolbar';
     content.append(input, rows, toolbar);
     button(toolbar, 'New', () => edit(), 'Alt+N');
-    const all = button(toolbar, 'Ungroup all', () => ungroup(), 'Alt+Shift+D');
+    const all = button(toolbar, 'Ungroup all', () => ungroup(), 'Ctrl+Shift+U');
     all.title = 'Dissolve every group in this window. All tabs stay open.';
     all.disabled = true;
     const helpButton = button(toolbar, '?', help);
@@ -593,9 +594,9 @@ export async function openTabGroups(): Promise<void> {
         (target as HTMLButtonElement).click();
         return;
       }
-      if (event.repeat && !['arrowdown', 'arrowup', 'tab'].includes(key)) return;
-      const shortcut = `${event.altKey ? 'alt+' : ''}${event.shiftKey && key !== '?' ? 'shift+' : ''}${key}`;
-      if ((!editing || event.altKey) && !event.ctrlKey && !event.metaKey && shortcuts.has(shortcut)) {
+      if (event.repeat && !['arrowdown', 'arrowup', 'arrowleft', 'arrowright', 'tab'].includes(key)) return;
+      const shortcut = `${event.ctrlKey ? 'ctrl+' : ''}${event.altKey ? 'alt+' : ''}${event.shiftKey && key !== '?' ? 'shift+' : ''}${key}`;
+      if ((!editing || event.altKey || event.ctrlKey) && !event.metaKey && shortcuts.has(shortcut)) {
         event.preventDefault();
         shortcuts.get(shortcut)?.click();
         return;
@@ -623,7 +624,10 @@ export async function openTabGroups(): Promise<void> {
           help();
           return;
         }
-        if (['arrowdown', 'arrowup'].includes(key) || (!editing && ['j', 'k'].includes(key))) {
+        if (
+          (target === search || target?.closest('#groups')) &&
+          (['arrowdown', 'arrowup'].includes(key) || (!editing && ['j', 'k'].includes(key)))
+        ) {
           event.preventDefault();
           const index = filtered.findIndex((item) => item.id === selectedId);
           pick((index + (['arrowup', 'k'].includes(key) ? -1 : 1) + filtered.length) % filtered.length);
@@ -634,6 +638,52 @@ export async function openTabGroups(): Promise<void> {
           search?.focus();
           return;
         }
+      }
+      if (
+        target?.tagName === 'BUTTON' &&
+        !event.altKey &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        ['arrowdown', 'arrowup', 'arrowleft', 'arrowright', 'home', 'end'].includes(key)
+      ) {
+        event.preventDefault();
+        const commands = Array.from(panel.querySelectorAll<HTMLButtonElement>('nav.actions button'));
+        const controls = commands.length
+          ? commands
+          : Array.from(panel.querySelectorAll<HTMLButtonElement>('button:not([tabindex="-1"])'));
+        const enabled = controls.filter((control) => !control.disabled);
+        const current = controls.indexOf(target as HTMLButtonElement);
+        let next: HTMLButtonElement | undefined;
+        if (key === 'home') next = enabled[0];
+        else if (key === 'end') next = enabled[enabled.length - 1];
+        else if (commands.length && current >= 0 && ['arrowdown', 'arrowup'].includes(key)) {
+          // Preserve the visual column in the two-column command grid, skipping
+          // disabled commands and the missing cell in an uneven last row.
+          const rows = Math.ceil(commands.length / 2);
+          const direction = key === 'arrowdown' ? 1 : -1;
+          for (let step = 1; step <= rows; step++) {
+            const row = (Math.floor(current / 2) + direction * step + rows) % rows;
+            const candidate = commands[row * 2 + (current % 2)];
+            if (candidate && !candidate.disabled) {
+              next = candidate;
+              break;
+            }
+          }
+        } else {
+          const index = enabled.indexOf(target as HTMLButtonElement);
+          const direction = ['arrowup', 'arrowleft'].includes(key) ? -1 : 1;
+          next =
+            enabled[
+              index < 0
+                ? direction > 0
+                  ? 0
+                  : enabled.length - 1
+                : (index + direction + enabled.length) % enabled.length
+            ];
+        }
+        next?.focus({ preventScroll: true });
+        next?.scrollIntoView({ block: 'nearest' });
+        return;
       }
       if (target?.tagName === 'SELECT' && ['arrowdown', 'arrowup', 'home', 'end'].includes(key)) {
         event.preventDefault();
