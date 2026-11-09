@@ -161,58 +161,41 @@ deep reading, improving a task request, and finding the outcome behind a task.
 
 ### Manage tab groups
 
-Press `;gg` and type a group name or tab title. The first matching group is
-selected automatically. **Enter** opens its actions; **Ctrl+Enter** switches
-directly to it. **Alt+1–9** jumps to a numbered result's actions. Search and
-selection survive returning from an action screen. The upstream `;G` is removed.
+Press `;gg` to open the custom dialog with its search field focused. Type to filter
+by group name or tab title. Down selects the first result; Enter opens a separate
+screen with a vertical list of actions. Create and rename/recolor use inline
+forms inside the same dialog. Closing a group requires confirmation, with Cancel
+focused first. The upstream `;G` mapping is removed.
 
-In the action screen, press **s** to switch, **a** to move this tab into the group,
-**r** to rename/recolor, **c** to collapse/expand, **d** to dissolve it while keeping
-tabs open, **u** to remove this tab (when it belongs to the group), or **x** to
-review closing the group. Closing defaults to Cancel and requires **y** or an
-explicit click, then rechecks membership before closing tabs.
+Use Up/Down (or j/k on buttons) to navigate, Tab/Shift-Tab to cycle through controls,
+Enter/Space to activate buttons, and Escape to close. Enter in the name field
+submits a create/rename form. Color supports Up/Down and Home/End. The dialog
+resizes with the browser and keeps its keyboard handling separate from the page.
 
-From the list, **Alt+N** creates a group, **Alt+Shift+D** dissolves every group in
-this window (regardless of the search filter), and **?** shows shortcuts.
-**Alt+W** shows/hides groups in other windows; they are hidden initially to keep
-the list focused. Switch to another window before moving tabs into or dissolving
-its groups. **Esc** goes back, then closes. Arrow keys remain available; Tab and
-Shift+Tab cycle controls. Enter saves forms. Colors support Up/Down and Home/End.
+Actions include add/move the current tab, remove it, rename/recolor, collapse or
+expand, dissolve while keeping tabs open, switch to the group, and close it.
+Groups in other windows are labeled. Switch to their window before adding tabs
+or dissolving them.
 
-Dissolving uses one `chrome.tabs.ungroup(tabIds)` call in the extension's service
-worker. It never activates, moves, reloads, or closes the target tabs, and works
-with restricted pages. Other windows and tabs added after the snapshot are left
-alone. There is no per-tab polling or activation participant. The operation is
-dispatched immediately and cannot be cancelled once sent.
+Choose **Dissolve all groups in this window — keep tabs open** from the `;gg`
+menu to dissolve every group in the current window, regardless of the search
+filter. Other windows are untouched. Groups and tabs added after the operation
+starts are left alone. Stop or Escape cancels further visits; tabs already
+ungrouped stay ungrouped.
 
-Batch dissolve requires the local Surfingkeys build below. A stock Web Store
-installation reports that the local build is needed; it never silently falls
-back to visiting tabs one at a time. Other group actions still work on stock
-Surfingkeys with tab-group support.
+Dissolving visits each tab so it can ungroup itself, then restores the starting
+tab. It does not move, reload, or close tabs. Participating pages need the updated
+config loaded; reload them when safe after installing a new version. Restricted
+pages, disabled Surfingkeys, or older configs may leave some tabs grouped; the
+result lists them. Requests expire after five seconds per tab, and the operation
+stops after about 45 seconds for the entire operation, including when dissolving
+all groups. Stop or Escape in the dialog cancels further visits.
+Visible pages check shared requests every two seconds as a fallback for missed
+activation events; hidden pages stop this timer.
 
-### Build Surfingkeys with batch dissolve
-
-`extension/batch-groups.js` adds `getGroupCapabilities` and `dissolveTabGroups` to
-the existing extension's normal and user-script message channels. The worker
-derives the window from the sending tab, accepts only an optional integer group
-ID, handles overlapping requests, and reads back membership after ungrouping.
-It adds no permissions or external message bridge.
-
-The builder also adds two structurally matched guards to the content script's
-input dispatcher. While the owned groups frame is present, Surfingkeys leaves
-its keyboard/focus events alone and does not boot normal mode inside it. Removing
-the frame restores ordinary shortcuts immediately. The builder refuses unknown
-dispatcher structures instead of guessing minified function names. The dialog
-counter-scales with CSS zoom so focusing controls cannot scroll it off-screen.
-
-Run `node scripts/patch-extension.mjs <installed-extension-folder> <new-output-folder>`.
-The script copies the installed Manifest V3 build to a separate directory, keeps
-its public key/ID, adds a small service-worker wrapper, and omits signed metadata
-and the Web Store update URL. It refuses to overwrite a folder or modify the
-installed copy. Load that directory using Chrome's **Load unpacked** flow and
-retain it in place. This is a locally maintained build; it will need rebuilding
-when updating the underlying Surfingkeys version. Keep the original Web Store
-installation/settings for recovery. Refresh the config and page after loading.
+Requires Surfingkeys tab-group runtime actions and a browser with the tabGroups
+API. Source changes require a release and promotion before the installed
+extension loads them.
 
 ### Update prompt templates
 
