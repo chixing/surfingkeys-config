@@ -161,27 +161,32 @@ deep reading, improving a task request, and finding the outcome behind a task.
 
 ### Manage tab groups
 
-Press `;gg` to open the custom dialog with its search field focused. Type to filter
-by group name or tab title. Down selects the first result; Enter opens a separate
-screen with a vertical list of actions. Create and rename/recolor use inline
-forms inside the same dialog. Closing a group requires confirmation, with Cancel
-focused first. The upstream `;G` mapping is removed.
+Press `;gg` and type a group name or tab title. The first match is selected
+automatically. **Enter** opens its actions; **Ctrl+Enter** switches directly.
+**Alt+1–9** opens a numbered result's actions. Search and selection are preserved
+when returning from an action screen. The upstream `;G` mapping is removed.
 
-Use Up/Down (or j/k on buttons) to navigate, Tab/Shift-Tab to cycle through controls,
-Enter/Space to activate buttons, and Escape to close. Enter in the name field
-submits a create/rename form. Color supports Up/Down and Home/End. The dialog
-resizes with the browser and keeps its keyboard handling separate from the page.
+In actions, press **s** to switch, **a** to move this tab into the group, **r** to
+rename/recolor, **c** to collapse/expand, **d** to dissolve while keeping tabs
+open, **u** to remove this tab (when it belongs to the group), or **x** to review
+closing the group. Closing defaults to Cancel; **y** confirms only after the
+confirmation is displayed and membership is rechecked.
 
-Actions include add/move the current tab, remove it, rename/recolor, collapse or
-expand, dissolve while keeping tabs open, switch to the group, and close it.
-Groups in other windows are labeled. Switch to their window before adding tabs
-or dissolving them.
+From the list, **Alt+N** creates a group, **Alt+Shift+D** dissolves all groups in
+the current window regardless of the search filter, and **?** shows shortcuts.
+**Alt+W** shows/hides other windows; they are hidden initially. Switch to another
+window before moving tabs into or dissolving its groups. **Esc** goes back, then
+closes. Arrow keys remain available, and Tab/Shift+Tab cycle controls. Enter saves
+forms; colors support Up/Down and Home/End.
 
-Choose **Dissolve all groups in this window — keep tabs open** from the `;gg`
-menu to dissolve every group in the current window, regardless of the search
-filter. Other windows are untouched. Groups and tabs added after the operation
-starts are left alone. Stop or Escape cancels further visits; tabs already
-ungrouped stay ungrouped.
+The compact dialog uses its own Blob document and scoped styles, keeping its
+keyboard handling separate from stock Surfingkeys. The config restores focus
+when the dialog closes and releases the document URL. If a page blocks the
+dialog, a banner reports it instead of leaving an invisible overlay.
+
+During dissolve, **s** or **Stop** cancels further visits; **Esc** stops and closes
+the dialog. Tabs already ungrouped stay ungrouped. Other windows and groups/tabs
+added after the snapshot are left alone.
 
 Dissolving visits each tab so it can ungroup itself, then restores the starting
 tab. It does not move, reload, or close tabs. Participating pages need the updated
@@ -196,6 +201,10 @@ activation events; hidden pages stop this timer.
 Requires Surfingkeys tab-group runtime actions and a browser with the tabGroups
 API. Source changes require a release and promotion before the installed
 extension loads them.
+
+This repository remains configuration-only. It does not patch, build, replace,
+or install Surfingkeys. Stock `ungroupTab` acts on the sending tab, so dissolve
+remains sequential; no batch/parallel speedup is claimed.
 
 ### Update prompt templates
 
