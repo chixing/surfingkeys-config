@@ -186,27 +186,31 @@ keyboard handling separate from stock Surfingkeys. The config restores focus
 when the dialog closes and releases the document URL. If a page blocks the
 dialog, a banner reports it instead of leaving an invisible overlay.
 
-During dissolve, **s** or **Stop** cancels further visits; **Esc** stops and closes
+During dissolve, **s** or **Stop** cancels further work; **Esc** stops and closes
 the dialog. Tabs already ungrouped stay ungrouped. Other windows and groups/tabs
 added after the snapshot are left alone.
 
-Dissolving visits each tab so it can ungroup itself, then restores the starting
-tab. It does not move, reload, or close tabs. Participating pages need the updated
-config loaded; reload them when safe after installing a new version. Restricted
-pages, disabled Surfingkeys, or older configs may leave some tabs grouped; the
-result lists them. Requests expire after five seconds per tab, and the operation
-stops after about 45 seconds for the entire operation, including when dissolving
-all groups. Stop or Escape in the dialog cancels further visits.
-Visible pages check shared requests every two seconds as a fallback for missed
-activation events; hidden pages stop this timer.
+Dissolving first gives loaded pages three seconds to ungroup themselves together
+without switching tabs. Any original tabs still grouped are then visited one at
+a time, restoring the starting tab afterward. It does not move, reload, or close
+tabs. Load the updated config on participating pages; reload them when safe.
+Pages running the previous sequential config can still answer fallback requests.
+Restricted pages, disabled Surfingkeys, or missing configs may leave tabs grouped;
+the result lists them. Fallback requests expire after five seconds per tab, and
+the entire operation stops after about 45 seconds, including the parallel pass.
+Loaded pages check shared requests every two seconds and on focus or visibility
+changes. Chrome may throttle or suspend background pages; fallback handles those
+that miss the parallel pass. With MRU ordering disabled or sender identification
+unavailable, tabs also use the sequential fallback.
 
 Requires Surfingkeys tab-group runtime actions and a browser with the tabGroups
 API. Source changes require a release and promotion before the installed
 extension loads them.
 
 This repository remains configuration-only. It does not patch, build, replace,
-or install Surfingkeys. Stock `ungroupTab` acts on the sending tab, so dissolve
-remains sequential; no batch/parallel speedup is claimed.
+or install Surfingkeys. Stock `ungroupTab` acts on the sending tab. The config
+coordinates these requests across loaded pages for parallel ungrouping, then
+uses the existing sequential path for remaining tabs.
 
 ### Update prompt templates
 

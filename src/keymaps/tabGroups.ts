@@ -286,7 +286,9 @@ export async function openTabGroups(): Promise<void> {
 
   async function ungroup(group?: TabGroup): Promise<void> {
     const content = page(group ? `Dissolving ${name(group)}` : 'Dissolving groups in this window', close);
-    content.append(element('p', 'Tabs are visited one at a time and stay open. Focus returns here.'));
+    content.append(
+      element('p', 'Loaded tabs ungroup together. Remaining tabs are visited individually. Tabs stay open.'),
+    );
     let cancelled = false;
     stopOperation = () => {
       cancelled = true;
@@ -318,6 +320,13 @@ export async function openTabGroups(): Promise<void> {
           `${result.remaining.length} ${result.remaining.length === 1 ? 'tab remains' : 'tabs remain'} grouped. Restricted pages or pages without this config may need Chrome’s Ungroup command.`,
         ),
       );
+      if (result.added)
+        done.append(
+          element(
+            'p',
+            `${result.added} ${result.added === 1 ? 'new tab was' : 'new tabs were'} left grouped because they joined after starting.`,
+          ),
+        );
       for (const title of result.remaining) done.append(element('p', title));
       button(done, 'Back to groups', list).focus({ preventScroll: true });
       return;
