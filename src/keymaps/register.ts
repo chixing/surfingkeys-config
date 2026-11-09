@@ -6,7 +6,6 @@ import { installUrlHistoryTracker, openBackInNewTab } from './backInNewTab';
 import { registerEditorMappings } from './editor';
 import { copyImageToClipboard } from './copyImage';
 import { openTabGroups } from './tabGroups';
-import { installGroupDissolveParticipant } from './dissolveGroup';
 
 function readClipboardAndUpdate(aiSelector: AiSelector): void {
   navigator.clipboard
@@ -68,7 +67,6 @@ function createAiLinkShortcut(
 }
 export function registerKeyMappings(aiSelector: AiSelector): void {
   installUrlHistoryTracker();
-  installGroupDissolveParticipant();
   registerEditorMappings();
 
   // Zen Browser fix: use native Ctrl-w instead of SurfingKeys closeTab
