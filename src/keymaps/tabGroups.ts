@@ -63,11 +63,13 @@ export async function openTabGroups(): Promise<void> {
   container.append(host);
   let closed = false;
   let resize: (() => void) | undefined;
+  let restoreFocus: (() => void) | undefined;
   const close = () => {
     if (closed) return;
     closed = true;
     container.remove();
     if (resize) window.removeEventListener('resize', resize);
+    if (restoreFocus) parentDocument.removeEventListener('focusin', restoreFocus);
     dismiss = undefined;
     if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
   };
@@ -169,8 +171,25 @@ export async function openTabGroups(): Promise<void> {
   document.body.onclick = (event) => {
     if (event.target === document.body) close();
   };
+  let lastControl: HTMLElement | undefined;
+  restoreFocus = () => {
+    if (!closed && parentDocument.activeElement !== host && lastControl?.isConnected) {
+      host.focus({ preventScroll: true });
+      lastControl.focus({ preventScroll: true });
+    }
+  };
+  parentDocument.addEventListener('focusin', restoreFocus);
   for (const type of ['focus', 'focusin', 'mousedown', 'keyup'])
-    dialogWindow.addEventListener(type, (event) => event.stopImmediatePropagation(), true);
+    dialogWindow.addEventListener(
+      type,
+      (event) => {
+        const target = event.target as HTMLElement | null;
+        if (type === 'focusin' && ['INPUT', 'BUTTON', 'SELECT'].includes(target?.tagName ?? ''))
+          lastControl = target ?? undefined;
+        event.stopImmediatePropagation();
+      },
+      true,
+    );
 
   let busy = false;
   let back: () => void = close;
@@ -513,6 +532,7 @@ export async function openTabGroups(): Promise<void> {
       };
       input.oninput = render;
       render();
+      if (document.activeElement === document.body) input.focus({ preventScroll: true });
     } catch (reason) {
       if (!closed && content.isConnected) status(reason);
     }
