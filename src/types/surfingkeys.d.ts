@@ -92,7 +92,8 @@ export interface SurfingKeysAPI {
     suggestionUrlOrType?: string,
     suggestionCallbackOrUrl?: string | ((response: any) => any),
     suggestionCallbackOrOnlyThisSite?: string | ((response: any) => any) | boolean,
-    onlyThisSite?: boolean,
+    interactiveKey?: string,
+    options?: { favicon_url?: string },
   ): void;
 
   removeSearchAlias(alias: string, searchUrl?: string, onlyThisSite?: boolean): void;

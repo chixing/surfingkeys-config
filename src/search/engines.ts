@@ -8,6 +8,7 @@ export interface CompletionResponse {
 export interface SearchEngine {
   alias: string;
   search: string;
+  faviconUrl?: string;
   compl?: string;
   callback?: (response: CompletionResponse) => any;
 }
@@ -49,7 +50,11 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
       return res.result?.tag?.map((t: any) => t.value) ?? [];
     },
   },
-  stremio: { alias: 's', search: 'https://web.stremio.com/#/search?search=' },
+  Stremio: {
+    alias: 's',
+    search: 'https://web.stremio.com/#/search?search=',
+    faviconUrl: 'https://web.stremio.com/favicons/favicon.ico',
+  },
   yandex: { alias: 'n', search: 'https://yandex.com/search/?text=' },
   anna: { alias: 'c', search: 'https://annas-archive.gl/search?q=' },
   libgen: { alias: 'v', search: 'https://libgen.li/index.php?req=' },
@@ -57,6 +62,15 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
 
 export function registerSearchEngines(): void {
   Object.entries(SEARCH_ENGINES).forEach(([name, conf]) => {
-    api.addSearchAlias(conf.alias, name, conf.search, 's', conf.compl, conf.callback);
+    api.addSearchAlias(
+      conf.alias,
+      name,
+      conf.search,
+      's',
+      conf.compl,
+      conf.callback,
+      undefined,
+      conf.faviconUrl ? { favicon_url: conf.faviconUrl } : undefined,
+    );
   });
 }
