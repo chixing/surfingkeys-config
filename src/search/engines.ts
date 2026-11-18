@@ -49,6 +49,7 @@ export const SEARCH_ENGINES: Record<string, SearchEngine> = {
       return res.result?.tag?.map((t: any) => t.value) ?? [];
     },
   },
+  stremio: { alias: 's', search: 'https://web.stremio.com/#/search?search=' },
   yandex: { alias: 'n', search: 'https://yandex.com/search/?text=' },
   anna: { alias: 'c', search: 'https://annas-archive.gl/search?q=' },
   libgen: { alias: 'v', search: 'https://libgen.li/index.php?req=' },
