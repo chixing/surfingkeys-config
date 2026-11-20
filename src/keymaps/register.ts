@@ -93,6 +93,26 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
 
   // Convenience
   api.map('q', 'p');
+  api.mapkey(
+    'i',
+    '#1Focus Yandex search',
+    () => {
+      // Yandex overlays the editable textarea on a hidden form input.
+      const searchBox = document.querySelector<HTMLTextAreaElement>(
+        'form[action="/search/"] textarea[role="combobox"]:not(:disabled):not([readonly])',
+      );
+      if (searchBox?.getClientRects().length) {
+        api.Hints.dispatchMouseClick(searchBox);
+        return;
+      }
+
+      api.Hints.create(
+        'input:not([type=submit]), textarea, [contenteditable=true], [role=textbox], select, div.ace_cursor',
+        api.Hints.dispatchMouseClick,
+      );
+    },
+    { domain: /^https:\/\/(?:www\.)?yandex\.com\/search\/?(?:[?#]|$)/, repeatIgnore: true },
+  );
 
   // Mode Swapping
   api.map('v', 'zv');
