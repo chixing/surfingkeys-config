@@ -40,7 +40,7 @@ export interface SurfingKeysAPI {
     keystroke: string,
     annotation: string,
     jscode: () => void | Promise<void>,
-    options?: { domain?: string; repeatIgnore?: boolean },
+    options?: { domain?: RegExp; repeatIgnore?: boolean },
   ): void;
 
   imapkey(
@@ -65,6 +65,7 @@ export interface SurfingKeysAPI {
 
   // Hints
   Hints: {
+    dispatchMouseClick(element: HTMLElement): void;
     create(
       cssSelector: string,
       onHintKey: (element: HTMLElement) => void,
