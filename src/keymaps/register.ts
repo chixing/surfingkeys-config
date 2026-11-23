@@ -92,6 +92,7 @@ export function registerKeyMappings(aiSelector: AiSelector): void {
   });
 
   // Convenience
+  api.map('<Alt-q>', '<Alt-i>');
   api.map('q', 'p');
   api.mapkey(
     'i',
