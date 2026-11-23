@@ -37,12 +37,13 @@ export function showReadyBadge(theme: Theme): void {
   // A tab can lose focus or switch to an editor while the background process replies.
   let generation = 0;
   let frame = 0;
-  let normal = false;
+  let mode = '';
+  let pendingKeys = false;
   function refresh(): void {
     const current = ++generation;
     badge.style.setProperty('display', 'none', 'important');
     cancelAnimationFrame(frame);
-    if (!normal || !pageHasKeyboardFocus()) return;
+    if (mode !== 'Normal' || pendingKeys || !pageHasKeyboardFocus()) return;
     frame = requestAnimationFrame(() => {
       if (!pageHasKeyboardFocus()) return;
       api.RUNTIME('getState', {}, (reply) => {
@@ -54,6 +55,36 @@ export function showReadyBadge(theme: Theme): void {
   }
   window.addEventListener('focus', refresh, true);
   window.addEventListener('blur', refresh, true);
+  function reconcileEditorBlur(): void {
+    if (mode !== 'Insert') return;
+    requestAnimationFrame(() => {
+      // Removing or blurring an editor can leave BODY active without a focus
+      // event. Insert then consumes the next key just to return to Normal.
+      const body = document.body;
+      if (mode === 'Insert' && body && document.activeElement === body && pageHasKeyboardFocus()) {
+        body.dispatchEvent(new FocusEvent('focus'));
+      }
+    });
+  }
+  document.addEventListener('focusout', reconcileEditorBlur, true);
+  window.addEventListener('focus', reconcileEditorBlur);
+  window.addEventListener('pageshow', reconcileEditorBlur);
+  // The native keystroke HUD receives a serializable copy of prefix updates.
+  // This flag affects only the badge and leaves multi-key commands intact.
+  window.addEventListener(
+    'message',
+    (event) => {
+      if (event.source !== window || event.origin !== location.origin) return;
+      const action = event.data?.surfingkeys_uihost_data?.action;
+      if (action !== 'showKeystroke' && action !== 'hideKeystroke') return;
+      const pending = action === 'showKeystroke';
+      if (pending !== pendingKeys) {
+        pendingKeys = pending;
+        refresh();
+      }
+    },
+    true,
+  );
   window.addEventListener('pageshow', refresh);
   document.addEventListener('visibilitychange', refresh);
   document.addEventListener('DOMContentLoaded', refresh, { once: true });
@@ -71,10 +102,10 @@ export function showReadyBadge(theme: Theme): void {
         const detail = (event as CustomEvent).detail;
         if (detail?.[0] !== 'showStatus' || typeof detail[1]?.[0] !== 'string') return;
         const status = detail[1];
-        normal = status[0] === 'Normal';
+        mode = status[0];
         // The page badge renders Normal. An empty native status lets the idle
         // frontend detach again, while other modes retain their native labels.
-        if (normal) {
+        if (mode === 'Normal') {
           event.stopImmediatePropagation();
           clearedStatus = new CustomEvent(event.type, {
             detail: ['showStatus', ['', ...status.slice(1)], ...detail.slice(2)],
